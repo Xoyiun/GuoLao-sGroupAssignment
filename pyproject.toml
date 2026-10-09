@@ -1,0 +1,4 @@
+[project]
+version = "0.1.0"
+name = "guolao-s-group-assignment"
+requires-python = ">=3.14,<3.15"
