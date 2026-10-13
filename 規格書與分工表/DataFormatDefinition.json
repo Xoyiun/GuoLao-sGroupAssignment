@@ -1,0 +1,109 @@
+{
+  "courses": [
+    {
+      "course_id": "CS101",
+      "title": "計算機程式設計",
+      "credits": 3,
+      "required": "必修",
+      "teacher": "王大明",
+      "capacity": 60,
+      "classroom": "TR-310",
+      "time_slots": [
+        { "day": 2, "period": "2" },
+        { "day": 2, "period": "3" },
+        { "day": 4, "period": "4" }
+      ]
+    },
+    {
+      "course_id": "MA101",
+      "title": "微積分",
+      "credits": 4,
+      "required": "必修",
+      "teacher": "李小華",
+      "capacity": 50,
+      "classroom": "MA-101",
+      "time_slots": [
+        { "day": 1, "period": "2" },
+        { "day": 1, "period": "3" },
+        { "day": 3, "period": "2" },
+        { "day": 3, "period": "3" }
+      ]
+    }
+  ],
+  "students": [
+    {
+      "student_id": "S11200001",
+      "name": "陳小文",
+      "department": "資訊工程系",
+      "enrolled_courses": [
+        "CS101",
+        "MA101"
+      ],
+      "max_credits": 25
+    }
+  ],
+  "classrooms": [
+    {
+      "classroom_id": "TR-310",
+      "capacity": 60,
+      "equipment": [
+        "投影機",
+        "麥克風",
+        "電腦"
+      ]
+    },
+    {
+      "classroom_id": "MA-101",
+      "capacity": 150,
+      "equipment": [
+        "投影機",
+        "麥克風"
+      ]
+    }
+  ],
+  "activities": [
+    {
+      "activity_id": "ACT001",
+      "title": "Python 程式設計讀書會",
+      "date": "星期四",
+      "time_slots": [
+        { "day": 4, "period": "5" }
+      ],
+      "expected_participants": 20,
+      "activity_type": "社團活動",
+      "required_equipment": [
+        "投影機",
+        "電腦"
+      ],
+      "assigned_classroom": "TR-310"
+    }
+  ],
+  "campus_graph": {
+    "nodes": [
+      {
+        "node_id": "TR",
+        "name": "研揚大樓"
+      },
+      {
+        "node_id": "MA",
+        "name": "管理大樓"
+      },
+      {
+        "node_id": "E2",
+        "name": "工程二館"
+      }
+    ],
+    "edges": [
+      {
+        "source": "TR",
+        "target": "MA",
+        "walk_time_minutes": 12
+      },
+      {
+        "source": "MA",
+        "target": "E2",
+        "walk_time_minutes": 5
+      }
+    ]
+  }
+}

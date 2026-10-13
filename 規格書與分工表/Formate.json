@@ -1,0 +1,39 @@
+{
+    "courses": [
+        {
+            "course_id": "363141",
+            "name": "Programming I",
+            "credits": 3,
+            "type": "Required",
+            "teacher": "KUO JONG-YIH",
+            "capacity": 94,
+            "classroom": "6TB-327",
+            "time_slots": [
+                "1-4",
+                "2-8",
+                "2-9"
+            ]
+        }
+    ],
+    "students": [
+        {
+            "student_id": "115590056",
+            "name": "Lukas",
+            "department": "CS",
+            "max_credits": 24,
+            "enrolled_courses": [
+                "363141"
+            ],
+            "enrolled_activities": []
+        }
+    ],
+    "classrooms": [
+        {
+            "room_id": "6TB-327",
+            "capacity": 100,
+            "equipment": [
+                "projector"
+            ]
+        }
+    ]
+}

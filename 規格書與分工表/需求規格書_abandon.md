@@ -272,7 +272,7 @@
 
 2. **軟性偏好量化評分公式 (Soft Preference Scoring)**：
    對每一組符合硬性限制的可行課表算出一總評分（Score），公式定義如下：
-   \\[\text{Total Score} = (w_1 \times S_{\text{days}}) + (w_2 \times S_{\text{gaps}}) + (w_3 \times S_{\text{no\_8am}}) + (w_4 \times S_{\text{conc}}) + (w_5 \times S_{\text{pref}})\\]
+   $$ \text{Total Score} = (w_1 \times S_{\text{days}}) + (w_2 \times S_{\text{gaps}}) + (w_3 \times S_{\text{no\_8am}}) + (w_4 \times S_{\text{conc}}) + (w_5 \times S_{\text{pref}}) $$
    * **到校天數分數 (\\(S_{\text{days}}\\))**：有課天數越少得分越高。
    * **空堂分數 (\\(S_{\text{gaps}}\\))**：每日首堂與尾堂間之空堂總節數越少得分越高。
    * **非早八分數 (\\(S_{\text{no\_8am}}\\))**：未排在第 1 節之課程比例越高得分越高。
@@ -373,8 +373,8 @@
    * **Dijkstra 演算法**：針對不同路線具備不同權重（步行時間）之情況，計算起點至終點之全域最短時間與最佳移動路線。
    * **BFS 演算法**：當所有邊之權重（移動成本）相同時，使用廣度優先搜尋尋求最少轉折節點路徑。
 3. **課表趕課可行性過濾 (Feasibility Check)**：
-   * 計算連續兩堂課程之「最短步行時間 \\(T_{\text{walk}}\\)_」與「課間空堂時間 \\(T_{\text{gap}}\\)_」。
-   * 若 \\(T_{\text{walk}} > T_{\text{gap}}\\)，則判定該課表組合存在「趕課不及衝突」，必須將該安排標示為不可行，並記錄衝突地點與時間缺口。
+   * 計算連續兩堂課程之「最短步行時間 $T_{\text{walk}}$」與「課間空堂時間 $T_{\text{gap}}$」。
+   * 若 $T_{\text{walk}} > T_{\text{gap}}$，則判定該課表組合存在「趕課不及衝突」，必須將該安排標示為不可行，並記錄衝突地點與時間缺口。
 
 ### 4. 輸出結果範例 (Output Example)
 ```text
