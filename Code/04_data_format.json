@@ -1,0 +1,850 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "計算機程式設計團體作業 - 初始資料庫與 Schema 定義檔",
+    "created_at": "2026-10-06"
+  },
+  "classrooms": [
+    {
+      "classroom_id": "TR-310",
+      "building_id": "TR",
+      "building_name": "研揚大樓",
+      "capacity": 60,
+      "equipment": [
+        "projector",
+        "mic",
+        "computer"
+      ]
+    },
+    {
+      "classroom_id": "IB-101",
+      "building_id": "IB",
+      "building_name": "綜合研究大樓",
+      "capacity": 120,
+      "equipment": [
+        "projector",
+        "mic",
+        "computer",
+        "audio"
+      ]
+    },
+    {
+      "classroom_id": "E2-201",
+      "building_id": "E2",
+      "building_name": "工程二館",
+      "capacity": 50,
+      "equipment": [
+        "projector",
+        "blackboard"
+      ]
+    },
+    {
+      "classroom_id": "MA-101",
+      "building_id": "MA",
+      "building_name": "管理大樓",
+      "capacity": 80,
+      "equipment": [
+        "projector",
+        "mic",
+        "computer"
+      ]
+    },
+    {
+      "classroom_id": "T4-202",
+      "building_id": "T4",
+      "building_name": "第四教學大樓",
+      "capacity": 45,
+      "equipment": [
+        "projector"
+      ]
+    }
+  ],
+  "courses": [
+    {
+      "course_id": "CS101",
+      "title": "計算機程式設計",
+      "credits": 4,
+      "required": true,
+      "teacher": "林教授",
+      "classroom_id": "TR-310",
+      "capacity": 60,
+      "enrolled_count": 45,
+      "time_slots": [
+        {
+          "day": 1,
+          "period": "2"
+        },
+        {
+          "day": 1,
+          "period": "3"
+        },
+        {
+          "day": 1,
+          "period": "4"
+        }
+      ]
+    },
+    {
+      "course_id": "CS102",
+      "title": "資料結構",
+      "credits": 3,
+      "required": true,
+      "teacher": "陳教授",
+      "classroom_id": "IB-101",
+      "capacity": 120,
+      "enrolled_count": 80,
+      "time_slots": [
+        {
+          "day": 2,
+          "period": "2"
+        },
+        {
+          "day": 2,
+          "period": "3"
+        },
+        {
+          "day": 2,
+          "period": "4"
+        }
+      ]
+    },
+    {
+      "course_id": "CS103",
+      "title": "演算法",
+      "credits": 3,
+      "required": true,
+      "teacher": "黃教授",
+      "classroom_id": "E2-201",
+      "capacity": 50,
+      "enrolled_count": 48,
+      "time_slots": [
+        {
+          "day": 3,
+          "period": "5"
+        },
+        {
+          "day": 3,
+          "period": "6"
+        },
+        {
+          "day": 3,
+          "period": "7"
+        }
+      ]
+    },
+    {
+      "course_id": "CS104",
+      "title": "物件導向程式設計",
+      "credits": 3,
+      "required": false,
+      "teacher": "王教授",
+      "classroom_id": "MA-101",
+      "capacity": 80,
+      "enrolled_count": 30,
+      "time_slots": [
+        {
+          "day": 4,
+          "period": "2"
+        },
+        {
+          "day": 4,
+          "period": "3"
+        },
+        {
+          "day": 4,
+          "period": "4"
+        }
+      ]
+    },
+    {
+      "course_id": "MA101",
+      "title": "微積分",
+      "credits": 4,
+      "required": true,
+      "teacher": "張教授",
+      "classroom_id": "IB-101",
+      "capacity": 120,
+      "enrolled_count": 110,
+      "time_slots": [
+        {
+          "day": 2,
+          "period": "3"
+        },
+        {
+          "day": 2,
+          "period": "4"
+        },
+        {
+          "day": 5,
+          "period": "2"
+        },
+        {
+          "day": 5,
+          "period": "3"
+        }
+      ]
+    },
+    {
+      "course_id": "MA102",
+      "title": "線性代數",
+      "credits": 3,
+      "required": true,
+      "teacher": "吳教授",
+      "classroom_id": "TR-310",
+      "capacity": 60,
+      "enrolled_count": 55,
+      "time_slots": [
+        {
+          "day": 1,
+          "period": "6"
+        },
+        {
+          "day": 1,
+          "period": "7"
+        },
+        {
+          "day": 1,
+          "period": "8"
+        }
+      ]
+    },
+    {
+      "course_id": "ENG101",
+      "title": "大一英文",
+      "credits": 2,
+      "required": true,
+      "teacher": "Smith教授",
+      "classroom_id": "T4-202",
+      "capacity": 45,
+      "enrolled_count": 40,
+      "time_slots": [
+        {
+          "day": 3,
+          "period": "1"
+        },
+        {
+          "day": 3,
+          "period": "2"
+        }
+      ]
+    },
+    {
+      "course_id": "PHY101",
+      "title": "普通物理",
+      "credits": 3,
+      "required": false,
+      "teacher": "劉教授",
+      "classroom_id": "E2-201",
+      "capacity": 50,
+      "enrolled_count": 42,
+      "time_slots": [
+        {
+          "day": 4,
+          "period": "6"
+        },
+        {
+          "day": 4,
+          "period": "7"
+        },
+        {
+          "day": 4,
+          "period": "8"
+        }
+      ]
+    },
+    {
+      "course_id": "CS201",
+      "title": "作業系統",
+      "credits": 3,
+      "required": false,
+      "teacher": "蔡教授",
+      "classroom_id": "TR-310",
+      "capacity": 60,
+      "enrolled_count": 50,
+      "time_slots": [
+        {
+          "day": 5,
+          "period": "5"
+        },
+        {
+          "day": 5,
+          "period": "6"
+        },
+        {
+          "day": 5,
+          "period": "7"
+        }
+      ]
+    },
+    {
+      "course_id": "CS202",
+      "title": "資料庫系統",
+      "credits": 3,
+      "required": false,
+      "teacher": "楊教授",
+      "classroom_id": "MA-101",
+      "capacity": 80,
+      "enrolled_count": 65,
+      "time_slots": [
+        {
+          "day": 2,
+          "period": "6"
+        },
+        {
+          "day": 2,
+          "period": "7"
+        },
+        {
+          "day": 2,
+          "period": "8"
+        }
+      ]
+    },
+    {
+      "course_id": "CS203",
+      "title": "軟體工程",
+      "credits": 3,
+      "required": false,
+      "teacher": "林教授",
+      "classroom_id": "IB-101",
+      "capacity": 120,
+      "enrolled_count": 70,
+      "time_slots": [
+        {
+          "day": 3,
+          "period": "2"
+        },
+        {
+          "day": 3,
+          "period": "3"
+        },
+        {
+          "day": 3,
+          "period": "4"
+        }
+      ]
+    },
+    {
+      "course_id": "CS204",
+      "title": "電腦網路概論",
+      "credits": 3,
+      "required": false,
+      "teacher": "高教授",
+      "classroom_id": "E2-201",
+      "capacity": 50,
+      "enrolled_count": 45,
+      "time_slots": [
+        {
+          "day": 1,
+          "period": "7"
+        },
+        {
+          "day": 1,
+          "period": "8"
+        },
+        {
+          "day": 1,
+          "period": "9"
+        }
+      ]
+    },
+    {
+      "course_id": "GE101",
+      "title": "哲學思考與現代生活",
+      "credits": 2,
+      "required": false,
+      "teacher": "趙教授",
+      "classroom_id": "T4-202",
+      "capacity": 45,
+      "enrolled_count": 45,
+      "time_slots": [
+        {
+          "day": 4,
+          "period": "3"
+        },
+        {
+          "day": 4,
+          "period": "4"
+        }
+      ]
+    },
+    {
+      "course_id": "GE102",
+      "title": "藝術欣賞與美學",
+      "credits": 2,
+      "required": false,
+      "teacher": "孫教授",
+      "classroom_id": "MA-101",
+      "capacity": 80,
+      "enrolled_count": 75,
+      "time_slots": [
+        {
+          "day": 5,
+          "period": "3"
+        },
+        {
+          "day": 5,
+          "period": "4"
+        }
+      ]
+    },
+    {
+      "course_id": "GE103",
+      "title": "心理學概論",
+      "credits": 2,
+      "required": false,
+      "teacher": "何教授",
+      "classroom_id": "IB-101",
+      "capacity": 120,
+      "enrolled_count": 90,
+      "time_slots": [
+        {
+          "day": 1,
+          "period": "3"
+        },
+        {
+          "day": 1,
+          "period": "4"
+        }
+      ]
+    },
+    {
+      "course_id": "CS301",
+      "title": "人工智慧概論",
+      "credits": 3,
+      "required": false,
+      "teacher": "李教授",
+      "classroom_id": "TR-310",
+      "capacity": 60,
+      "enrolled_count": 58,
+      "time_slots": [
+        {
+          "day": 3,
+          "period": "6"
+        },
+        {
+          "day": 3,
+          "period": "7"
+        },
+        {
+          "day": 3,
+          "period": "8"
+        }
+      ]
+    },
+    {
+      "course_id": "CS302",
+      "title": "機器學習實務",
+      "credits": 3,
+      "required": false,
+      "teacher": "黃教授",
+      "classroom_id": "E2-201",
+      "capacity": 50,
+      "enrolled_count": 49,
+      "time_slots": [
+        {
+          "day": 2,
+          "period": "7"
+        },
+        {
+          "day": 2,
+          "period": "8"
+        },
+        {
+          "day": 2,
+          "period": "9"
+        }
+      ]
+    },
+    {
+      "course_id": "CS303",
+      "title": "資訊安全概論",
+      "credits": 3,
+      "required": false,
+      "teacher": "葉教授",
+      "classroom_id": "MA-101",
+      "capacity": 80,
+      "enrolled_count": 60,
+      "time_slots": [
+        {
+          "day": 4,
+          "period": "7"
+        },
+        {
+          "day": 4,
+          "period": "8"
+        },
+        {
+          "day": 4,
+          "period": "9"
+        }
+      ]
+    },
+    {
+      "course_id": "PE101",
+      "title": "體育：羽球",
+      "credits": 0,
+      "required": true,
+      "teacher": "馮教練",
+      "classroom_id": "T4-202",
+      "capacity": 30,
+      "enrolled_count": 30,
+      "time_slots": [
+        {
+          "day": 5,
+          "period": "1"
+        },
+        {
+          "day": 5,
+          "period": "2"
+        }
+      ]
+    },
+    {
+      "course_id": "PE102",
+      "title": "體育：網球",
+      "credits": 0,
+      "required": true,
+      "teacher": "鄧教練",
+      "classroom_id": "T4-202",
+      "capacity": 30,
+      "enrolled_count": 25,
+      "time_slots": [
+        {
+          "day": 2,
+          "period": "1"
+        },
+        {
+          "day": 2,
+          "period": "2"
+        }
+      ]
+    }
+  ],
+  "students": [
+    {
+      "student_id": "S10901",
+      "name": "陳小明",
+      "department": "資工系",
+      "max_credits": 25,
+      "enrolled_courses": [
+        "CS101",
+        "MA102"
+      ]
+    },
+    {
+      "student_id": "S10902",
+      "name": "林美玲",
+      "department": "資工系",
+      "max_credits": 25,
+      "enrolled_courses": [
+        "CS101",
+        "CS102"
+      ]
+    },
+    {
+      "student_id": "S10903",
+      "name": "張志強",
+      "department": "資工系",
+      "max_credits": 25,
+      "enrolled_courses": [
+        "CS102",
+        "CS103"
+      ]
+    },
+    {
+      "student_id": "S10904",
+      "name": "黃雅婷",
+      "department": "資工系",
+      "max_credits": 25,
+      "enrolled_courses": [
+        "CS101",
+        "ENG101"
+      ]
+    },
+    {
+      "student_id": "S10905",
+      "name": "王大衛",
+      "department": "管院",
+      "max_credits": 25,
+      "enrolled_courses": [
+        "MA101",
+        "CS202"
+      ]
+    },
+    {
+      "student_id": "S10906",
+      "name": "李欣怡",
+      "department": "管院",
+      "max_credits": 25,
+      "enrolled_courses": [
+        "MA101",
+        "GE102"
+      ]
+    },
+    {
+      "student_id": "S10907",
+      "name": "吳承翰",
+      "department": "工院",
+      "max_credits": 25,
+      "enrolled_courses": [
+        "PHY101",
+        "MA101"
+      ]
+    },
+    {
+      "student_id": "S10908",
+      "name": "蔡佩君",
+      "department": "資工系",
+      "max_credits": 25,
+      "enrolled_courses": [
+        "CS201",
+        "CS203"
+      ]
+    },
+    {
+      "student_id": "S10909",
+      "name": "楊冠宇",
+      "department": "資工系",
+      "max_credits": 25,
+      "enrolled_courses": [
+        "CS202",
+        "CS301"
+      ]
+    },
+    {
+      "student_id": "S10910",
+      "name": "許家豪",
+      "department": "資工系",
+      "max_credits": 25,
+      "enrolled_courses": [
+        "CS301",
+        "CS302"
+      ]
+    },
+    {
+      "student_id": "S10911",
+      "name": "鄭婷婷",
+      "department": "管院",
+      "max_credits": 25,
+      "enrolled_courses": [
+        "GE101",
+        "CS104"
+      ]
+    },
+    {
+      "student_id": "S10912",
+      "name": "謝宗翰",
+      "department": "工院",
+      "max_credits": 25,
+      "enrolled_courses": [
+        "CS204",
+        "PHY101"
+      ]
+    },
+    {
+      "student_id": "S10913",
+      "name": "郭佳玲",
+      "department": "資工系",
+      "max_credits": 25,
+      "enrolled_courses": [
+        "CS103",
+        "CS303"
+      ]
+    },
+    {
+      "student_id": "S10914",
+      "name": "曾子軒",
+      "department": "資工系",
+      "max_credits": 25,
+      "enrolled_courses": [
+        "PE101",
+        "CS101"
+      ]
+    },
+    {
+      "student_id": "S10915",
+      "name": "彭智勝",
+      "department": "資工系",
+      "max_credits": 25,
+      "enrolled_courses": [
+        "PE102",
+        "MA102"
+      ]
+    }
+  ],
+  "activities": [
+    {
+      "activity_id": "ACT01",
+      "title": "資工系迎新茶會",
+      "classroom_id": "TR-310",
+      "capacity": 100,
+      "enrolled_count": 80,
+      "time_slots": [
+        {
+          "day": 4,
+          "period": "5"
+        },
+        {
+          "day": 4,
+          "period": "6"
+        }
+      ]
+    },
+    {
+      "activity_id": "ACT02",
+      "title": "程式競賽培訓工作坊",
+      "classroom_id": "IB-101",
+      "capacity": 60,
+      "enrolled_count": 40,
+      "time_slots": [
+        {
+          "day": 3,
+          "period": "8"
+        },
+        {
+          "day": 3,
+          "period": "9"
+        }
+      ]
+    },
+    {
+      "activity_id": "ACT03",
+      "title": "職涯發展與履歷講座",
+      "classroom_id": "MA-101",
+      "capacity": 80,
+      "enrolled_count": 50,
+      "time_slots": [
+        {
+          "day": 5,
+          "period": "7"
+        },
+        {
+          "day": 5,
+          "period": "8"
+        }
+      ]
+    }
+  ],
+  "campus_graph": {
+    "nodes": [
+      {
+        "node_id": "TR",
+        "name": "研揚大樓"
+      },
+      {
+        "node_id": "IB",
+        "name": "綜合研究大樓"
+      },
+      {
+        "node_id": "E2",
+        "name": "工程二館"
+      },
+      {
+        "node_id": "MA",
+        "name": "管理大樓"
+      },
+      {
+        "node_id": "T4",
+        "name": "第四教學大樓"
+      },
+      {
+        "node_id": "T3",
+        "name": "第三教學大樓"
+      },
+      {
+        "node_id": "AU",
+        "name": "視聽館"
+      },
+      {
+        "node_id": "LIB",
+        "name": "圖書館"
+      },
+      {
+        "node_id": "GYM",
+        "name": "體育館"
+      },
+      {
+        "node_id": "ADM",
+        "name": "行政大樓"
+      }
+    ],
+    "edges": [
+      {
+        "from": "TR",
+        "to": "IB",
+        "walk_minutes": 3
+      },
+      {
+        "from": "TR",
+        "to": "E2",
+        "walk_minutes": 5
+      },
+      {
+        "from": "IB",
+        "to": "MA",
+        "walk_minutes": 4
+      },
+      {
+        "from": "IB",
+        "to": "T4",
+        "walk_minutes": 2
+      },
+      {
+        "from": "E2",
+        "to": "T3",
+        "walk_minutes": 3
+      },
+      {
+        "from": "E2",
+        "to": "LIB",
+        "walk_minutes": 6
+      },
+      {
+        "from": "MA",
+        "to": "T4",
+        "walk_minutes": 3
+      },
+      {
+        "from": "MA",
+        "to": "ADM",
+        "walk_minutes": 5
+      },
+      {
+        "from": "T4",
+        "to": "T3",
+        "walk_minutes": 2
+      },
+      {
+        "from": "T3",
+        "to": "AU",
+        "walk_minutes": 4
+      },
+      {
+        "from": "AU",
+        "to": "LIB",
+        "walk_minutes": 3
+      },
+      {
+        "from": "LIB",
+        "to": "GYM",
+        "walk_minutes": 7
+      },
+      {
+        "from": "ADM",
+        "to": "GYM",
+        "walk_minutes": 8
+      },
+      {
+        "from": "TR",
+        "to": "T4",
+        "walk_minutes": 6
+      },
+      {
+        "from": "MA",
+        "to": "LIB",
+        "walk_minutes": 5
+      }
+    ]
+  }
+}
