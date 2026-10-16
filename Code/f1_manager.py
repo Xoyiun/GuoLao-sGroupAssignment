@@ -20,12 +20,12 @@ VALID_PERIODS = ("1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c")
 ALLOW_ZERO_CREDITS = False  # F1：學分必須為正整數（種子檔體育課 PE101、PE102 已改為 1 學分）
 
 # ---- 錯誤碼 ----
-# 【Claude 新增 10/16】標註說明：
+# 標註說明：
 #   [F1 規格] 需求規格書 F1（需求規格書_abandon.md）或 UseCase.md UC-01 有明寫的規則
 #   [F1 自訂] 規格沒寫、為了不讓資料壞掉而加的檢查
 #   [F4 相關] 跟教室／活動配置有關，F4 會用到
 OK = "OK"                                    # 成功（通用）
-NOT_FOUND = "NOT_FOUND"                      # [F1 自訂] 修改、刪除時找不到該課程、學生或教室【Claude 修改 10/16】原標 [F1 規格]，但規格沒明寫
+NOT_FOUND = "NOT_FOUND"                      # [F1 自訂] 修改、刪除時找不到該課程、學生或教室（原標 [F1 規格]，但規格沒明寫）
 DUPLICATE_ID = "DUPLICATE_ID"                # [F1 規格] 課程代號、學號不得重複（教室代號沿用同一碼）
 INVALID_FIELD = "INVALID_FIELD"              # [F1 自訂] 其他格式錯誤：空白、型別不對、不可修改的欄位
 INVALID_CREDITS = "INVALID_CREDITS"          # [F1 規格] 學分必須為正整數（學生的學分上限也沿用此碼）
@@ -66,7 +66,7 @@ def _is_nonempty_str(value):
 def find_course(db, course_id):
     """把course_id例如CS101 找到了把完整字典資料（包含課名、老師、學分等）整包回傳給你
 
-    【Claude 新增 10/16】通用查找工具，不限 F1：F2 選課檢查、F3 課表、F5 課程篩選都要用代號找課程。
+    通用查找工具，不限 F1：F2 選課檢查、F3 課表、F5 課程篩選都要用代號找課程。
     """
     return next((c for c in db["courses"] if c["course_id"] == course_id), None)
 
@@ -74,7 +74,7 @@ def find_course(db, course_id):
 def find_student(db, student_id):
     """用學號找學生，找不到回傳 None。
 
-    【Claude 新增 10/16】通用查找工具，不限 F1：F2 選課檢查、F3 個人課表都要先找到學生。
+    通用查找工具，不限 F1：F2 選課檢查、F3 個人課表都要先找到學生。
     """
     return next((s for s in db["students"] if s["student_id"] == student_id), None)
 
@@ -82,7 +82,7 @@ def find_student(db, student_id):
 def find_classroom(db, classroom_id):
     """用教室代號找教室，找不到回傳 None。
 
-    【Claude 新增 10/16】通用查找工具，不限 F1：F2 教室衝突檢查、F4 活動配置教室都會用到。
+    通用查找工具，不限 F1：F2 教室衝突檢查、F4 活動配置教室都會用到。
     """
     return next((r for r in db["classrooms"] if r["classroom_id"] == classroom_id), None) #next用法跟傳送帶一樣一個找一個
 
@@ -90,7 +90,7 @@ def find_classroom(db, classroom_id):
 def count_enrolled(db, course_id):
     """學生資料中實際選修該課的人數。
 
-    【Claude 新增 10/16】F1 刪除課程時用來檢查是否有人選修；F2 名額限制驗證（人數是否已達 capacity）也會用到。
+    F1 刪除課程時用來檢查是否有人選修；F2 名額限制驗證（人數是否已達 capacity）也會用到。
     """
     return sum(1 for s in db["students"] if course_id in s["enrolled_courses"])
 
@@ -98,7 +98,7 @@ def count_enrolled(db, course_id):
 def remaining_seats(course):
     """剩餘名額 = 人數上限 − 目前人數 (enrolled_count)。
 
-    【Claude 新增 10/16】F1 只在 query_courses 的「剩餘名額」條件用到；
+    F1 只在 query_courses 的「剩餘名額」條件用到；
     F2 名額限制驗證、F5 額滿課程排除也會用到。
     """
     return course["capacity"] - course.get("enrolled_count", 0)
@@ -110,7 +110,7 @@ def remaining_seats(course):
 def validate_time_slots(time_slots):
     """防止種子檔的time_slot設定錯誤 或是防止未來add_course時設定錯誤
 
-    【Claude 新增 10/16】F4 活動的 time_slots 格式跟課程相同（星期 1–7、節次 1–9, a, b, c），新增活動時可共用。
+    F4 活動的 time_slots 格式跟課程相同（星期 1–7、節次 1–9, a, b, c），新增活動時可共用。
     """
     if not isinstance(time_slots, list) or len(time_slots) == 0:
         return False, INVALID_TIME_SLOTS
@@ -266,7 +266,7 @@ def delete_course(db, course_id):
     return True, OK
 
 
-def query_courses(db, course_id=None, teacher=None, day=None,  #F1 規格：依課程代號、教師、星期、必選修、剩餘名額查詢
+def query_courses(db, course_id=None, teacher=None, day=None,  #指定尋找某一堂特定的課，例如只找代號為 "CS101" 的課
                   required=None, has_seats=None):
     """多條件查詢，條件之間為 AND；未指定(None)的條件不篩選。"""
     results = []
@@ -294,12 +294,12 @@ def add_student(db, student):
     student = dict(student)
     student.setdefault("enrolled_courses", [])#用setfault去查student裡面有沒有enrolled_courses 沒有就加入[]
     student_id = student.get("student_id")
-    if _is_nonempty_str(student_id) and find_student(db, student_id) is not None:
+    if _is_nonempty_str(student_id) and find_student(db, student_id) is not None: #檢查不能重複學號
         return False, DUPLICATE_ID
-    ok, code = validate_student_fields(db, student)
+    ok, code = validate_student_fields(db, student) #code是狀況 交給validat_student_fields去判斷
     if not ok:
         return False, code
-    db["students"].append({k: copy.deepcopy(student[k]) for k in ("student_id", *STUDENT_FIELDS)})
+    db["students"].append({k: copy.deepcopy(student[k]) for k in ("student_id", *STUDENT_FIELDS)})#把student_id放進fields裡面
     return True, OK
 
 
@@ -354,7 +354,7 @@ class F1Manager(DataManager):
     def _commit(self, result):
         """成功才存檔，存檔失敗回傳 (False, "SAVE_FAILED")。
 
-        【Claude 新增 10/16】這是 F6 資料存檔的部分（實際存檔在 data_manager.py），不是 F1 的業務規則。
+        這是 F6 資料存檔的部分（實際存檔在 data_manager.py），不是 F1 的業務規則。
         """
         ok, code = result
         if ok and not self._autosave():
