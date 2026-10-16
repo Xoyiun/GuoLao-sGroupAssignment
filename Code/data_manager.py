@@ -99,12 +99,22 @@ def save_db(db, path):
         return False
 
 
+DEFAULT_WORK_FILE = "db.json"  # 【Claude 新增 10/16】沒指定 save_path 時預設寫入的工作檔檔名
+
+
 class DataManager:
     """持有一份 db 並負責讀寫檔。業務規則請放在 f1_manager 的純函式。"""
 
     def __init__(self, json_path="04_data_format.json", save_path=None, autosave=True):  #拿完資料馬上備份 怕出問題時還有備份
         self.json_path = json_path
-        self.save_path = save_path or json_path
+        # ▼▼▼ 【Claude 修改 10/16】原本只有一行：self.save_path = save_path or json_path
+        #     （沒指定 save_path 時會直接覆蓋讀進來的檔，可能弄髒種子檔）
+        #     現在：沒指定時預設存到「讀檔同一個資料夾」的 db.json
+        self._default_save_path = save_path is None          # 【Claude 新增】記下是不是用預設值，save() 要用
+        if save_path is None:
+            save_path = os.path.join(os.path.dirname(os.path.abspath(json_path)), DEFAULT_WORK_FILE)
+        self.save_path = save_path
+        # ▲▲▲ 【Claude 修改】到此結束
         self.autosave = autosave
         self.data, self.load_errors, self.corrupted = load_db(json_path) #load_db把乾淨資料db拿出來
         if self.corrupted and os.path.exists(json_path): #確認檔案存在和檔案確實壞了 但是檔案本身沒問題是電腦看不懂(例如少了一個逗號或括號，導致 json.load() 解析失敗)
@@ -112,8 +122,12 @@ class DataManager:
             shutil.copy2(json_path, json_path + ".corrupt.bak")  #shutil 專門處理檔案操作的模組 copy2是copy增強版會把檔案的建立時間和最後修改時間等屬性一併完美複製過去
                                                                  #會把原本檔名加上.corrupt.bak 備份檔 .bak是約定俗成的附檔名
     def save(self):
-        """寫回 save_path；若載入時檔案損毀且 save_path 就是原檔，拒絕覆蓋。""" 
-        if self.corrupted and self.save_path == self.json_path: 
+        """寫回 save_path；若載入時檔案損毀，且 save_path 是原檔或是沒指定的預設值，拒絕存檔。"""
+        # ▼▼▼ 【Claude 修改 10/16】原本是：if self.corrupted and self.save_path == self.json_path:
+        #     改成用 abspath 比較（預設路徑是絕對路徑，不轉換會比不出來），並多擋「沒指定 save_path」的情況
+        same_file = os.path.abspath(self.save_path) == os.path.abspath(self.json_path)   # 【Claude 新增】
+        if self.corrupted and (same_file or self._default_save_path):
+        # ▲▲▲ 【Claude 修改】到此結束
             print("原檔損毀，為避免覆蓋已拒絕存檔（請指定其他 save_path）")
             return False 
         return save_db(self.data, self.save_path)
