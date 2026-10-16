@@ -17,7 +17,7 @@ from data_manager import DataManager
 # ---- 規格常數（修改規格時請同步更新需求規格文件）----
 VALID_DAYS = range(1, 8)  # 星期 1–7
 VALID_PERIODS = ("1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c")
-ALLOW_ZERO_CREDITS = False  # F1：學分必須為正整數（種子檔體育課 PE101、PE102 已改為 1 學分）【Claude 修改 10/16】原註解：體育課 0 學分待團隊決議
+ALLOW_ZERO_CREDITS = False  # F1：學分必須為正整數（種子檔體育課 PE101、PE102 已改為 1 學分）
 
 # ---- 錯誤碼 ----
 # 【Claude 新增 10/16】標註說明：
@@ -64,25 +64,43 @@ def _is_nonempty_str(value):
 
 
 def find_course(db, course_id):
-    """把course_id例如CS101 找到了把完整字典資料（包含課名、老師、學分等）整包回傳給你"""
+    """把course_id例如CS101 找到了把完整字典資料（包含課名、老師、學分等）整包回傳給你
+
+    【Claude 新增 10/16】通用查找工具，不限 F1：F2 選課檢查、F3 課表、F5 課程篩選都要用代號找課程。
+    """
     return next((c for c in db["courses"] if c["course_id"] == course_id), None)
 
 
 def find_student(db, student_id):
+    """用學號找學生，找不到回傳 None。
+
+    【Claude 新增 10/16】通用查找工具，不限 F1：F2 選課檢查、F3 個人課表都要先找到學生。
+    """
     return next((s for s in db["students"] if s["student_id"] == student_id), None)
 
 
 def find_classroom(db, classroom_id):
+    """用教室代號找教室，找不到回傳 None。
+
+    【Claude 新增 10/16】通用查找工具，不限 F1：F2 教室衝突檢查、F4 活動配置教室都會用到。
+    """
     return next((r for r in db["classrooms"] if r["classroom_id"] == classroom_id), None) #next用法跟傳送帶一樣一個找一個
 
 
 def count_enrolled(db, course_id):
-    """學生資料中實際選修該課的人數。"""
+    """學生資料中實際選修該課的人數。
+
+    【Claude 新增 10/16】F1 刪除課程時用來檢查是否有人選修；F2 名額限制驗證（人數是否已達 capacity）也會用到。
+    """
     return sum(1 for s in db["students"] if course_id in s["enrolled_courses"])
 
 
 def remaining_seats(course):
-    """剩餘名額 = 人數上限 − 目前人數 (enrolled_count)。"""
+    """剩餘名額 = 人數上限 − 目前人數 (enrolled_count)。
+
+    【Claude 新增 10/16】F1 只在 query_courses 的「剩餘名額」條件用到；
+    F2 名額限制驗證、F5 額滿課程排除也會用到。
+    """
     return course["capacity"] - course.get("enrolled_count", 0)
 
 
@@ -90,7 +108,10 @@ def remaining_seats(course):
 # 驗證（純函式，皆回傳 (ok, code)）
 # ======================================================================
 def validate_time_slots(time_slots):
-    """防止種子檔的time_slot設定錯誤 或是防止未來add_course時設定錯誤"""
+    """防止種子檔的time_slot設定錯誤 或是防止未來add_course時設定錯誤
+
+    【Claude 新增 10/16】F4 活動的 time_slots 格式跟課程相同（星期 1–7、節次 1–9, a, b, c），新增活動時可共用。
+    """
     if not isinstance(time_slots, list) or len(time_slots) == 0:
         return False, INVALID_TIME_SLOTS
     seen = set()
@@ -240,12 +261,12 @@ def delete_course(db, course_id):
     if course is None:
         return False, NOT_FOUND
     if count_enrolled(db, course_id) > 0 or course.get("enrolled_count", 0) > 0:
-        return False, COURSE_HAS_STUDENTS
+       return False, COURSE_HAS_STUDENTS
     db["courses"].remove(course)
     return True, OK
 
 
-def query_courses(db, course_id=None, teacher=None, day=None,
+def query_courses(db, course_id=None, teacher=None, day=None, #不是f1的內容 可以先不看
                   required=None, has_seats=None):
     """多條件查詢，條件之間為 AND；未指定(None)的條件不篩選。"""
     results = []
@@ -261,7 +282,7 @@ def query_courses(db, course_id=None, teacher=None, day=None,
         if has_seats is not None and (remaining_seats(c) > 0) != has_seats:
             continue
         results.append(c)
-    return results
+    return results 
 
 
 # ======================================================================
@@ -271,7 +292,7 @@ def add_student(db, student):
     if not isinstance(student, dict):
         return False, INVALID_FIELD
     student = dict(student)
-    student.setdefault("enrolled_courses", [])
+    student.setdefault("enrolled_courses", [])#用setfault去查student裡面有沒有enrolled_courses 沒有就加入[]
     student_id = student.get("student_id")
     if _is_nonempty_str(student_id) and find_student(db, student_id) is not None:
         return False, DUPLICATE_ID
@@ -331,6 +352,10 @@ class F1Manager(DataManager):
     """呼叫純函式後，成功才存檔；存檔失敗會回報 SAVE_FAILED。"""
 
     def _commit(self, result):
+        """成功才存檔，存檔失敗回傳 (False, "SAVE_FAILED")。
+
+        【Claude 新增 10/16】這是 F6 資料存檔的部分（實際存檔在 data_manager.py），不是 F1 的業務規則。
+        """
         ok, code = result
         if ok and not self._autosave():
             return False, "SAVE_FAILED"
