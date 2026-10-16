@@ -79,5 +79,36 @@ uv sync
   uv remove 套件名稱
   ```
 
+### 5. 執行自動化測試
+
+在專案根目錄執行以下指令。第一次執行或依賴有更新時，先同步環境：
+
+```bash
+uv sync
+```
+
+接著可依需求執行：
+
+```bash
+# 執行全部測試
+uv run pytest
+
+# 只執行 F6 的 JSON 存檔與容錯載入測試
+uv run pytest Code/test_f6_persistence.py -v
+
+# 依測試標記執行 F1 分類或 F6 持久化案例
+uv run pytest -m normal -v
+uv run pytest -m boundary -v
+uv run pytest -m error -v
+uv run pytest -m extra -v
+uv run pytest -m persistence -v
+uv run pytest -m acceptance -v
+
+# 查詢有哪些測試與標記，不執行測試
+uv run pytest --collect-only -q
+```
+
+F6 測試使用 pytest 的 `tmp_path` 在暫存目錄建立 JSON 檔，涵蓋正常存檔、種子檔保護、缺漏或型別錯誤資料、損毀檔案備份、原子寫入失敗，以及自動存檔失敗時的回復。這些測試檔與專案種子資料隔離；pytest 會管理暫存目錄並清理較舊的測試目錄。
+
 ---
 ⚠️ **注意**：`.venv/` 資料夾已加入 `.gitignore`，**請勿將 `.venv` 推送到 Git**。

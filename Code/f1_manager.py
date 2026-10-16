@@ -50,6 +50,31 @@ STUDENT_FIELDS = ("name", "department", "max_credits", "enrolled_courses")
 #我把課程代號和學號分開來寫了 裡面找不到正常
 
 
+def _sync_mutable_data(target, source):
+    """把候選資料寫回原物件，保留既有 getter 參照的有效性。"""
+    if isinstance(target, dict) and isinstance(source, dict):
+        for key in target.keys() - source.keys():
+            del target[key]
+        for key, value in source.items():
+            if (
+                key in target
+                and isinstance(target[key], (dict, list))
+                and isinstance(value, type(target[key]))
+            ):
+                _sync_mutable_data(target[key], value)
+            else:
+                target[key] = copy.deepcopy(value)
+        return
+    if isinstance(target, list) and isinstance(source, list):
+        common_length = min(len(target), len(source))
+        for index in range(common_length):
+            if isinstance(target[index], (dict, list)) and isinstance(source[index], type(target[index])):
+                _sync_mutable_data(target[index], source[index])
+            else:
+                target[index] = copy.deepcopy(source[index])
+        target[common_length:] = copy.deepcopy(source[common_length:])
+
+
 # ======================================================================
 # 小工具
 # ======================================================================
@@ -330,38 +355,47 @@ def query_students(db, student_id=None, department=None, course_id=None):
 class F1Manager(DataManager):
     """呼叫純函式後，成功才存檔；存檔失敗會回報 SAVE_FAILED。"""
 
-    def _commit(self, result):
-        ok, code = result
-        if ok and not self._autosave():
+    def _commit(self, operation, *args):
+        previous = self.data
+        candidate = copy.deepcopy(previous)
+        ok, code = operation(candidate, *args)
+        if not ok:
+            return ok, code
+
+        self.data = candidate
+        if not self._autosave():
+            self.data = previous
             return False, "SAVE_FAILED"
-        return ok, code
+        _sync_mutable_data(previous, candidate)
+        self.data = previous
+        return True, code
 
     def add_classroom(self, room):
-        return self._commit(add_classroom(self.data, room))
+        return self._commit(add_classroom, room)
 
     def delete_classroom(self, classroom_id):
-        return self._commit(delete_classroom(self.data, classroom_id))
+        return self._commit(delete_classroom, classroom_id)
 
     def add_course(self, course):
-        return self._commit(add_course(self.data, course))
+        return self._commit(add_course, course)
 
     def update_course(self, course_id, changes):
-        return self._commit(update_course(self.data, course_id, changes))
+        return self._commit(update_course, course_id, changes)
 
     def delete_course(self, course_id):
-        return self._commit(delete_course(self.data, course_id))
+        return self._commit(delete_course, course_id)
 
     def query_courses(self, **conditions):
         return query_courses(self.data, **conditions)
 
     def add_student(self, student):
-        return self._commit(add_student(self.data, student))
+        return self._commit(add_student, student)
 
     def update_student(self, student_id, changes):
-        return self._commit(update_student(self.data, student_id, changes))
+        return self._commit(update_student, student_id, changes)
 
     def delete_student(self, student_id):
-        return self._commit(delete_student(self.data, student_id))
+        return self._commit(delete_student, student_id)
 
     def query_students(self, **conditions):
         return query_students(self.data, **conditions)

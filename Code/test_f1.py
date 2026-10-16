@@ -13,14 +13,12 @@
 """
 
 import copy
-import json
 import os
-import shutil
 
 import pytest
 
 import f1_manager as f1
-from data_manager import DataManager, load_db
+from data_manager import load_db
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SEED = os.path.join(HERE, "04_data_format.json")
@@ -382,81 +380,3 @@ def test_x_student_invalid_max_credits(db):
 @pytest.mark.extra
 def test_x_delete_classroom_in_use(db):
     assert f1.delete_classroom(db, "TR-310") == (False, f1.CLASSROOM_IN_USE)
-
-
-# ======================================================================
-# 存檔與容錯載入（F6 相關，不計入 10/10/10）
-# ======================================================================
-@pytest.mark.persistence
-def test_p_save_goes_to_save_path_and_seed_untouched(tmp_path):
-    """存檔寫到工作檔，種子檔位元組完全不變；重新載入後資料還在。"""
-    seed_copy = tmp_path / "seed.json"
-    shutil.copy(SEED, seed_copy)
-    seed_bytes = seed_copy.read_bytes()
-    work = tmp_path / "work.json"
-
-    m = f1.F1Manager(str(seed_copy), save_path=str(work))
-    assert m.add_course(new_course()) == (True, f1.OK)
-
-    assert seed_copy.read_bytes() == seed_bytes
-    assert any(c["course_id"] == "NEW101" for c in json.loads(work.read_text("utf-8"))["courses"])
-    again = f1.F1Manager(str(work), save_path=str(work))
-    assert f1.find_course(again.data, "NEW101") is not None
-
-
-# ▼▼▼ 【Claude 新增 10/16】驗證「沒指定 save_path 時不會覆蓋種子檔」（對應 data_manager.py 的預設存檔路徑修改）
-@pytest.mark.persistence
-def test_p_default_save_path_never_overwrites_seed(tmp_path):
-    """沒指定 save_path 時，預設存到同資料夾的 db.json，種子檔位元組完全不變。"""
-    seed_copy = tmp_path / "seed.json"
-    shutil.copy(SEED, seed_copy)
-    seed_bytes = seed_copy.read_bytes()
-
-    m = f1.F1Manager(str(seed_copy))  # 故意不給 save_path
-    assert m.add_course(new_course()) == (True, f1.OK)
-
-    assert seed_copy.read_bytes() == seed_bytes
-    assert (tmp_path / "db.json").exists()
-# ▲▲▲ 【Claude 新增】到此結束
-
-
-@pytest.mark.persistence
-def test_p_autosave_off_writes_nothing(tmp_path):
-    """autosave=False 時，新增資料不會產生任何檔案。"""
-    work = tmp_path / "work.json"
-    m = f1.F1Manager(SEED, save_path=str(work), autosave=False)
-    m.add_course(new_course())
-    assert not work.exists()
-
-
-@pytest.mark.persistence
-def test_p_bad_record_skipped_not_crash(tmp_path):
-    """檔案中有缺欄位或型別錯誤的單筆資料 → 跳過並記錄，程式不當掉。"""
-    with open(SEED, encoding="utf-8") as f:
-        raw = json.load(f)
-    raw["courses"].append({"course_id": "BROKEN"})  # 缺欄位
-    raw["courses"].append("not a dict")
-    path = tmp_path / "bad.json"
-    path.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
-    m = DataManager(str(path), save_path=str(tmp_path / "out.json"))
-    assert len(m.get_courses()) == 20
-    assert len(m.load_errors) == 2
-
-
-@pytest.mark.persistence
-def test_p_corrupted_file_backed_up_and_not_overwritten(tmp_path):
-    """整個檔案損毀 → 備份、回傳空資料庫，且拒絕覆蓋原檔。"""
-    path = tmp_path / "broken.json"
-    path.write_text("{ this is not json", encoding="utf-8")
-    m = DataManager(str(path))
-    assert m.corrupted and m.get_courses() == []
-    assert m.save() is False
-    assert path.read_text(encoding="utf-8") == "{ this is not json"
-    assert (tmp_path / "broken.json.corrupt.bak").exists()
-
-
-@pytest.mark.persistence
-def test_p_missing_file_gives_empty_db(tmp_path):
-    """檔案不存在 → 空資料庫，不當掉。"""
-    m = DataManager(str(tmp_path / "nope.json"))
-    assert m.get_courses() == [] and not m.corrupted

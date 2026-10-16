@@ -2,3 +2,19 @@
 version = "0.1.0"
 name = "guolao-s-group-assignment"
 requires-python = ">=3.14,<3.15"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+addopts = ["--strict-markers"]
+markers = [
+    "normal: 正常案例",
+    "boundary: 邊界案例",
+    "error: 錯誤案例",
+    "extra: 補充測試案例",
+    "persistence: 存檔與容錯載入測試",
+    "acceptance: 驗收條件測試",
+]

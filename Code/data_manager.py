@@ -21,6 +21,65 @@ REQUIRED_KEYS = {
     "activities": ("activity_id", "title", "classroom_id", "time_slots"),
 }
 
+STRING_FIELDS = {
+    "classrooms": ("classroom_id", "building_id", "building_name"),
+    "courses": ("course_id", "title", "teacher", "classroom_id"),
+    "students": ("student_id", "name", "department"),
+    "activities": ("activity_id", "title", "classroom_id", "date", "activity_type"),
+}
+INTEGER_FIELDS = {
+    "classrooms": ("capacity",),
+    "courses": ("credits", "capacity", "enrolled_count"),
+    "students": ("max_credits",),
+    "activities": ("capacity", "expected_participants", "participant_count"),
+}
+LIST_OF_STRINGS_FIELDS = {
+    "classrooms": ("equipment",),
+    "students": ("enrolled_courses", "enrolled_activities"),
+    "activities": ("required_equipment",),
+}
+
+
+def _is_int(value):
+    """JSON 整數欄位不接受 bool（Python 中 bool 是 int 的子類）。"""
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _valid_time_slots(value):
+    return isinstance(value, list) and all(
+        isinstance(slot, dict)
+        and _is_int(slot.get("day"))
+        and isinstance(slot.get("period"), str)
+        for slot in value
+    )
+
+
+def _record_type_error(section, record):
+    """回傳首個欄位型別錯誤；格式正確時回傳 None。"""
+    for field in STRING_FIELDS.get(section, ()):
+        if field in record and not isinstance(record[field], str):
+            return field
+    for field in INTEGER_FIELDS.get(section, ()):
+        if field in record and not _is_int(record[field]):
+            return field
+    for field in LIST_OF_STRINGS_FIELDS.get(section, ()):
+        if field in record and (
+            not isinstance(record[field], list)
+            or any(not isinstance(item, str) for item in record[field])
+        ):
+            return field
+    if section in ("courses", "activities") and not _valid_time_slots(
+        record.get("time_slots")
+    ):
+        return "time_slots"
+    if (
+        section == "courses"
+        and "required" in record
+        and not isinstance(record["required"], bool)
+    ):
+        return "required"
+    return None
+
 
 def empty_db():
     """回傳一份全新的空資料庫結構。"""
@@ -63,6 +122,10 @@ def normalize_db(raw): #raw是從json檔案讀取出來 最乾淨的原始資料
             if missing:
                 errors.append(f"{section}[{i}] 缺少欄位 {missing}，已略過")
                 continue
+            invalid_field = _record_type_error(section, rec)
+            if invalid_field:
+                errors.append(f"{section}[{i}] 欄位 {invalid_field} 型別錯誤，已略過")
+                continue
             db[section].append(rec)
     return db, errors
 
@@ -94,9 +157,14 @@ def save_db(db, path):
             json.dump(db, f, ensure_ascii=False, indent=2) #dump跟load相反 dump是把程式碼翻譯成json存回去 db是我要存進去的資料 f是目標位置
         os.replace(tmp_path, path)                         #ensure_ascii=False保證中文不會被翻譯成亂碼 indent = 2 自動排版
         return True
-    except OSError as e:
+    except (OSError, TypeError, ValueError) as e:
         print(f"存檔失敗: {e}")
         return False
+    finally:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
 
 
 DEFAULT_WORK_FILE = "db.json"  # 【Claude 新增 10/16】沒指定 save_path 時預設寫入的工作檔檔名
