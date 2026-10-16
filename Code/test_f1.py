@@ -2,7 +2,7 @@
 
 分類（用 pytest 標記，可分開執行與計數）：
   normal      正常案例   10 個   python -m pytest -m normal -v
-  boundary    邊界案例   10 個   python -m pytest -m boundary -v
+  boundary    邊界案例   11 個   python -m pytest -m boundary -v
   error       錯誤案例   10 個   python -m pytest -m error -v
   extra       補充案例（參數化與較細的檢查，不計入上面 30 個）
   persistence 存檔與容錯載入（F6 相關，不計入上面 30 個）
@@ -160,7 +160,7 @@ def test_n10_add_classroom(db):
 
 
 # ======================================================================
-# 邊界案例（10）：剛好在合法範圍邊緣，預期成功或行為正確
+# 邊界案例（11）：剛好在合法範圍邊緣，預期成功或行為正確
 # ======================================================================
 @pytest.mark.boundary
 def test_b01_capacity_exactly_one(db):
@@ -223,6 +223,17 @@ def test_b10_update_capacity_down_to_enrolled_count(db):
     f1.add_course(db, new_course())
     db["courses"][-1]["enrolled_count"] = 10
     assert f1.update_course(db, "NEW101", {"capacity": 10}) == (True, f1.OK)
+
+
+# 新增：enrolled_count 已經是 0 時刪除學生，人數要停在 0，不能變成 -1
+@pytest.mark.boundary
+def test_b11_delete_student_enrolled_count_stays_at_zero(db):
+    """CS101 的 enrolled_count 設成 0，再刪除已選 CS101 的學生 → 成功，人數停在 0（不會變 -1）。"""
+    f1.find_course(db, "CS101")["enrolled_count"] = 0
+    assert f1.delete_student(db, "S10901") == (True, f1.OK)
+    assert f1.find_student(db, "S10901") is None
+    assert f1.find_course(db, "CS101")["enrolled_count"] == 0
+
 
 
 # ======================================================================
@@ -404,7 +415,7 @@ def test_p_save_goes_to_save_path_and_seed_untouched(tmp_path):
     assert f1.find_course(again.data, "NEW101") is not None
 
 
-# ▼▼▼ 【Claude 新增 10/16】驗證「沒指定 save_path 時不會覆蓋種子檔」（對應 data_manager.py 的預設存檔路徑修改）
+
 @pytest.mark.persistence
 def test_p_default_save_path_never_overwrites_seed(tmp_path):
     """沒指定 save_path 時，預設存到同資料夾的 db.json，種子檔位元組完全不變。"""
@@ -417,7 +428,7 @@ def test_p_default_save_path_never_overwrites_seed(tmp_path):
 
     assert seed_copy.read_bytes() == seed_bytes
     assert (tmp_path / "db.json").exists()
-# ▲▲▲ 【Claude 新增】到此結束
+
 
 
 @pytest.mark.persistence
