@@ -85,7 +85,7 @@ def load_db(path):  #跟normalize_db(raw)做連動 讀取json檔案給raw 把raw
     db, errors = normalize_db(raw)
     return db, errors, False
 
-
+#"我是gay"
 def save_db(db, path):
     """原子寫入：先寫暫存檔再取代，避免寫到一半留下半個檔案。回傳 bool。"""
     tmp_path = path + ".tmp" #把我原本的檔案.json後面再取一個.tmp 做佔存
