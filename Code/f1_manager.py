@@ -266,7 +266,7 @@ def delete_course(db, course_id):
     return True, OK
 
 
-def query_courses(db, course_id=None, teacher=None, day=None, #不是f1的內容 可以先不看
+def query_courses(db, course_id=None, teacher=None, day=None,  #F1 規格：依課程代號、教師、星期、必選修、剩餘名額查詢
                   required=None, has_seats=None):
     """多條件查詢，條件之間為 AND；未指定(None)的條件不篩選。"""
     results = []
