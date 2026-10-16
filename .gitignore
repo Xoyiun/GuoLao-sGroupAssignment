@@ -1,1 +1,8 @@
 .venv/
+# 【Claude 新增 10/16】DataManager 沒指定 save_path 時寫入的工作檔，不進版控
+db.json
+# 【Claude 新增 10/16】Python 執行時自動產生的快取，各自電腦會重新產生
+__pycache__/
+*.pyc
+# 【Claude 新增 10/16】DataManager 讀到損毀檔時自動產生的備份檔
+*.corrupt.bak

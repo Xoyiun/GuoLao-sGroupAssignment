@@ -17,31 +17,37 @@ from data_manager import DataManager
 # ---- 規格常數（修改規格時請同步更新需求規格文件）----
 VALID_DAYS = range(1, 8)  # 星期 1–7
 VALID_PERIODS = ("1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c")
-ALLOW_ZERO_CREDITS = False  # F1：學分必須為正整數。體育課 0 學分待團隊決議
+ALLOW_ZERO_CREDITS = False  # F1：學分必須為正整數（種子檔體育課 PE101、PE102 已改為 1 學分）【Claude 修改 10/16】原註解：體育課 0 學分待團隊決議
 
 # ---- 錯誤碼 ----
-OK = "OK"
-NOT_FOUND = "NOT_FOUND"
-DUPLICATE_ID = "DUPLICATE_ID"
-INVALID_FIELD = "INVALID_FIELD"
-INVALID_CREDITS = "INVALID_CREDITS"
-INVALID_CAPACITY = "INVALID_CAPACITY"
-INVALID_DAY = "INVALID_DAY"
-INVALID_PERIOD = "INVALID_PERIOD"
-INVALID_TIME_SLOTS = "INVALID_TIME_SLOTS"
-DUPLICATE_SLOT = "DUPLICATE_SLOT"
-CLASSROOM_NOT_FOUND = "CLASSROOM_NOT_FOUND"
-CAPACITY_EXCEEDS_ROOM = "CAPACITY_EXCEEDS_ROOM"
-COURSE_NOT_FOUND = "COURSE_NOT_FOUND"
-COURSE_HAS_STUDENTS = "COURSE_HAS_STUDENTS"
-CLASSROOM_IN_USE = "CLASSROOM_IN_USE"
-INVALID_STUDENT_COURSES = "INVALID_STUDENT_COURSES"
+# 【Claude 新增 10/16】標註說明：
+#   [F1 規格] 需求規格書 F1（需求規格書_abandon.md）或 UseCase.md UC-01 有明寫的規則
+#   [F1 自訂] 規格沒寫、為了不讓資料壞掉而加的檢查
+#   [F4 相關] 跟教室／活動配置有關，F4 會用到
+OK = "OK"                                    # 成功（通用）
+NOT_FOUND = "NOT_FOUND"                      # [F1 自訂] 修改、刪除時找不到該課程、學生或教室【Claude 修改 10/16】原標 [F1 規格]，但規格沒明寫
+DUPLICATE_ID = "DUPLICATE_ID"                # [F1 規格] 課程代號、學號不得重複（教室代號沿用同一碼）
+INVALID_FIELD = "INVALID_FIELD"              # [F1 自訂] 其他格式錯誤：空白、型別不對、不可修改的欄位
+INVALID_CREDITS = "INVALID_CREDITS"          # [F1 規格] 學分必須為正整數（學生的學分上限也沿用此碼）
+INVALID_CAPACITY = "INVALID_CAPACITY"        # [F1 規格] 課程人數上限不得小於 1（教室容量也沿用；改小時不得低於目前人數）
+INVALID_DAY = "INVALID_DAY"                  # [F1 規格] 星期必須為 1–7
+INVALID_PERIOD = "INVALID_PERIOD"            # [F1 規格] 節次必須為 1–9、a、b、c
+INVALID_TIME_SLOTS = "INVALID_TIME_SLOTS"    # [F1 規格] 時段須為非空清單且格式正確（每門課可有多個時段）
+DUPLICATE_SLOT = "DUPLICATE_SLOT"            # [F1 自訂] 同一門課的時段不得重複
+CLASSROOM_NOT_FOUND = "CLASSROOM_NOT_FOUND"  # [F1 自訂][F4 相關] 課程指定的教室必須存在
+CAPACITY_EXCEEDS_ROOM = "CAPACITY_EXCEEDS_ROOM"  # [F1 自訂][F4 相關] 課程人數上限不得超過教室容量
+COURSE_NOT_FOUND = "COURSE_NOT_FOUND"        # [F1 自訂] 學生的已選課程必須是存在的課程
+COURSE_HAS_STUDENTS = "COURSE_HAS_STUDENTS"  # [F1 規格] 不得刪除已有學生選修的課程
+CLASSROOM_IN_USE = "CLASSROOM_IN_USE"        # [F1 自訂][F4 相關] 有課程或活動使用中的教室不可刪除
+INVALID_STUDENT_COURSES = "INVALID_STUDENT_COURSES"  # [F1 自訂] 學生的已選課程清單不得有重複
+#自訂是防止資料不會壞掉 郭老也說可以加
 
 COURSE_FIELDS = (
-    "title", "credits", "required", "teacher", "classroom_id",
+    "title", "credits", "required", "teacher", "classroom_id",   
     "capacity", "time_slots",
 )
 STUDENT_FIELDS = ("name", "department", "max_credits", "enrolled_courses")
+#我把課程代號和學號分開來寫了 裡面找不到正常
 
 
 # ======================================================================
@@ -53,10 +59,12 @@ def _is_int(value):
 
 
 def _is_nonempty_str(value):
+    """確認value不是空的"""
     return isinstance(value, str) and value.strip() != ""
 
 
 def find_course(db, course_id):
+    """把course_id例如CS101 找到了把完整字典資料（包含課名、老師、學分等）整包回傳給你"""
     return next((c for c in db["courses"] if c["course_id"] == course_id), None)
 
 
@@ -65,7 +73,7 @@ def find_student(db, student_id):
 
 
 def find_classroom(db, classroom_id):
-    return next((r for r in db["classrooms"] if r["classroom_id"] == classroom_id), None)
+    return next((r for r in db["classrooms"] if r["classroom_id"] == classroom_id), None) #next用法跟傳送帶一樣一個找一個
 
 
 def count_enrolled(db, course_id):
@@ -82,6 +90,7 @@ def remaining_seats(course):
 # 驗證（純函式，皆回傳 (ok, code)）
 # ======================================================================
 def validate_time_slots(time_slots):
+    """防止種子檔的time_slot設定錯誤 或是防止未來add_course時設定錯誤"""
     if not isinstance(time_slots, list) or len(time_slots) == 0:
         return False, INVALID_TIME_SLOTS
     seen = set()
@@ -111,9 +120,9 @@ def validate_course_fields(db, course):
         return False, INVALID_FIELD
 
     credits = course.get("credits")
-    min_credits = 0 if ALLOW_ZERO_CREDITS else 1
+    min_credits = 0 if ALLOW_ZERO_CREDITS else 1 
     if not _is_int(credits) or credits < min_credits:
-        return False, INVALID_CREDITS
+        return False, INVALID_CREDITS   
 
     capacity = course.get("capacity")
     if not _is_int(capacity) or capacity < 1:
@@ -125,10 +134,11 @@ def validate_course_fields(db, course):
     if capacity > room["capacity"]:
         return False, CAPACITY_EXCEEDS_ROOM
 
-    return validate_time_slots(course.get("time_slots"))
+    return validate_time_slots(course.get("time_slots"))  #專門寫了檢查time_slot因為time_slot有點複雜
 
 
 def validate_student_fields(db, student):
+    """檢查學生資料"""
     if not _is_nonempty_str(student.get("student_id")):
         return False, INVALID_FIELD
     if not _is_nonempty_str(student.get("name")):
@@ -150,6 +160,7 @@ def validate_student_fields(db, student):
 # 教室
 # ======================================================================
 def add_classroom(db, room):
+    """手動輸入來新增新的課程"""
     if not _is_nonempty_str(room.get("classroom_id")):
         return False, INVALID_FIELD
     if find_classroom(db, room["classroom_id"]) is not None:

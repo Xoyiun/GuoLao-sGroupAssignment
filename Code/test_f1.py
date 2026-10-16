@@ -404,6 +404,22 @@ def test_p_save_goes_to_save_path_and_seed_untouched(tmp_path):
     assert f1.find_course(again.data, "NEW101") is not None
 
 
+# ▼▼▼ 【Claude 新增 10/16】驗證「沒指定 save_path 時不會覆蓋種子檔」（對應 data_manager.py 的預設存檔路徑修改）
+@pytest.mark.persistence
+def test_p_default_save_path_never_overwrites_seed(tmp_path):
+    """沒指定 save_path 時，預設存到同資料夾的 db.json，種子檔位元組完全不變。"""
+    seed_copy = tmp_path / "seed.json"
+    shutil.copy(SEED, seed_copy)
+    seed_bytes = seed_copy.read_bytes()
+
+    m = f1.F1Manager(str(seed_copy))  # 故意不給 save_path
+    assert m.add_course(new_course()) == (True, f1.OK)
+
+    assert seed_copy.read_bytes() == seed_bytes
+    assert (tmp_path / "db.json").exists()
+# ▲▲▲ 【Claude 新增】到此結束
+
+
 @pytest.mark.persistence
 def test_p_autosave_off_writes_nothing(tmp_path):
     """autosave=False 時，新增資料不會產生任何檔案。"""
