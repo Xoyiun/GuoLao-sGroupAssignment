@@ -1,4 +1,4 @@
-# 郭老師的分組作業 (GuoLao's Group Assignment)
+# 郭佬的小組作業 (GuoLao's Group Assignment)
 
 本專案採用現代化 Python 套件管理工具 [uv](https://github.com/astral-sh/uv) 進行專案環境管理與套件依賴控制。
 
