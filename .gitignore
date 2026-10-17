@@ -6,4 +6,7 @@ __pycache__/
 *.pyc
 
 *.corrupt.bak
-Code/report_f1.html
+Code/report_*.html
+CampusPlanner/TestDriver/report_*.html
+report_*.html
+
