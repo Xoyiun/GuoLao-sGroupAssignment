@@ -1,1 +1,9 @@
 .venv/
+
+db.json
+
+__pycache__/
+*.pyc
+
+*.corrupt.bak
+Code/report_f1.html
