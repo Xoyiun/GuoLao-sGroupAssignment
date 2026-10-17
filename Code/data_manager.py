@@ -9,10 +9,10 @@ import os
 import shutil
 # 讀檔時若單筆資料缺少這些鍵（視為資料損毀），將自動略過該筆，以確保系統穩定性。
 REQUIRED_KEYS = {
-    "classrooms": ("classroom_id", "capacity"),
+    "classrooms": ("classroom_id", "capacity"), #這裡capacity指的是實體座位數
     "courses": (
         "course_id", "title", "credits", "required", "teacher",
-        "classroom_id", "capacity", "time_slots",
+        "classroom_id", "capacity", "time_slots", #這裡是多收幾個學生
     ),
     "students": (
         "student_id", "name", "department", "max_credits",
