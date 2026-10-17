@@ -18,18 +18,26 @@ import os
 import sys
 import shutil
 
-# 將 Code 目錄加入搜尋路徑
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'Code'))
+HERE = os.path.dirname(os.path.abspath(__file__))
+CODE_DIR = os.path.abspath(os.path.join(HERE, "..", "Code"))
+if CODE_DIR not in sys.path:
+    sys.path.insert(0, CODE_DIR)
 
 import pytest
 
 import DataManager as f1
 from StorageManager import DataManager, load_db
+import StorageManager
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-SEED = os.path.join(HERE, '..', 'Data', 'Reference', '04_data_format.json')
-if not os.path.exists(SEED):  # 找不到就往上一層找
-    SEED = os.path.join(os.path.dirname(HERE), '04_data_format.json')
+# 向下相容舊檔名模組呼叫
+sys.modules.setdefault("f1_manager", f1)
+sys.modules.setdefault("data_manager", StorageManager)
+
+SEED = os.path.abspath(os.path.join(HERE, "..", "Data", "Reference", "04_data_format.json"))
+if not os.path.exists(SEED):
+    SEED = os.path.abspath(os.path.join(HERE, "04_data_format.json"))
+if not os.path.exists(SEED):
+    SEED = os.path.abspath(os.path.join(HERE, "..", "..", "Code", "04_data_format.json"))
 
 
 @pytest.fixture
@@ -475,3 +483,8 @@ def test_p_missing_file_gives_empty_db(tmp_path):
     """檔案不存在 → 空資料庫，不當掉。"""
     m = DataManager(str(tmp_path / "nope.json"))
     assert m.get_courses() == [] and not m.corrupted
+
+
+if __name__ == "__main__":
+    sys.exit(pytest.main([__file__, "-v"]))
+

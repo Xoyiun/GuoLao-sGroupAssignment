@@ -390,3 +390,8 @@ class F1Manager(DataManager):
 
     def query_students(self, **conditions):
         return query_students(self.data, **conditions)
+
+
+# 為了符合模組名稱 DataManager.py，提供別名
+DataManager = F1Manager
+

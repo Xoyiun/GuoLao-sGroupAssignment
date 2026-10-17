@@ -100,12 +100,15 @@ def save_db(db, path):
 
 
 DEFAULT_WORK_FILE = "db.json"  # 沒指定 save_path 時預設寫入的工作檔檔名
+DEFAULT_SEED_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Data", "Reference", "04_data_format.json")
 
 
 class DataManager:
     """持有一份 db 並負責讀寫檔。業務規則請放在 f1_manager 的純函式。"""
 
     def __init__(self, json_path="04_data_format.json", save_path=None, autosave=True):  #拿完資料馬上備份 怕出問題時還有備份
+        if json_path == "04_data_format.json" and not os.path.exists(json_path) and os.path.exists(DEFAULT_SEED_FILE):
+            json_path = DEFAULT_SEED_FILE
         self.json_path = json_path
         self._default_save_path = save_path is None          # 記下是不是用預設值，save() 要用
         if save_path is None:
@@ -142,6 +145,10 @@ class DataManager:
 
     def get_campus_graph(self):
         return self.data["campus_graph"]
+
+
+# 為了符合模組名稱 StorageManager.py，提供別名
+StorageManager = DataManager
 
 
     #辛苦了讀到這裡 先去休息一下吧還有很多lol

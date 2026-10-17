@@ -293,7 +293,10 @@ def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description="把 pytest 結果做成單一 HTML 報告")
-    ap.add_argument("test_file", nargs="?", default="test_f1.py", help="測試檔（預設 test_f1.py）")
+    default_test = os.path.join(os.path.dirname(os.path.abspath(__file__)), "TestDriver.py")
+    if not os.path.exists(default_test):
+        default_test = "TestDriver.py"
+    ap.add_argument("test_file", nargs="?", default=default_test, help="測試檔（預設 TestDriver.py）")
     ap.add_argument("-o", "--output", help="輸出的 HTML 檔名（預設 report_<測試檔名>.html）")
     ap.add_argument("--from-xml", help="直接讀既有的 junit XML，不重新執行測試")
     ap.add_argument("--title", help="報告標題")
@@ -301,9 +304,14 @@ def main():
 
     test_file = args.test_file
     if not os.path.exists(test_file):
-        sys.exit(f"找不到測試檔：{test_file}")
+        candidate = os.path.join(os.path.dirname(os.path.abspath(__file__)), test_file)
+        if os.path.exists(candidate):
+            test_file = candidate
+        else:
+            sys.exit(f"找不到測試檔：{test_file}")
     stem = os.path.splitext(os.path.basename(test_file))[0]
-    output = args.output or f"report_{stem.replace('test_', '')}.html"
+    out_dir = os.path.dirname(os.path.abspath(test_file))
+    output = args.output or os.path.join(out_dir, f"report_{stem.replace('test_', '')}.html")
     title = args.title or f"{stem.replace('test_', '').upper()} 測試報告"
 
     tmp_xml = None
