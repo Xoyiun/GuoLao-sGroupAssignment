@@ -1,2 +1,0 @@
-# CampusPlanner TestDriver package
-

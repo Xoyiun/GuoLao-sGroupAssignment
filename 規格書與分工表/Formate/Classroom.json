@@ -1,0 +1,11 @@
+{
+    "classroom": [
+        {
+            "room_id": "6TB-327",
+            "capacity": 100,
+            "equipment": [
+                "projector"
+            ]
+        }
+    ]
+}
