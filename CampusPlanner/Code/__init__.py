@@ -1,2 +1,0 @@
-# CampusPlanner Code package
-
