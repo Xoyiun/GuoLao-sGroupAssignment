@@ -1,0 +1,17 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/CampusPlanner/Code",
+    "${workspaceFolder}/Code"
+  ],
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/CampusPlanner/Code",
+    "${workspaceFolder}/Code"
+  ],
+  "python.testing.pytestArgs": [
+    "CampusPlanner/TestDriver"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
+}
+
