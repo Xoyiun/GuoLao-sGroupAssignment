@@ -188,7 +188,7 @@ def add_classroom(db, room):
     if not _is_int(room.get("capacity")) or room["capacity"] < 1:
         return False, INVALID_CAPACITY
     equipment = room.get("equipment", [])
-    if not isinstance(equipment, list):
+    if not isinstance(equipment, list) or not all(isinstance(e, str) for e in equipment):  # 每項設備都要是文字，列出教室時才接得起來
         return False, INVALID_FIELD
     new_room = {
         "classroom_id": room["classroom_id"],
