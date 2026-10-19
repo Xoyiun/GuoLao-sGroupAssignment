@@ -425,7 +425,7 @@ MENU = (
 
 
 def menu_text():
-    lines = ["", "===== F1 課程與學生資料管理 ====="]
+    lines = ["", "===== F1 作業 ====="]
     lines += [f" {key:>2}. {label}" for key, label, _ in MENU]
     lines.append("  0. 離開")
     return "\n".join(lines)
