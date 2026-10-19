@@ -393,6 +393,15 @@ def test_x_delete_classroom_in_use(db):
     assert f1.delete_classroom(db, "TR-310") == (False, f1.CLASSROOM_IN_USE)
 
 
+@pytest.mark.extra
+@pytest.mark.parametrize("equipment", ["projector", [1, 2], ["projector", None]])
+def test_x_add_classroom_bad_equipment(db, equipment):
+    """設備必須是文字清單；否則列出教室時會當掉，新增時就要擋下。"""
+    room = {"classroom_id": "X-2", "capacity": 10, "equipment": equipment}
+    assert f1.add_classroom(db, room) == (False, f1.INVALID_FIELD)
+    assert f1.find_classroom(db, "X-2") is None
+
+
 # ======================================================================
 # 存檔與容錯載入（F6 相關，不計入 10/10/10）
 # ======================================================================
