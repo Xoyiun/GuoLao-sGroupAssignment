@@ -13,10 +13,9 @@
 import copy
 
 from F6_StorageManager import DataManager  # 搬到 CampusPlanner：原本是 from data_manager import DataManager
+from F6_StorageManager import VALID_DAYS, VALID_PERIODS  # 時段規格改放 F6，載入檔案時也要用；f1.VALID_PERIODS 照樣能用
 
 # ---- 規格常數（修改規格時請同步更新需求規格文件）----
-VALID_DAYS = range(1, 8)  # 星期 1–7
-VALID_PERIODS = ("1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c")
 ALLOW_ZERO_CREDITS = False  # F1：學分必須為正整數（種子檔體育課 PE101、PE102 已改為 1 學分）
 
 # ---- 錯誤碼 ----

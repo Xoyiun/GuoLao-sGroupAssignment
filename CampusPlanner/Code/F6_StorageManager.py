@@ -21,6 +21,59 @@ REQUIRED_KEYS = {
     "activities": ("activity_id", "title", "classroom_id", "time_slots"),
 }
 
+# 時段格式：F1 驗證新資料、F6 載入舊資料都用這一份（F1_DataManager 從這裡 import）
+VALID_DAYS = range(1, 8)  # 星期 1–7
+VALID_PERIODS = ("1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c")
+
+
+# ---- 欄位格式檢查：只擋「型別錯了會讓程式當掉」的資料，學分正負、容量大小等規則交給 F1 ----
+def _is_int(value):
+    """bool 也是 int 的子類別，要排除 True/False。"""
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _is_str(value):
+    return isinstance(value, str) and value.strip() != ""
+
+
+def _is_bool(value):
+    return isinstance(value, bool)
+
+
+def _is_str_list(value):
+    return isinstance(value, list) and all(isinstance(x, str) for x in value)
+
+
+def _is_time_slots(value):
+    """[{day: 1–7, period: 1–9/a/b/c}, ...]；星期或節次超出範圍時，課表顯示會查不到名稱而當掉。"""
+    return isinstance(value, list) and all(
+        isinstance(s, dict)
+        and _is_int(s.get("day")) and s["day"] in VALID_DAYS
+        and s.get("period") in VALID_PERIODS
+        for s in value
+    )
+
+
+# 有出現就要檢查格式的欄位（必填欄位是否存在仍由 REQUIRED_KEYS 檢查）
+FIELD_CHECKS = {
+    "classrooms": {
+        "classroom_id": _is_str, "capacity": _is_int, "equipment": _is_str_list,
+    },
+    "courses": {
+        "course_id": _is_str, "title": _is_str, "credits": _is_int, "required": _is_bool,
+        "teacher": _is_str, "classroom_id": _is_str, "capacity": _is_int,
+        "enrolled_count": _is_int, "time_slots": _is_time_slots,
+    },
+    "students": {
+        "student_id": _is_str, "name": _is_str, "department": _is_str,
+        "max_credits": _is_int, "enrolled_courses": _is_str_list,
+    },
+    "activities": {
+        "activity_id": _is_str, "title": _is_str, "classroom_id": _is_str,
+        "time_slots": _is_time_slots,
+    },
+}
+
 
 def empty_db():
     """回傳一份全新的空資料庫結構。"""
@@ -62,6 +115,10 @@ def normalize_db(raw): #raw是從json檔案讀取出來 最乾淨的原始資料
             missing = [k for k in keys if k not in rec]
             if missing:
                 errors.append(f"{section}[{i}] 缺少欄位 {missing}，已略過")
+                continue
+            bad = [k for k, check in FIELD_CHECKS[section].items() if k in rec and not check(rec[k])]
+            if bad:  # 例如 time_slots 寫成字串 "1-3"，留著的話之後查詢課程會當掉
+                errors.append(f"{section}[{i}] 欄位格式錯誤 {bad}，已略過")
                 continue
             db[section].append(rec)
     return db, errors
