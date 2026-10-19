@@ -38,6 +38,7 @@
 - [4. 專案管理 (Project Management)](#4-專案管理-project-management)
   - [4.1 工作分解表 (Work Breakdown Structure)](#41-工作分解表-work-breakdown-structure)
   - [4.2 版本控管 (Version Control)](#42-版本控管-version-control)
+  - [4.3 Code Review 紀錄](#43-code-review-紀錄)
 - [Glossary](#glossary)
 - [References](#references)
 - [Appendix](#appendix)
@@ -90,15 +91,21 @@ F6_StorageManager.py（讀取／正規化／原子寫入 JSON）
 CampusPlanner/UserData/04_data_format.json（種子資料）／db.json（工作資料）
 ```
 
-需求規劃的功能模組與目前程式狀態：
+功能完成表（狀態依作業規範分為：未開始、開發中、已完成、測試通過）：
 
-| 功能 | 規劃內容 | 程式狀態 |
-| :--- | :--- | :--- |
-| F1 | 課程、學生、教室資料管理 | 部分完成；課程與學生 CRUD、課程／學生查詢、教室新增／刪除／列出已有實作 |
-| F2–F5 | 衝突檢查、課表、活動配置、課程篩選 | 尚未實作 |
-| F6 | JSON／CSV 資料持久化及容錯載入 | 部分完成；已有 JSON 載入／儲存與壞資料處理，尚無 CSV 功能 |
-| F7–F10 | 最佳化搜尋、演算法比較、路徑規劃、動態重排 | 尚未實作 |
-| F11 | AI 協作品質改善 | 屬需求規劃，未見對應程式實作 |
+| 功能 | 規劃內容 | 狀態 | 說明 |
+| :--- | :--- | :--- | :--- |
+| F1 | 課程與學生資料管理 | 測試通過 | 課程與學生 CRUD、五種課程查詢、教室新增／刪除／列出；112 項自動化測試通過。學生「系級」的年級尚未加入 |
+| F2 | 多層次衝堂與選課檢查 | 未開始 | |
+| F3 | 個人課表產生與空閒時段查詢 | 未開始 | |
+| F4 | 校園活動與教室配置 | 未開始 | |
+| F5 | 多條件課程篩選與可行性檢查 | 未開始 | |
+| F6 | 資料儲存與系統測試 | 開發中 | JSON 載入／儲存與容錯載入已完成並有測試；跨模組的 30 項以上自動化測試待 F2 起各模組加入 |
+| F7 | 多條件最佳課表搜尋 | 未開始 | |
+| F8 | 搜尋演算法比較 | 未開始 | |
+| F9 | 校園移動路徑規劃 | 未開始 | |
+| F10 | 動態事件與課表重新規劃 | 未開始 | |
+| F11 | AI 輔助測試與程式品質改善 | 未開始 | |
 
 ---
 
@@ -253,7 +260,66 @@ uv run pytest -q
 
 ### 4.2 版本控管 (Version Control)
 
-專案遠端倉庫：[GuoLao-sGroupAssignment](https://github.com/Xoyiun/GuoLao-sGroupAssignment)。依 [`README.md`](../../README.md) 的協作流程，開發分支先 `git fetch origin`，再合併 `origin/main`；若 [`pyproject.toml`](../../pyproject.toml) 或 [`uv.lock`](../../uv.lock) 有更新，使用 `uv sync` 同步環境。[`.venv/`](../../.venv/) 不納入版控。原報告所附 Git log 指向其他專案，故移除；本節不臆造提交紀錄。
+專案遠端倉庫：[GuoLao-sGroupAssignment](https://github.com/Xoyiun/GuoLao-sGroupAssignment)。依 [`README.md`](../../README.md) 的協作流程，開發分支先 `git fetch origin`，再合併 `origin/main`；若 [`pyproject.toml`](../../pyproject.toml) 或 [`uv.lock`](../../uv.lock) 有更新，使用 `uv sync` 同步環境。[`.venv/`](../../.venv/) 不納入版控。每位成員在自己的分支開發，經 Pull Request 由組長 review 後合併進 `main`。
+
+#### 本週 Git 紀錄（2026-10-12 至 10-20）
+
+以下依各成員分支整理本週的主要 Commit 與 Merge；「F1 分工」依 [`工作分解表v1.md`](../../規格書與分工表/工作分解表v1.md) 判斷。
+
+**A 索云（組長，分支 `Master`）** — F1 分工：工作分解表未分配 F1 開發；負責系統整合與最終 Code Review，本週協助 F1 測試與文件。
+
+| Commit | 日期 | 內容 |
+| :--- | :--- | :--- |
+| `2759564` | 10/15 | 建立 `CampusPlanner` 各模組檔案，初始化專案結構 |
+| `a003a9c` | 10/16 | 修正專案名稱，新增 `Student.json` 格式檔 |
+| `da2acf2` | 10/17 | 新增 F1 課程、學生、教室管理的自動化測試 |
+| `e2c2574` | 10/17 | 重構 DataManager／StorageManager，調整 pytest 設定 |
+| `d17e538` | 10/19 | 更新專案結構與文件 |
+| `65e7ae1` | 10/19 | 新增 F1 函式接口報告 |
+| Merge | 10/17–10/19 | 合併 PR #21、#24、#25 進 `main` |
+
+**B 阿福（分支 `B`）** — F1 分工：有。工作分解表分配需求規格 (F1)、F1 課程與學生 CRUD、F6 資料持久化。
+
+| Commit | 日期 | 內容 |
+| :--- | :--- | :--- |
+| `dd57d8a` | 10/14 | 新增 `Code/f1_data_management.py`（F1 程式，183 行）；目前只在分支 `B`，尚未合併進 `main` |
+| Merge | 10/13、10/19 | PR #20、#26：把 `main` 同步到分支 `B` |
+
+**C Steve（副組長，分支 `C`）** — F1 分工：工作分解表分配 F2、F5、F7，未分配 F1；本週實際負責開發 F1 程式。
+
+| Commit | 日期 | 內容 |
+| :--- | :--- | :--- |
+| `03be675`、`38dd680` | 10/15 | 完成 F1 核心程式、測試與 `make_report.py`（測試報告） |
+| `c378791`、`30a86d6`、`51ab8a7`、`7c5e66b`、`05b0517`、`45fc50c` | 10/16–10/17 | 檢查 `data_manager.py`、修正 F1 錯誤並補上註解與測試 |
+| `9ba5595` | 10/18 | 完成 F1 命令列介面 `main.py` 與 CLI 測試 |
+| `0b4722e`、`89638a1`、`0da5479`、`8d13389` | 10/19 | F1 搬進 `CampusPlanner` 並加上 F 編號；更新函式接口報告與資料模型 |
+| `5f346c9` | 10/20 | 修正缺陷 D01：F6 讀檔時檢查欄位格式 |
+| `7f5985b` | 10/20 | 修正缺陷 D02：`add_classroom` 檢查設備清單 |
+| `30e0602`、`00c99a8`、`2a4cdb0` | 10/20 | 更新 SRS、資料模型與個人工作紀錄 |
+| PR | 10/17、10/19 | PR #21、#25：分支 `C` 合併進 `main` |
+
+**D 竹（分支 `Zhu22`、`docs/week0-D`）** — 本組員 F1 沒有被分工（工作分解表分配 F3、F4）。本週沒有 Commit。
+
+**E 晴（分支 `Zd`）** — 本組員 F1 沒有被分工（工作分解表分配 F9、F10；擔任成員 B 的監督者）。本週沒有新增內容的 Commit，只有 PR #22、#23、#27 同步分支。
+
+**F minnn（分支 `minnn`）** — 本組員 F1 沒有被分工（工作分解表分配 F6 自動化測試架構、F8、F11）。
+
+| Commit | 日期 | 內容 |
+| :--- | :--- | :--- |
+| `e297784` | 10/16 | 新增 F6 JSON 存檔測試 `test_f6_persistence.py`（207 行），並修改 `data_manager.py`、`f1_manager.py`；目前只在分支 `minnn`，尚未合併進 `main` |
+
+---
+
+### 4.3 Code Review 紀錄
+
+依作業規範，每個核心模組至少要由一位非原開發者檢視。本週 F1 由組長索云 review：
+
+| PR | 內容 | 原開發者 | Reviewer | 日期 | Review 結果 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| [#21](https://github.com/Xoyiun/GuoLao-sGroupAssignment/pull/21) | F1 核心程式、bug 修正與註解 | C Steve | A 索云 | 10/17 | Approved，合併進 `main` |
+| [#25](https://github.com/Xoyiun/GuoLao-sGroupAssignment/pull/25) | F1 搬進 `CampusPlanner`、檔名加上 F 編號 | C Steve | A 索云 | 10/19 | 先提出意見：「就跟你說討論一下轉移，你現在轉移了其他報告的內容你要改嗎？」；之後 Approved 並合併。後續已將 SRS 與資料模型的路徑改為 `CampusPlanner` 版本 |
+
+尚未進行的 Review：成員 B（`dd57d8a`）與成員 F（`e297784`）的程式尚未開 PR，也還沒有人 review。
 
 ---
 
@@ -280,4 +346,6 @@ uv run pytest -q
 
 ## Appendix
 
-*(目前無額外附錄內容)*
+### 團隊討論照片
+
+![本週團隊實體討論](團隊討論照片.jpg)
