@@ -1,0 +1,15 @@
+{
+    "students": [
+        {
+            "student_id": "115590056",
+            "name": "Lukas",
+            "department": "CS",
+            "grade": 1,
+            "max_credits": 24,
+            "enrolled_courses": [
+                "363141"
+            ],
+            "enrolled_activities": []
+        }
+    ]
+}

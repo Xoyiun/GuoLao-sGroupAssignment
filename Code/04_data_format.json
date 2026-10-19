@@ -483,7 +483,7 @@
     {
       "course_id": "PE101",
       "title": "體育：羽球",
-      "credits": 0,
+      "credits": 1,
       "required": true,
       "teacher": "馮教練",
       "classroom_id": "T4-202",
@@ -503,7 +503,7 @@
     {
       "course_id": "PE102",
       "title": "體育：網球",
-      "credits": 0,
+      "credits": 1,
       "required": true,
       "teacher": "鄧教練",
       "classroom_id": "T4-202",
