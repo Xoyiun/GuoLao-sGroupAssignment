@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>F1 資料模型</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm; }
+  :root { --ink: #1f2328; --muted: #57606a; --line: #d0d7de; --head: #f3f5f7; --accent: #1f4e79; }
+  body { font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.6; margin: 0; background: #fff; }
+  h1 { font-size: 18pt; margin: 0 0 2px; color: var(--accent); }
+  .sub { color: var(--muted); margin: 0 0 4px; }
+  .meta { color: var(--muted); font-size: 9.5pt; margin-bottom: 10px; }
+  h2 { font-size: 13pt; color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 2px; margin: 20px 0 8px; break-after: avoid; }
+  h3 { font-size: 11pt; margin: 14px 0 6px; break-after: avoid; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; font-size: 9.5pt; break-inside: auto; }
+  th, td { border: 1px solid var(--line); padding: 4px 7px; text-align: left; vertical-align: top; }
+  th { background: var(--head); white-space: nowrap; }
+  tr { break-inside: avoid; }
+  code { font-family: "DejaVu Sans Mono", Consolas, monospace; font-size: 9pt; background: #f6f8fa; padding: 0 3px; border-radius: 3px; }
+  .tag { display: inline-block; font-size: 8.5pt; padding: 0 6px; border-radius: 8px; white-space: nowrap; }
+  .spec { background: #ddf4ff; color: #0550ae; }
+  .own { background: #fff1d6; color: #8a4b00; }
+  ul { margin: 4px 0 8px; padding-left: 20px; }
+  .note { background: #f6f8fa; border-left: 3px solid var(--accent); padding: 6px 10px; margin: 8px 0; }
+  .er { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin: 10px 0 4px; break-inside: avoid; }
+  .ent { border: 1.5px solid var(--accent); border-radius: 6px; min-width: 150px; }
+  .ent b { display: block; background: var(--accent); color: #fff; padding: 3px 8px; font-size: 9.5pt; }
+  .ent div { padding: 4px 8px; font-family: "DejaVu Sans Mono", Consolas, monospace; font-size: 8.5pt; line-height: 1.5; }
+  .rel { flex: 1; text-align: center; font-size: 9pt; color: var(--muted); }
+  .rel .arrow { display: block; border-top: 1.5px solid var(--muted); position: relative; margin: 3px 0; }
+  .rel .arrow::after { content: ""; position: absolute; right: -1px; top: -5px; border: 4.5px solid transparent; border-left: 7px solid var(--muted); }
+  .cap { text-align: center; color: var(--muted); font-size: 9pt; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<h1>資料模型（F1 課程與學生資料管理）</h1>
+<p class="sub">計算機程式設計團體作業 ・ 課程排課系統 ・ Iteration 1</p>
+<p class="meta">日期：2026-10-20 ・ 對應程式：<code>CampusPlanner/Code/F1_DataManager.py</code>、<code>CampusPlanner/Code/F6_StorageManager.py</code>、<code>CampusPlanner/UserData/04_data_format.json</code></p>
+
+<table>
+  <tr><th>日期</th><th>修訂內容</th></tr>
+  <tr><td style="white-space:nowrap">2026-10-19</td><td>F1 資料模型定稿：儲存方式、實體關係、欄位定義、資料規則與錯誤碼、規格對照、函式與查詢、設計決定、未完成與移交事項。</td></tr>
+  <tr><td style="white-space:nowrap">2026-10-20</td><td>
+    ① 程式搬到 <code>CampusPlanner</code> 架構：<code>f1_manager.py</code> → <code>F1_DataManager.py</code>、<code>data_manager.py</code> → <code>F6_StorageManager.py</code>，資料檔改放 <code>CampusPlanner/UserData/</code>；函式與欄位都沒有改變。<br>
+    ② 第 2 節加入讀檔時的格式檢查（缺陷 D01 修正）。<br>
+    ③ 第 4.3、5 節加入教室設備清單規則（缺陷 D02 修正）。<br>
+    ④ 第 5 節 <code>NOT_FOUND</code> 的來源改為「自訂」，與程式註解一致（規格書沒有明寫）。<br>
+    ⑤ 第 7 節更新測試檔路徑與測試數量。
+  </td></tr>
+</table>
+
+<h2>1. 這份文件的用途</h2>
+<p>說明系統裡有哪些資料、每筆資料有哪些欄位與限制、資料之間如何關聯，以及 F1 在新增、修改、刪除時會檢查哪些規則。內容以目前的程式與種子檔為準；規格書沒寫、由我們自行決定的規則以 <span class="tag own">自訂</span> 標示（作業規定須記錄在需求規格），規格書明文要求的以 <span class="tag spec">F1 規格</span> 標示。</p>
+
+<h2>2. 資料如何儲存</h2>
+<table>
+  <tr><th>檔案</th><th>角色</th></tr>
+  <tr><td><code>CampusPlanner/UserData/04_data_format.json</code></td><td>種子檔（初始資料）。只讀不寫，內含 20 門課程、15 名學生、5 間教室。</td></tr>
+  <tr><td><code>CampusPlanner/UserData/db.json</code></td><td>工作檔。程式每次新增、修改、刪除成功後自動寫入這裡；下次啟動時，有它就讀它，沒有才讀種子檔。想還原成初始資料，刪除此檔即可。</td></tr>
+</table>
+<p>資料檔是一個 JSON 物件，F1 管理其中三個區塊：</p>
+<table>
+  <tr><th>區塊</th><th>型別</th><th>說明</th></tr>
+  <tr><td><code>classrooms</code></td><td>清單</td><td>教室。F1 管理。</td></tr>
+  <tr><td><code>courses</code></td><td>清單</td><td>課程。F1 管理。</td></tr>
+  <tr><td><code>students</code></td><td>清單</td><td>學生。F1 管理（選課內容屬 F2）。</td></tr>
+</table>
+<p>檔案中的其他區塊（<code>metadata</code> 版本資訊、<code>activities</code>、<code>campus_graph</code>）F1 不處理，存檔時原樣保留，本文不說明。</p>
+<div class="note"><b>讀檔時的格式檢查（F6）：</b>讀入資料檔時，<code>F6_StorageManager.py</code> 會逐筆檢查必填欄位是否存在、欄位型別是否正確（例如 <code>credits</code> 必須是整數、<code>time_slots</code> 必須是 <code>{day, period}</code> 清單且星期與節次在範圍內）。不合格的單筆資料會被略過並記錄原因，其他資料照常載入，程式不會因此當掉。整個檔案損毀時，會先備份成 <code>.corrupt.bak</code>，再改用空資料庫或種子檔。</div>
+
+<h2>3. 實體關係圖</h2>
+<div class="er">
+  <div class="ent"><b>學生 students</b><div>student_id（主鍵）<br>name<br>department<br>max_credits<br>enrolled_courses [ ]<br><span style="font-family:inherit">（內容為課程代號清單）</span></div></div>
+  <div class="rel">多對多<span class="arrow"></span>選課</div>
+  <div class="ent"><b>課程 courses</b><div>course_id（主鍵）<br>title<br>credits<br>required<br>teacher<br>classroom_id（外鍵）<br>capacity<br>enrolled_count<br>time_slots [ {day, period} ]</div></div>
+  <div class="rel">多對一<span class="arrow"></span>上課教室</div>
+  <div class="ent"><b>教室 classrooms</b><div>classroom_id（主鍵）<br>capacity<br>equipment [ ]</div></div>
+</div>
+<p class="cap">圖 1　F1 管理的三種實體及其關係。箭頭指向被參照的一方。</p>
+<ul>
+  <li>課程的 <code>classroom_id</code> 必須是已存在的教室（<span class="tag own">自訂</span>）。</li>
+  <li>每門課只有一間教室，所有時段共用。講課與實習若在不同教室，以不同課程代號分別建立。這樣教室衝堂與學生衝堂都只需比對時段集合是否有交集。</li>
+  <li>學生與課程是多對多：學生以 <code>enrolled_courses</code> 存放課程代號；課程端則以 <code>enrolled_count</code> 記錄人數。</li>
+</ul>
+
+<h2>4. 實體欄位定義</h2>
+<h3>4.1 課程 courses</h3>
+<table>
+  <tr><th>欄位</th><th>型別</th><th>必填</th><th>限制與說明</th></tr>
+  <tr><td><code>course_id</code></td><td>字串</td><td>是</td><td>課程代號，如 <code>CS101</code>。不可空白、不可重複；建立後不可修改。</td></tr>
+  <tr><td><code>title</code></td><td>字串</td><td>是</td><td>課程名稱，不可空白。</td></tr>
+  <tr><td><code>credits</code></td><td>整數</td><td>是</td><td>學分，必須為正整數（≥ 1）。</td></tr>
+  <tr><td><code>required</code></td><td>布林</td><td>是</td><td><code>true</code> 必修、<code>false</code> 選修。</td></tr>
+  <tr><td><code>teacher</code></td><td>字串</td><td>是</td><td>授課教師，不可空白。</td></tr>
+  <tr><td><code>classroom_id</code></td><td>字串</td><td>是</td><td>上課教室，必須存在於 classrooms。</td></tr>
+  <tr><td><code>capacity</code></td><td>整數</td><td>是</td><td>修課人數上限，≥ 1，且不得超過該教室的 <code>capacity</code>。修改時不得低於目前人數。</td></tr>
+  <tr><td><code>enrolled_count</code></td><td>整數</td><td>是</td><td>目前選課人數。新增課程時為 0，由系統維護，使用者不能直接修改。見第 8 節說明。</td></tr>
+  <tr><td><code>time_slots</code></td><td>清單</td><td>是</td><td>每週上課時段，至少一項，格式見 4.4。</td></tr>
+</table>
+
+<h3>4.2 學生 students</h3>
+<table>
+  <tr><th>欄位</th><th>型別</th><th>必填</th><th>限制與說明</th></tr>
+  <tr><td><code>student_id</code></td><td>字串</td><td>是</td><td>學號，不可空白、不可重複；建立後不可修改。</td></tr>
+  <tr><td><code>name</code></td><td>字串</td><td>是</td><td>姓名，不可空白。</td></tr>
+  <tr><td><code>department</code></td><td>字串</td><td>是</td><td>系級中的「系」，如「資工系」，不可空白。年級（系級的「級」）尚未實作，見第 9 節。</td></tr>
+  <tr><td><code>max_credits</code></td><td>整數</td><td>是</td><td>學分上限，正整數；以命令列新增時預設 25。</td></tr>
+  <tr><td><code>enrolled_courses</code></td><td>字串清單</td><td>是</td><td>已選課程代號。不可重複、每個代號都必須是存在的課程。新增學生時為空清單；選課內容由 F2 異動，F1 的修改功能不能改它。</td></tr>
+</table>
+
+<h3>4.3 教室 classrooms</h3>
+<p>F1 管理教室的代號、容量與設備清單。種子檔中教室還有大樓欄位，F1 只在新增時補上預設值，不做其他處理；依容量與設備篩選場地屬 F4。</p>
+<table>
+  <tr><th>欄位</th><th>型別</th><th>必填</th><th>限制與說明</th></tr>
+  <tr><td><code>classroom_id</code></td><td>字串</td><td>是</td><td>教室代號，如 <code>TR-310</code>。不可空白、不可重複。</td></tr>
+  <tr><td><code>capacity</code></td><td>整數</td><td>是</td><td>教室座位數，≥ 1。</td></tr>
+  <tr><td><code>equipment</code></td><td>字串清單</td><td>否</td><td>設備，如 <code>["projector", "mic"]</code>。未提供時為空清單；每一項都必須是文字。</td></tr>
+  <tr><td><code>building_id</code>、<code>building_name</code></td><td>字串</td><td>否</td><td>大樓代號與名稱。未提供時為空字串。</td></tr>
+</table>
+
+<h3>4.4 上課時段 time_slots 的每一項</h3>
+<table>
+  <tr><th>欄位</th><th>型別</th><th>限制與說明</th></tr>
+  <tr><td><code>day</code></td><td>整數</td><td>星期，1–7（1 為星期一、7 為星期日）。</td></tr>
+  <tr><td><code>period</code></td><td>字串</td><td>節次，只能是 <code>1</code>–<code>9</code>、<code>a</code>、<code>b</code>、<code>c</code>（小寫字串）。</td></tr>
+</table>
+<p>範例：<code>{"day": 2, "period": "3"}</code> 代表星期二第 3 節。同一門課的時段不可重複。</p>
+
+<h2>5. 資料規則與錯誤碼</h2>
+<p>F1 的每個新增、修改、刪除都回傳 <code>(ok, code)</code>：成功是 <code>(True, "OK")</code>，失敗時 <code>code</code> 是下列錯誤碼，且資料不會被改動。</p>
+<table>
+  <tr><th>規則</th><th>錯誤碼</th><th>來源</th></tr>
+  <tr><td>課程代號、學號不得重複</td><td><code>DUPLICATE_ID</code></td><td><span class="tag spec">F1 規格</span></td></tr>
+  <tr><td>學分必須為正整數</td><td><code>INVALID_CREDITS</code></td><td><span class="tag spec">F1 規格</span></td></tr>
+  <tr><td>課程人數上限不得小於 1</td><td><code>INVALID_CAPACITY</code></td><td><span class="tag spec">F1 規格</span></td></tr>
+  <tr><td>星期必須為 1–7</td><td><code>INVALID_DAY</code></td><td><span class="tag spec">F1 規格</span></td></tr>
+  <tr><td>節次必須為 1–9、a、b、c</td><td><code>INVALID_PERIOD</code></td><td><span class="tag spec">F1 規格</span></td></tr>
+  <tr><td>時段必須是非空清單，每項含 day 與 period</td><td><code>INVALID_TIME_SLOTS</code></td><td><span class="tag spec">F1 規格</span></td></tr>
+  <tr><td>已有學生選修的課程不得刪除</td><td><code>COURSE_HAS_STUDENTS</code></td><td><span class="tag spec">F1 規格</span></td></tr>
+  <tr><td>修改或刪除時找不到該筆資料</td><td><code>NOT_FOUND</code></td><td><span class="tag own">自訂</span></td></tr>
+  <tr><td>名稱、教師、學號、姓名、系不可空白；必選修須為布林；修改時不可含代號或不在白名單的欄位</td><td><code>INVALID_FIELD</code></td><td><span class="tag own">自訂</span></td></tr>
+  <tr><td>教室設備必須是清單，且每一項都是文字</td><td><code>INVALID_FIELD</code></td><td><span class="tag own">自訂</span></td></tr>
+  <tr><td>同一門課的時段不得重複</td><td><code>DUPLICATE_SLOT</code></td><td><span class="tag own">自訂</span></td></tr>
+  <tr><td>課程指定的教室必須存在</td><td><code>CLASSROOM_NOT_FOUND</code></td><td><span class="tag own">自訂</span></td></tr>
+  <tr><td>課程人數上限不得超過教室容量</td><td><code>CAPACITY_EXCEEDS_ROOM</code></td><td><span class="tag own">自訂</span></td></tr>
+  <tr><td>修改人數上限時，不得低於目前選課人數</td><td><code>INVALID_CAPACITY</code></td><td><span class="tag own">自訂</span></td></tr>
+  <tr><td>學生的學分上限必須為正整數；教室容量須 ≥ 1</td><td><code>INVALID_CREDITS</code>／<code>INVALID_CAPACITY</code></td><td><span class="tag own">自訂</span></td></tr>
+  <tr><td>學生的已選課程不可重複</td><td><code>INVALID_STUDENT_COURSES</code></td><td><span class="tag own">自訂</span></td></tr>
+  <tr><td>學生的已選課程必須是存在的課程</td><td><code>COURSE_NOT_FOUND</code></td><td><span class="tag own">自訂</span></td></tr>
+  <tr><td>有課程使用的教室不得刪除。程式同時也檢查活動是否使用該教室，這是為 F4 提前加入的，F1 本身沒有活動資料</td><td><code>CLASSROOM_IN_USE</code></td><td><span class="tag own">自訂</span></td></tr>
+</table>
+<p>標示「自訂」的規則，組內已決定全部保留，並須記錄於需求規格（作業第 11 點）。</p>
+<h3>連動行為</h3>
+<ul>
+  <li>新增課程：<code>enrolled_count</code> 自動設為 0。</li>
+  <li>刪除學生：該生已選的每門課，<code>enrolled_count</code> 各減 1（最低為 0）。</li>
+  <li>查詢：課程與學生的查詢條件見第 6.3 節。</li>
+</ul>
+
+<h2>6. F1 功能與規格對照</h2>
+<h3>6.1 規格逐條對照</h3>
+<table>
+  <tr><th>F1 規格</th><th>在本文件、程式的對應</th><th>狀況</th></tr>
+  <tr><td>課程與學生的新增、修改、刪除及查詢</td><td>操作與函式見 6.2，查詢條件見 6.3</td><td>已涵蓋</td></tr>
+  <tr><td>學生輸入資料包含「系級」</td><td>第 4.2 節 <code>department</code>；目前只有系，尚無年級，見第 9 節</td><td>部分完成</td></tr>
+  <tr><td>課程代號及學號不得重複</td><td>第 4 節欄位表；第 5 節 <code>DUPLICATE_ID</code></td><td>已涵蓋</td></tr>
+  <tr><td>每門課可有多個時段；星期 1–7、節次 1–9、a、b、c</td><td>第 4.4 節；<code>INVALID_DAY</code>、<code>INVALID_PERIOD</code>、<code>INVALID_TIME_SLOTS</code></td><td>已涵蓋</td></tr>
+  <tr><td>學分為正整數；人數上限不得小於 1</td><td>第 4.1 節；<code>INVALID_CREDITS</code>、<code>INVALID_CAPACITY</code></td><td>已涵蓋</td></tr>
+  <tr><td>不得刪除已有學生選修的課程</td><td>第 5 節 <code>COURSE_HAS_STUDENTS</code></td><td>已涵蓋</td></tr>
+  <tr><td>「除非先執行退選或課程取消程序」</td><td>F1 沒有選課功能，所以沒有退選；退選歸 F2 處理</td><td>歸 F2，見第 9 節</td></tr>
+  <tr><td>依課程代號、教師、星期、必選修、剩餘名額查詢</td><td>6.3 課程查詢條件</td><td>已涵蓋</td></tr>
+  <tr><td>至少 20 門課程、15 名學生、5 間教室；拒絕重複代號、非法節次、無效學分</td><td>第 7 節</td><td>已涵蓋</td></tr>
+</table>
+
+<h3>6.2 操作與函式清單</h3>
+<p>所有新增、修改、刪除都回傳 <code>(ok, code)</code>，成功為 <code>(True, "OK")</code>，下表的錯誤碼只列失敗時可能出現的。函式放在 <code>CampusPlanner/Code/F1_DataManager.py</code>，由 <code>F1Manager</code> 包裝：成功後才自動存檔。</p>
+<table>
+  <tr><th>對象</th><th>操作</th><th>函式與輸入</th><th>失敗時可能的錯誤碼</th></tr>
+  <tr><td rowspan="4">課程</td><td>新增</td><td><code>add_course(course)</code><br>課程代號加其餘七個欄位</td><td><code>DUPLICATE_ID</code>、<code>INVALID_FIELD</code>、<code>INVALID_CREDITS</code>、<code>INVALID_CAPACITY</code>、<code>CLASSROOM_NOT_FOUND</code>、<code>CAPACITY_EXCEEDS_ROOM</code>、<code>INVALID_TIME_SLOTS</code>、<code>INVALID_DAY</code>、<code>INVALID_PERIOD</code>、<code>DUPLICATE_SLOT</code></td></tr>
+  <tr><td>修改</td><td><code>update_course(course_id, changes)</code><br>只能改七個欄位</td><td><code>NOT_FOUND</code>、<code>INVALID_FIELD</code>（含想改代號）、<code>INVALID_CAPACITY</code>（含低於目前人數），其餘同新增</td></tr>
+  <tr><td>刪除</td><td><code>delete_course(course_id)</code></td><td><code>NOT_FOUND</code>、<code>COURSE_HAS_STUDENTS</code></td></tr>
+  <tr><td>查詢</td><td><code>query_courses(...)</code></td><td>回傳符合的課程清單，無符合回傳空清單</td></tr>
+  <tr><td rowspan="4">學生</td><td>新增</td><td><code>add_student(student)</code><br>學號、姓名、系、學分上限、已選課程</td><td><code>DUPLICATE_ID</code>、<code>INVALID_FIELD</code>、<code>INVALID_CREDITS</code>、<code>INVALID_STUDENT_COURSES</code>、<code>COURSE_NOT_FOUND</code></td></tr>
+  <tr><td>修改</td><td><code>update_student(student_id, changes)</code><br>只能改姓名、系、學分上限</td><td><code>NOT_FOUND</code>、<code>INVALID_FIELD</code>（含想改學號或已選課程）、<code>INVALID_CREDITS</code></td></tr>
+  <tr><td>刪除</td><td><code>delete_student(student_id)</code></td><td><code>NOT_FOUND</code>。成功時，該生已選每門課的 <code>enrolled_count</code> 各減 1</td></tr>
+  <tr><td>查詢</td><td><code>query_students(...)</code></td><td>回傳符合的學生清單，無符合回傳空清單</td></tr>
+  <tr><td rowspan="2">教室</td><td>新增</td><td><code>add_classroom(room)</code><br>教室代號、容量、設備（選填）</td><td><code>DUPLICATE_ID</code>、<code>INVALID_FIELD</code>（含設備不是文字清單）、<code>INVALID_CAPACITY</code></td></tr>
+  <tr><td>刪除</td><td><code>delete_classroom(classroom_id)</code></td><td><code>NOT_FOUND</code>、<code>CLASSROOM_IN_USE</code></td></tr>
+</table>
+<p>教室目前只有新增與刪除，沒有修改與查詢；F1 規格只要求課程與學生的完整管理，教室作為輔助資料。</p>
+
+<h3>6.3 查詢條件</h3>
+<p>所有條件都是選填，同時給多個條件時必須全部成立才列出；沒給任何條件就回傳全部資料。</p>
+<table>
+  <tr><th>查詢</th><th>條件</th><th>比對方式</th></tr>
+  <tr><td rowspan="5">課程</td><td><code>course_id</code></td><td>課程代號完全相符。</td></tr>
+  <tr><td><code>teacher</code></td><td>授課教師姓名完全相符。</td></tr>
+  <tr><td><code>day</code></td><td>任何一個上課時段在該星期（1–7）就符合。</td></tr>
+  <tr><td><code>required</code></td><td><code>True</code> 只列必修；<code>False</code> 只列選修。</td></tr>
+  <tr><td><code>has_seats</code></td><td>剩餘名額 = <code>capacity − enrolled_count</code>。<code>True</code> 只列剩餘名額大於 0 的課；<code>False</code> 只列已額滿的課。</td></tr>
+  <tr><td rowspan="3">學生</td><td><code>student_id</code></td><td>學號完全相符。</td></tr>
+  <tr><td><code>department</code></td><td>系完全相符。</td></tr>
+  <tr><td><code>course_id</code></td><td>已選課程中有該課程。</td></tr>
+</table>
+
+<h2>7. 種子資料是否符合驗收條件</h2>
+<table>
+  <tr><th>項目</th><th>驗收要求</th><th>目前種子檔</th></tr>
+  <tr><td>課程</td><td>至少 20 門</td><td>20 門</td></tr>
+  <tr><td>學生</td><td>至少 15 名</td><td>15 名</td></tr>
+  <tr><td>教室</td><td>至少 5 間</td><td>5 間</td></tr>
+</table>
+<p>拒絕重複代號、非法節次、無效學分，由自動化測試驗證（<code>CampusPlanner/TestDriver/test_f1.py</code>）。目前 <code>test_f1.py</code> 與 <code>test_main.py</code> 共 112 項測試全部通過。</p>
+
+<h2>8. 設計決定</h2>
+<p><b>設計決定：課程人數以 <code>enrolled_count</code> 為準。</b><br>
+學生的 <code>enrolled_courses</code> 只記錄「這名學生選了哪些課」，不用來計算人數。剩餘名額、額滿判斷、修改人數上限都讀 <code>enrolled_count</code>。</p>
+<p><b>原因：</b>種子檔的 <code>enrolled_count</code> 代表整班人數（例如 CS101 為 45），學生清單只有 15 名樣本；若改用學生清單計算，多數課程會變成幾乎沒人，額滿與剩餘名額的情境就無法測試。</p>
+<p><b>可能的壞處：</b></p>
+<ul>
+  <li>兩個數字可能對不上。F2 選課與退選時必須同時更新兩處，漏更新一處就會出錯。</li>
+  <li>種子檔的人數中有不在學生清單裡的學生，無法查出是誰選的。</li>
+  <li>學生清單無法用來檢查 <code>enrolled_count</code> 是否正確，數字錯了不容易發現。</li>
+</ul>
+<p><b>維護規則：</b></p>
+<ul>
+  <li>資料不變條件：學生清單中實際選修某課的人數 ≤ <code>enrolled_count</code> ≤ <code>capacity</code>。若不成立，代表資料被弄壞。目前種子檔 20 門課都符合。F1 不檢查此條件，留給 F2、F6 的測試使用。</li>
+  <li>加選、退選的做法：F2 把「加選」與「退選」各寫成一個函式，同時更新學生的 <code>enrolled_courses</code> 和課程的 <code>enrolled_count</code>；其他功能都呼叫它，不得各自修改其中一邊。</li>
+  <li>人數的讀取：F2、F5、F7 判斷額滿與剩餘名額，一律讀 <code>enrolled_count</code>，不要自行掃描學生清單計算。</li>
+</ul>
+<p><b>目前程式：</b>刪除課程與修改人數上限時，仍同時參考學生清單（取較大值），比較保守，不影響上述決定。</p>
+
+<h2>9. F1 未完成與移交事項</h2>
+<p>以下是 F1 規格中目前沒有完全做到的項目，以及處理方式。其餘 F1 規格項目的對照見第 6.1 節。</p>
+<table>
+  <tr><th>項目</th><th>規格內容與目前狀況</th><th>狀況</th><th>處理方式</th></tr>
+  <tr><td>系級的「級」（年級）</td><td>規格的學生輸入資料包含「系級」。目前種子檔與程式都只有 <code>department</code>（如「資工系」、「管院」），沒有年級。</td><td>未完成，待補</td><td>留在 F1 處理。補法尚待決定：年級與系寫在同一欄，或新增獨立的 <code>grade</code> 欄位。</td></tr>
+  <tr><td>退選或課程取消程序</td><td>規格要求「不得刪除已有學生選修的課程，除非先執行退選或課程取消程序」。F1 沒有選課功能，所以沒有退選，目前只會拒絕刪除。</td><td>移交 F2</td><td>F2 實作退選時一併處理。完成後才能「先退選、再刪除課程」。</td></tr>
+</table>
+
+</body>
+</html>
