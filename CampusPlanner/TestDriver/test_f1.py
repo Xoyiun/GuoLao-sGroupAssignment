@@ -393,6 +393,15 @@ def test_x_delete_classroom_in_use(db):
     assert f1.delete_classroom(db, "TR-310") == (False, f1.CLASSROOM_IN_USE)
 
 
+@pytest.mark.extra
+@pytest.mark.parametrize("equipment", ["projector", [1, 2], ["projector", None]])
+def test_x_add_classroom_bad_equipment(db, equipment):
+    """設備必須是文字清單；否則列出教室時會當掉，新增時就要擋下。"""
+    room = {"classroom_id": "X-2", "capacity": 10, "equipment": equipment}
+    assert f1.add_classroom(db, room) == (False, f1.INVALID_FIELD)
+    assert f1.find_classroom(db, "X-2") is None
+
+
 # ======================================================================
 # 存檔與容錯載入（F6 相關，不計入 10/10/10）
 # ======================================================================
@@ -450,6 +459,45 @@ def test_p_bad_record_skipped_not_crash(tmp_path):
     m = DataManager(str(path), save_path=str(tmp_path / "out.json"))
     assert len(m.get_courses()) == 20
     assert len(m.load_errors) == 2
+
+
+@pytest.mark.persistence
+@pytest.mark.parametrize("field, value", [
+    ("time_slots", "1-3"),                      # 時段寫成字串
+    ("time_slots", [{"day": 9, "period": "1"}]),  # 星期超出 1–7
+    ("time_slots", [{"day": 1, "period": "z"}]),  # 節次不是 1–9、a、b、c
+    ("credits", "abc"),
+    ("capacity", "60"),
+    ("required", "是"),
+    ("enrolled_count", None),
+])
+def test_p_bad_course_format_skipped_not_crash(tmp_path, field, value):
+    """欄位都在但格式錯 → 載入時跳過，之後查詢課程不會當掉。"""
+    with open(SEED, encoding="utf-8") as f:
+        raw = json.load(f)
+    raw["courses"].append(new_course(course_id="BROKEN", **{field: value}))
+    path = tmp_path / "bad.json"
+    path.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+    m = DataManager(str(path), save_path=str(tmp_path / "out.json"))
+    assert f1.find_course(m.data, "BROKEN") is None
+    assert len(m.get_courses()) == 20
+    assert len(m.load_errors) == 1 and field in m.load_errors[0]
+    f1.query_courses(m.data, day=1, has_seats=True)  # 不得拋出例外
+
+
+@pytest.mark.persistence
+def test_p_bad_student_classroom_activity_format_skipped(tmp_path):
+    """學生、教室、活動的欄位格式錯誤也一樣跳過，其他資料照常載入。"""
+    with open(SEED, encoding="utf-8") as f:
+        raw = json.load(f)
+    raw["students"].append(new_student(student_id="BAD-S", enrolled_courses="CS101"))
+    raw["classrooms"].append({"classroom_id": "BAD-R", "capacity": 10, "equipment": "projector"})
+    raw["activities"].append({"activity_id": "BAD-A", "title": "x", "classroom_id": "TR-310", "time_slots": None})
+    path = tmp_path / "bad.json"
+    path.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+    m = DataManager(str(path), save_path=str(tmp_path / "out.json"))
+    assert (len(m.get_students()), len(m.get_classrooms()), len(m.get_activities())) == (15, 5, 3)
+    assert len(m.load_errors) == 3
 
 
 @pytest.mark.persistence
