@@ -1,0 +1,20 @@
+{
+  "course_id": "GE102",
+  "name": "藝術欣賞與美學",
+  "credits": 2,
+  "type": "unRequired",
+  "teacher": "孫教授",
+  "capacity": 80,
+  "classroom": "MA-101",
+  "time_slots": [
+    {
+      "day": 5,
+      "period": "3"
+    },
+    {
+      "day": 5,
+      "period": "4"
+    }
+  ],
+  "enrolled_count": 75
+}

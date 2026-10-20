@@ -1,0 +1,123 @@
+{
+  "campus_graph": {
+    "nodes": [
+      {
+        "node_id": "TR",
+        "name": "研揚大樓"
+      },
+      {
+        "node_id": "IB",
+        "name": "綜合研究大樓"
+      },
+      {
+        "node_id": "E2",
+        "name": "工程二館"
+      },
+      {
+        "node_id": "MA",
+        "name": "管理大樓"
+      },
+      {
+        "node_id": "T4",
+        "name": "第四教學大樓"
+      },
+      {
+        "node_id": "T3",
+        "name": "第三教學大樓"
+      },
+      {
+        "node_id": "AU",
+        "name": "視聽館"
+      },
+      {
+        "node_id": "LIB",
+        "name": "圖書館"
+      },
+      {
+        "node_id": "GYM",
+        "name": "體育館"
+      },
+      {
+        "node_id": "ADM",
+        "name": "行政大樓"
+      }
+    ],
+    "edges": [
+      {
+        "from": "TR",
+        "to": "IB",
+        "walk_minutes": 3
+      },
+      {
+        "from": "TR",
+        "to": "E2",
+        "walk_minutes": 5
+      },
+      {
+        "from": "IB",
+        "to": "MA",
+        "walk_minutes": 4
+      },
+      {
+        "from": "IB",
+        "to": "T4",
+        "walk_minutes": 2
+      },
+      {
+        "from": "E2",
+        "to": "T3",
+        "walk_minutes": 3
+      },
+      {
+        "from": "E2",
+        "to": "LIB",
+        "walk_minutes": 6
+      },
+      {
+        "from": "MA",
+        "to": "T4",
+        "walk_minutes": 3
+      },
+      {
+        "from": "MA",
+        "to": "ADM",
+        "walk_minutes": 5
+      },
+      {
+        "from": "T4",
+        "to": "T3",
+        "walk_minutes": 2
+      },
+      {
+        "from": "T3",
+        "to": "AU",
+        "walk_minutes": 4
+      },
+      {
+        "from": "AU",
+        "to": "LIB",
+        "walk_minutes": 3
+      },
+      {
+        "from": "LIB",
+        "to": "GYM",
+        "walk_minutes": 7
+      },
+      {
+        "from": "ADM",
+        "to": "GYM",
+        "walk_minutes": 8
+      },
+      {
+        "from": "TR",
+        "to": "T4",
+        "walk_minutes": 6
+      },
+      {
+        "from": "MA",
+        "to": "LIB",
+        "walk_minutes": 5
+      }
+    ]
+  }
+}

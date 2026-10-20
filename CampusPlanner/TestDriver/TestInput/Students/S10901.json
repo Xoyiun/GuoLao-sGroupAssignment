@@ -1,0 +1,11 @@
+{
+  "student_id": "S10901",
+  "name": "陳小明",
+  "department": "資工系",
+  "max_credits": 25,
+  "enrolled_courses": [
+    "CS101",
+    "MA102"
+  ],
+  "grade": 1
+}

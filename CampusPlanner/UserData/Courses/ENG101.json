@@ -1,0 +1,20 @@
+{
+  "course_id": "ENG101",
+  "name": "大一英文",
+  "credits": 2,
+  "type": "Required",
+  "teacher": "Smith教授",
+  "capacity": 45,
+  "classroom": "T4-202",
+  "time_slots": [
+    {
+      "day": 3,
+      "period": "1"
+    },
+    {
+      "day": 3,
+      "period": "2"
+    }
+  ],
+  "enrolled_count": 40
+}

@@ -1,0 +1,24 @@
+{
+  "course_id": "CS201",
+  "name": "作業系統",
+  "credits": 3,
+  "type": "unRequired",
+  "teacher": "蔡教授",
+  "capacity": 60,
+  "classroom": "TR-310",
+  "time_slots": [
+    {
+      "day": 5,
+      "period": "5"
+    },
+    {
+      "day": 5,
+      "period": "6"
+    },
+    {
+      "day": 5,
+      "period": "7"
+    }
+  ],
+  "enrolled_count": 50
+}
