@@ -1,0 +1,11 @@
+{
+  "student_id": "S10908",
+  "name": "蔡佩君",
+  "department": "資工系",
+  "max_credits": 25,
+  "enrolled_courses": [
+    "CS201",
+    "CS203"
+  ],
+  "grade": 1
+}

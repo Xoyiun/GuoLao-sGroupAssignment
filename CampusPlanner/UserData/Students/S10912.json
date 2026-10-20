@@ -1,0 +1,11 @@
+{
+  "student_id": "S10912",
+  "name": "謝宗翰",
+  "department": "工院",
+  "max_credits": 25,
+  "enrolled_courses": [
+    "CS204",
+    "PHY101"
+  ],
+  "grade": 1
+}
