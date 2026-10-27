@@ -95,6 +95,39 @@ def find_free_slots(timeable, day, start_period, end_period, min_length=1):
 
     return free_slots
 
+def query_timeable(timeable, day=None, period=None, course_id=None):
+    """依星期、節次及／或課程代碼查詢課表格子。
+
+    可以傳入單一條件，也可以組合多個條件。
+    回傳結果為 (星期, 節次, 課程代碼) 的清單。"""
+
+    if day is not None and not 1<=day<=7:
+        raise ValueError("day must be between 1 and 7")
+    if period is not None and period not in PERIODS:
+        raise ValueError("invalid period")
+
+    results=[]
+
+    for day_index, row in enumerate(timeable):
+        current_day=day_index+1
+
+        if day is not None and current_day != day:
+            continue
+
+        for period_index, course in enumerate(row):
+            current_period=PERIODS[period_index]
+
+            if course is None:
+                continue
+            if period is not None and current_period !=period:
+                continue
+            if course_id is not None and course !=course_id:
+                continue
+            results.append((current_day, current_period, course))
+
+    return results
+
+
 
 
 
