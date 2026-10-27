@@ -126,6 +126,42 @@ def query_timeable(timeable, day=None, period=None, course_id=None):
             results.append((current_day, current_period, course))
 
     return results
+def summarize_timeable(timeable,db,student_id):
+    """統計每日節數、總學分數及空堂數。"""
+    for s in db["students"]:
+        if s["student_id"] == student_id:
+            students=s
+            break
+        if students is None:
+            return None
+
+    daily_period_counts=[]
+
+    for row in timeable:
+        count=0
+        for cell in row:
+            if cell is not None:
+                count+=1
+        daily_period_counts.append(count)
+
+    selected_ids=set(students["enrolled_courses"])
+    total_credits=0
+    for course in db["course"]:
+        if course["course_id"] in selected_ids:
+            total_credits+=course["credits"]
+
+    for row in timeable:
+        free_period_counts=0
+        for cell in row:
+            if cell is None:
+                free_period_count+=1
+
+    return {
+        "daily_period_counts": daily_period_counts,
+        "total_credits": total_credits,
+        "free_period_counts": free_period_counts
+    }
+
 
 
 
