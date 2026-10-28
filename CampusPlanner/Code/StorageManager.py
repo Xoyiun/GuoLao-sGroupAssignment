@@ -1,7 +1,9 @@
 """資料存取層：只負責讀檔與存檔，不含任何業務規則（功能 F6）。
 
 - 不建立全域實例，由呼叫端自行建立 StorageManager 後傳入。
-- 種子資料（jsonPath）與工作資料（savePath）可分開，避免弄髒測資。
+- 資料一律按 ID 分檔：Courses/{course_id}.json、Students/{student_id}.json，
+  教室與校園圖放在同資料夾的 Classroom.json、CampusGraph.json。
+- 讀取的資料夾（dataDirectory）與寫回的資料夾（savePath）可分開，避免弄髒測資。
 - 依 Reference/Formate 正規化動態資料，並合併獨立的教室與校園圖固定資料。
 - 副程式只負責執行讀寫與狀態回傳（True/False），不主動印出介面文字。
 """
@@ -15,9 +17,7 @@ from Constants import (
     CAMPUS_GRAPH_FILE,
     CLASSROOM_FILE,
     COURSE_DATA_DIRECTORY,
-    DEFAULT_WORK_FILE,
     REQUIRED_KEYS,
-    SEED_FILE,
     STUDENT_DATA_DIRECTORY,
     VALID_PERIODS,
 )
@@ -25,58 +25,14 @@ from TimeSlotUtils import IsValidTimeSlotDay
 
 
 def AdaptCourseReferenceData(rawData):
-    """將參考格式課程與活動欄位轉成程式內部的課程資料。"""
-    if not isinstance(rawData, dict):
-        return rawData, []
-
+    """將 Courses/ 讀到的參考格式課程（含 event 活動）轉成程式內部的課程資料。"""
     adaptedData = dict(rawData)
     errors = []
-    sourceCourseRecords = rawData.get("course")
-    if sourceCourseRecords is not None:
-        if not isinstance(sourceCourseRecords, list):
-            errors.append("course 不是清單，已略過")
-            sourceCourseRecords = []
-        adaptedData["courses"] = []
-        for index, course in enumerate(sourceCourseRecords):
-            adaptedCourse = AdaptReferenceCourse(course, index, errors)
-            if adaptedCourse is not None:
-                adaptedData["courses"].append(adaptedCourse)
-    else:
-        adaptedData.setdefault("courses", [])
-
-    activityRecords = rawData.get("activities", [])
-    if not isinstance(activityRecords, list):
-        errors.append("activities 不是清單，已略過")
-        activityRecords = []
-    activityIds = set()
-    adaptedActivities = []
-    for index, activity in enumerate(activityRecords):
-        adaptedActivity = AdaptActivityCourse(activity, index, errors)
-        adaptedActivities.append(adaptedActivity)
-        if isinstance(adaptedActivity, dict) and isinstance(
-            adaptedActivity.get("course_id"), str
-        ):
-            activityIds.add(adaptedActivity["course_id"])
-    adaptedData["courses"].extend(adaptedActivities)
-    adaptedData["activities"] = []
-
-    students = adaptedData.get("students", [])
-    if isinstance(students, list):
-        activityIds.update(
-            course["course_id"]
-            for course in adaptedData["courses"]
-            if isinstance(course, dict) and course.get("course_type") == "event"
-        )
-        for student in students:
-            if not isinstance(student, dict):
-                continue
-            enrolledCourses = student.setdefault("enrolled_courses", [])
-            enrolledActivities = student.pop("enrolled_activities", [])
-            if isinstance(enrolledCourses, list) and isinstance(enrolledActivities, list):
-                enrolledCourses.extend(
-                    activityId for activityId in enrolledActivities
-                    if activityId in activityIds and activityId not in enrolledCourses
-                )
+    adaptedData["courses"] = []
+    for index, course in enumerate(rawData.get("course", [])):
+        adaptedCourse = AdaptReferenceCourse(course, index, errors)
+        if adaptedCourse is not None:
+            adaptedData["courses"].append(adaptedCourse)
     return adaptedData, errors
 
 
@@ -104,86 +60,48 @@ def AdaptReferenceCourse(course, index, errors):
     return item
 
 
-def AdaptActivityCourse(activity, index, errors):
-    if not isinstance(activity, dict):
-        return activity
-    activityId = activity.get("activity_id")
-    if not isinstance(activityId, str) or not activityId.strip():
-        errors.append(f"activities[{index}] 缺少有效 activity_id，已略過")
-        return activity
-    item = {
-        "course_id": activityId,
-        "title": activity.get("title"),
-        "credits": 0,
-        "required": False,
-        "teacher": activity.get("teacher", "NPC"),
-        "capacity": activity.get("capacity"),
-        "classroom_id": activity.get("classroom_id"),
-        "time_slots": activity.get("time_slots"),
-        "enrolled_count": activity.get("enrolled_count", 0),
-        "course_type": "event",
-    }
-    for fieldName, value in activity.items():
-        if fieldName not in {
-            "activity_id", "title", "classroom_id", "capacity",
-            "enrolled_count", "time_slots", "teacher",
-        }:
-            item[fieldName] = copy.deepcopy(value)
-    return item
-
-
-def LoadSupplementaryData(rawData, path):
-    """從種子資料旁的固定資料檔補入教室與校園圖。"""
+def LoadSupplementaryData(rawData, directory):
+    """從資料夾中的固定資料檔補入教室與校園圖。"""
     errors = []
-    if not isinstance(rawData, dict):
-        return rawData, errors
 
-    directory = (
-        os.path.abspath(path)
-        if os.path.isdir(path)
-        else os.path.dirname(os.path.abspath(path))
-    )
-
-    if "campus_graph" not in rawData:
-        graphPath = os.path.join(directory, CAMPUS_GRAPH_FILE)
-        try:
-            with open(graphPath, "r", encoding="utf-8") as file:
-                graphData = json.load(file)
-        except (json.JSONDecodeError, UnicodeDecodeError, OSError) as error:
-            errors.append(f"固定資料檔 {graphPath} 無法讀取：{error}")
+    graphPath = os.path.join(directory, CAMPUS_GRAPH_FILE)
+    try:
+        with open(graphPath, "r", encoding="utf-8") as file:
+            graphData = json.load(file)
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError) as error:
+        errors.append(f"固定資料檔 {graphPath} 無法讀取：{error}")
+    else:
+        graph = graphData.get("campus_graph") if isinstance(
+            graphData, dict) else None
+        if not isinstance(graph, dict):
+            errors.append(f"固定資料檔 {graphPath} 缺少 campus_graph 物件")
         else:
-            graph = graphData.get("campus_graph") if isinstance(
-                graphData, dict) else None
-            if not isinstance(graph, dict):
-                errors.append(f"固定資料檔 {graphPath} 缺少 campus_graph 物件")
-            else:
-                rawData["campus_graph"] = graph
+            rawData["campus_graph"] = graph
 
-    if "classrooms" not in rawData:
-        classroomPath = os.path.join(directory, CLASSROOM_FILE)
-        try:
-            with open(classroomPath, "r", encoding="utf-8") as file:
-                classroomData = json.load(file)
-        except (json.JSONDecodeError, UnicodeDecodeError, OSError) as error:
-            errors.append(f"固定資料檔 {classroomPath} 無法讀取：{error}")
+    classroomPath = os.path.join(directory, CLASSROOM_FILE)
+    try:
+        with open(classroomPath, "r", encoding="utf-8") as file:
+            classroomData = json.load(file)
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError) as error:
+        errors.append(f"固定資料檔 {classroomPath} 無法讀取：{error}")
+    else:
+        records = classroomData.get("classroom") if isinstance(
+            classroomData, dict) else None
+        if not isinstance(records, list):
+            errors.append(f"固定資料檔 {classroomPath} 缺少 classroom 清單")
         else:
-            records = classroomData.get("classroom") if isinstance(
-                classroomData, dict) else None
-            if not isinstance(records, list):
-                errors.append(f"固定資料檔 {classroomPath} 缺少 classroom 清單")
-            else:
-                graph = rawData.get("campus_graph", {})
-                nodes = graph.get("nodes", []) if isinstance(
-                    graph, dict) else []
-                buildingNames = {
-                    node.get("node_id"): node.get("name", "")
-                    for node in nodes
-                    if isinstance(node, dict) and isinstance(node.get("node_id"), str)
-                }
-                rawData["classrooms"] = [
-                    AdaptReferenceClassroom(room, buildingNames)
-                    for room in records
-                ]
+            graph = rawData.get("campus_graph", {})
+            nodes = graph.get("nodes", []) if isinstance(
+                graph, dict) else []
+            buildingNames = {
+                node.get("node_id"): node.get("name", "")
+                for node in nodes
+                if isinstance(node, dict) and isinstance(node.get("node_id"), str)
+            }
+            rawData["classrooms"] = [
+                AdaptReferenceClassroom(room, buildingNames)
+                for room in records
+            ]
 
     return rawData, errors
 
@@ -246,11 +164,6 @@ FIELDCHECKS = {
     "students": {
         "student_id": IsNonemptyString, "name": IsNonemptyString, "department": IsNonemptyString,
         "grade": IsInteger, "max_credits": IsInteger, "enrolled_courses": IsStringList,
-        "enrolled_activities": IsStringList,
-    },
-    "activities": {
-        "activity_id": IsNonemptyString, "title": IsNonemptyString, "classroom_id": IsNonemptyString,
-        "time_slots": IsTimeSlotList,
     },
 }
 
@@ -262,7 +175,7 @@ def CreateEmptyDatabase():
         "classrooms": [],
         "courses": [],
         "students": [],
-        "activities": [],
+        "activities": [],  # 活動都存成 event 課程，這裡固定為空清單，留給 F2–F4 現有程式讀取
         "campus_graph": {"nodes": [], "edges": []},
     }
 
@@ -274,14 +187,8 @@ def NormalizeDatabase(rawData):
     """
     errors = []
     database = CreateEmptyDatabase()
-    if not isinstance(rawData, dict):
-        errors.append("最上層不是物件，改用空資料庫")
-        return database, errors
-
     rawData, adaptationErrors = AdaptCourseReferenceData(rawData)
     errors.extend(adaptationErrors)
-    if isinstance(rawData.get("metadata"), dict):
-        database["metadata"] = rawData["metadata"]
     if isinstance(rawData.get("campus_graph"), dict):
         database["campus_graph"] = rawData["campus_graph"]
 
@@ -332,6 +239,11 @@ def LoadEntityDirectory(path):
                     record = json.load(dataFile)
             except (json.JSONDecodeError, UnicodeDecodeError, OSError) as error:
                 errors.append(f"資料檔 {filePath} 無法讀取：{error}")
+                # 下次存檔會清掉沒載入的檔案，先備份；.bak 不是 .json，之後讀檔也會略過
+                try:
+                    shutil.copy2(filePath, filePath + ".corrupt.bak")
+                except OSError:
+                    pass
                 continue
             if not isinstance(record, dict):
                 errors.append(f"資料檔 {filePath} 不是物件，已略過")
@@ -345,61 +257,18 @@ def LoadEntityDirectory(path):
 
 
 def LoadDatabase(path):
-    """從 ID 分檔目錄或舊版 JSON 載入資料庫。
+    """從資料夾載入資料庫：Courses/、Students/ 的 ID.json，加上 Classroom.json、CampusGraph.json。
 
-    回傳 (database, errors, corrupted)。
-    - 分檔目錄：讀取 Courses/ 與 Students/，固定資料由同目錄補入
-    - 舊版 JSON：繼續支援單一種子檔或 db.json
-    - 檔案不存在：空資料庫，corrupted=False
-    - 檔案損毀或無法讀取：空資料庫，corrupted=True
-    - 單筆壞資料：略過並寫入 errors
+    回傳 (database, errors)。
+    - 資料夾不存在：空資料庫
+    - 單一檔案無法讀取或單筆資料格式錯誤：略過該筆並寫入 errors，其他資料照常載入
     """
-    if os.path.isdir(path):
-        courseDirectory = os.path.join(path, COURSE_DATA_DIRECTORY)
-        studentDirectory = os.path.join(path, STUDENT_DATA_DIRECTORY)
-        if os.path.isdir(courseDirectory) or os.path.isdir(studentDirectory):
-            rawData, errors = LoadEntityDirectory(path)
-            rawData, companionErrors = LoadSupplementaryData(rawData, path)
-            database, normalizationErrors = NormalizeDatabase(rawData)
-            return database, errors + companionErrors + normalizationErrors, False
-
-        legacyPath = next(
-            (
-                os.path.join(path, fileName)
-                for fileName in (DEFAULT_WORK_FILE, SEED_FILE)
-                if os.path.isfile(os.path.join(path, fileName))
-            ),
-            None,
-        )
-        if legacyPath is None:
-            return CreateEmptyDatabase(), [f"找不到資料檔：{path}"], False
-        path = legacyPath
-    if not os.path.exists(path):
-        return CreateEmptyDatabase(), [f"找不到檔案 {path}，使用空資料庫"], False
-    try:
-        with open(path, "r", encoding="utf-8") as dataFile:
-            rawData = json.load(dataFile)
-    except (json.JSONDecodeError, UnicodeDecodeError, OSError) as error:
-        return CreateEmptyDatabase(), [f"檔案 {path} 無法讀取：{error}"], True
+    if not os.path.isdir(path):
+        return CreateEmptyDatabase(), [f"找不到資料夾 {path}，使用空資料庫"]
+    rawData, errors = LoadEntityDirectory(path)
     rawData, companionErrors = LoadSupplementaryData(rawData, path)
-    database, errors = NormalizeDatabase(rawData)
-    errors[:0] = companionErrors
-    return database, errors, False
-
-
-def SaveDatabase(database, path):
-    """將資料分別寫入 ID.json；單一檔案仍採原子取代方式。"""
-    if os.path.isdir(path):
-        return SaveEntityDirectory(database, path)
-
-    temporaryFilePath = path + ".tmp"
-    try:
-        with open(temporaryFilePath, "w", encoding="utf-8") as dataFile:
-            json.dump(database, dataFile, ensure_ascii=False, indent=2)
-        os.replace(temporaryFilePath, path)
-        return True
-    except OSError:
-        return False
+    database, normalizationErrors = NormalizeDatabase(rawData)
+    return database, errors + companionErrors + normalizationErrors
 
 
 def IsSafeRecordId(recordId):
@@ -470,8 +339,8 @@ def ClassroomRecordsForFile(classrooms):
     return records
 
 
-def SaveEntityDirectory(database, path):
-    """原子更新 ID.json 資料夾，並移除已刪除資料對應的舊檔。"""
+def SaveDatabase(database, path):
+    """把資料寫回資料夾：每筆一個 ID.json（原子取代），並移除已刪除資料對應的舊檔。回傳 bool。"""
     courseDirectory = os.path.join(path, COURSE_DATA_DIRECTORY)
     studentDirectory = os.path.join(path, STUDENT_DATA_DIRECTORY)
     try:
@@ -516,39 +385,15 @@ def SaveEntityDirectory(database, path):
 class StorageManager:
     """持有一份資料庫並負責讀寫檔案；業務規則由其他模組的純函式處理。"""
 
-    def __init__(self, jsonPath="04_data_format.json", savePath=None, autosave=True):
-        self.jsonPath = jsonPath
-        self.defaultSavePath = savePath is None
-        if savePath is None:
-            sourceDirectory = (
-                os.path.abspath(jsonPath)
-                if os.path.isdir(jsonPath)
-                else os.path.dirname(os.path.abspath(jsonPath))
-            )
-            savePath = os.path.join(sourceDirectory, DEFAULT_WORK_FILE)
-        self.savePath = savePath
+    def __init__(self, dataDirectory, savePath=None, autosave=True):
+        """dataDirectory：要讀取的資料夾；savePath：要寫回的資料夾，沒指定就寫回 dataDirectory。"""
+        self.dataDirectory = dataDirectory
+        self.savePath = dataDirectory if savePath is None else savePath
         self.autosave = autosave
-        self.data, self.loadErrors, self.corrupted = LoadDatabase(jsonPath)
-        if self.corrupted:
-            corruptedPath = jsonPath
-            if os.path.isdir(jsonPath):
-                corruptedPath = next(
-                    (
-                        os.path.join(jsonPath, fileName)
-                        for fileName in (DEFAULT_WORK_FILE, SEED_FILE)
-                        if os.path.isfile(os.path.join(jsonPath, fileName))
-                    ),
-                    "",
-                )
-            if corruptedPath and os.path.isfile(corruptedPath):
-                shutil.copy2(corruptedPath, corruptedPath + ".corrupt.bak")
+        self.data, self.loadErrors = LoadDatabase(dataDirectory)
 
     def Save(self):
-        """寫回 savePath；若載入時檔案損毀且目標是原檔或預設路徑，拒絕存檔並回傳 False。"""
-        sameFile = os.path.abspath(
-            self.savePath) == os.path.abspath(self.jsonPath)
-        if self.corrupted and (sameFile or self.defaultSavePath):
-            return False
+        """寫回 savePath，回傳 bool。"""
         return SaveDatabase(self.data, self.savePath)
 
     def AutoSave(self):
