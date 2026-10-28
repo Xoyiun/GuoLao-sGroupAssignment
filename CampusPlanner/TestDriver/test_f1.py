@@ -44,7 +44,7 @@ def CopyInputData(directory):
 
 
 def ReadSeedData():
-    data = {"course": [], "students": [], "activities": []}
+    data = {"course": [], "students": []}
     for fileName in os.listdir(os.path.join(SEED, "Courses")):
         with open(os.path.join(SEED, "Courses", fileName), encoding="utf-8") as dataFile:
             data["course"].append(json.load(dataFile))
@@ -59,8 +59,8 @@ def Database(tmp_path):
     """每個測試拿到一份全新的記憶體資料，完全不碰檔案。"""
     assert os.path.exists(SEED), f"找不到種子檔：{SEED}"
     CopyInputData(tmp_path)
-    data, errors, corrupted = LoadDatabase(str(tmp_path))
-    assert not errors and not corrupted
+    data, errors = LoadDatabase(str(tmp_path))
+    assert not errors
     return copy.deepcopy(data)
 
 
@@ -568,18 +568,25 @@ def test_PClassroomChangesPersistToFixedDataFile(tmp_path):
 
 
 
+def WriteRecord(directory, record, fileName=None):
+    """在 Courses/ 或 Students/ 裡寫一個資料檔；檔名預設為 ID.json。"""
+    if fileName is None:
+        fileName = f"{record.get('course_id') or record.get('student_id')}.json"
+    (directory / fileName).write_text(json.dumps(record, ensure_ascii=False), encoding="utf-8")
+
+
 @pytest.mark.persistence
-def test_PDefaultSavePathNeverOverwritesSeed(tmp_path):
-    """沒指定 save_path 時，預設存到同資料夾的 db.json，種子檔位元組完全不變。"""
+def test_PDefaultSavePathIsSameDirectory(tmp_path):
+    """沒指定 savePath 時，存回讀取的同一個資料夾，原有課程檔不受影響。"""
     seedCopy = tmp_path / "seed"
     CopyInputData(seedCopy)
     seedBytes = (seedCopy / "Courses" / "CS101.json").read_bytes()
 
-    m = courseDataManager.CourseDataManager(str(seedCopy))  # 故意不給 save_path
+    m = courseDataManager.CourseDataManager(str(seedCopy))  # 故意不給 savePath
     assert m.AddCourse(NewCourse()) == (True, courseDataManager.OK)
 
     assert (seedCopy / "Courses" / "CS101.json").read_bytes() == seedBytes
-    assert (seedCopy / "db.json").exists()
+    assert (seedCopy / "Courses" / "NEW101.json").exists()
 
 
 
@@ -588,7 +595,7 @@ def test_PAutosaveOffWritesNothing(tmp_path):
     """autosave=False 時，新增資料不會產生任何檔案。"""
     seedCopy = tmp_path / "seed"
     CopyInputData(seedCopy)
-    work = tmp_path / "work.json"
+    work = tmp_path / "work"
     m = courseDataManager.CourseDataManager(str(seedCopy), savePath=str(work), autosave=False)
     m.AddCourse(NewCourse())
     assert not work.exists()
@@ -596,14 +603,11 @@ def test_PAutosaveOffWritesNothing(tmp_path):
 
 @pytest.mark.persistence
 def test_PBadRecordSkippedNotCrash(tmp_path):
-    """檔案中有缺欄位或型別錯誤的單筆資料 → 跳過並記錄，程式不當掉。"""
-    raw = ReadSeedData()
-    raw["course"].append({"course_id": "BROKEN"})  # 缺欄位
-    raw["course"].append("not a dict")
-    CopyFixedData(tmp_path)
-    path = tmp_path / "bad.json"
-    path.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
-    m = StorageManager(str(path), savePath=str(tmp_path / "out.json"))
+    """資料夾中有缺欄位或不是物件的單一檔案 → 跳過並記錄，程式不當掉。"""
+    CopyInputData(tmp_path)
+    WriteRecord(tmp_path / "Courses", {"course_id": "BROKEN"})  # 缺欄位
+    WriteRecord(tmp_path / "Courses", "not a dict", "NOTDICT.json")
+    m = StorageManager(str(tmp_path), savePath=str(tmp_path / "out"))
     assert len(m.GetCourses()) == 23
     assert len(m.loadErrors) == 2
 
@@ -620,7 +624,6 @@ def test_PBadRecordSkippedNotCrash(tmp_path):
 ])
 def test_PBadCourseFormatSkippedNotCrash(tmp_path, field, value):
     """欄位都在但格式錯 → 載入時跳過，之後查詢課程不會當掉。"""
-    raw = ReadSeedData()
     course = NewCourse(course_id="BROKEN", **({"required": False} if field == "type" else {}))
     referenceCourse = {
         "course_id": course["course_id"],
@@ -634,11 +637,9 @@ def test_PBadCourseFormatSkippedNotCrash(tmp_path, field, value):
         "enrolled_count": 0,
     }
     referenceCourse[field] = value
-    raw["course"].append(referenceCourse)
-    CopyFixedData(tmp_path)
-    path = tmp_path / "bad.json"
-    path.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
-    m = StorageManager(str(path), savePath=str(tmp_path / "out.json"))
+    CopyInputData(tmp_path)
+    WriteRecord(tmp_path / "Courses", referenceCourse)
+    m = StorageManager(str(tmp_path), savePath=str(tmp_path / "out"))
     assert courseDataManager.FindCourse(m.data, "BROKEN") is None
     assert len(m.GetCourses()) == 23
     assert len(m.loadErrors) == 1 and field in m.loadErrors[0]
@@ -647,11 +648,13 @@ def test_PBadCourseFormatSkippedNotCrash(tmp_path, field, value):
 
 @pytest.mark.persistence
 def test_PBadStudentClassroomActivityFormatSkipped(tmp_path):
-    """學生、教室、活動的欄位格式錯誤也一樣跳過，其他資料照常載入。"""
-    raw = ReadSeedData()
-    raw["students"].append(NewStudent(student_id="BAD-S", enrolled_courses="CS101"))
-    raw["activities"].append({"activity_id": "BAD-A", "title": "x", "classroom_id": "TR-310", "time_slots": None})
-    CopyFixedData(tmp_path)
+    """學生、教室、活動（event 課程）的欄位格式錯誤也一樣跳過，其他資料照常載入。"""
+    CopyInputData(tmp_path)
+    WriteRecord(tmp_path / "Students", NewStudent(student_id="BAD-S", enrolled_courses="CS101"))
+    WriteRecord(tmp_path / "Courses", {
+        "course_id": "BAD-A", "name": "x", "credits": 0, "type": "event", "teacher": "NPC",
+        "capacity": 10, "classroom": "TR-310", "time_slots": None,
+    })
     classroomPath = tmp_path / "Classroom.json"
     with classroomPath.open(encoding="utf-8") as f:
         classroomData = json.load(f)
@@ -659,27 +662,28 @@ def test_PBadStudentClassroomActivityFormatSkipped(tmp_path):
         {"room_id": "BAD-R", "capacity": 10, "equipment": "projector"}
     )
     classroomPath.write_text(json.dumps(classroomData), encoding="utf-8")
-    path = tmp_path / "bad.json"
-    path.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
-    m = StorageManager(str(path), savePath=str(tmp_path / "out.json"))
+    m = StorageManager(str(tmp_path), savePath=str(tmp_path / "out"))
     assert (len(m.GetStudents()), len(m.GetClassrooms()), len(m.GetActivities())) == (15, 5, 3)
     assert len(m.loadErrors) == 3
 
 
 @pytest.mark.persistence
-def test_PCorruptedFileBackedUpAndNotOverwritten(tmp_path):
-    """整個檔案損毀 → 備份、回傳空資料庫，且拒絕覆蓋原檔。"""
-    path = tmp_path / "broken.json"
-    path.write_text("{ this is not json", encoding="utf-8")
-    m = StorageManager(str(path))
-    assert m.corrupted and m.GetCourses() == []
-    assert m.Save() is False
-    assert path.read_text(encoding="utf-8") == "{ this is not json"
-    assert (tmp_path / "broken.json.corrupt.bak").exists()
+def test_PCorruptedFileBackedUpOthersLoaded(tmp_path):
+    """單一課程檔損毀 → 略過並備份成 .corrupt.bak，其他資料照常載入；存檔後備份仍在。"""
+    CopyInputData(tmp_path)
+    broken = tmp_path / "Courses" / "BROKEN.json"
+    broken.write_text("{ this is not json", encoding="utf-8")
+    m = StorageManager(str(tmp_path))
+    assert len(m.GetCourses()) == 23
+    assert len(m.loadErrors) == 1 and "BROKEN.json" in m.loadErrors[0]
+    backup = tmp_path / "Courses" / "BROKEN.json.corrupt.bak"
+    assert backup.read_text(encoding="utf-8") == "{ this is not json"
+    assert m.Save() is True
+    assert backup.read_text(encoding="utf-8") == "{ this is not json"
 
 
 @pytest.mark.persistence
-def test_PMissingFileGivesEmptyDb(tmp_path):
-    """檔案不存在 → 空資料庫，不當掉。"""
-    m = StorageManager(str(tmp_path / "nope.json"))
-    assert m.GetCourses() == [] and not m.corrupted
+def test_PMissingDirectoryGivesEmptyDb(tmp_path):
+    """資料夾不存在 → 空資料庫並記錄原因，不當掉。"""
+    m = StorageManager(str(tmp_path / "nope"))
+    assert m.GetCourses() == [] and len(m.loadErrors) == 1

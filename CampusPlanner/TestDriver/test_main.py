@@ -1,7 +1,7 @@
 """main.py（F1 命令列介面）的自動化測試。
 
 用假的 ask（照順序回傳預先寫好的輸入）和 show（把輸出收進清單）取代鍵盤和螢幕，
-所以不需要人工輸入。每個測試都在 tmp_path 裡放一份種子檔複本，不會碰到真正的檔案。
+所以不需要人工輸入。每個測試都在 tmp_path 裡放一份 TestInput 複本，不會碰到真正的檔案。
 
 執行：python -m pytest test_main.py -v      只跑這類：python -m pytest -m cli -v
 """
@@ -15,7 +15,8 @@ import pytest
 import Main as main
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SEED = os.path.join(os.path.dirname(HERE), "UserData", "04_data_format.json")  # 修改：種子檔在 CampusPlanner/UserData
+TEST_INPUT = os.path.join(HERE, "TestInput")  # 修改：測試資料改為 TestInput/Courses、TestInput/Students 按 ID 分檔
+USER_DATA = os.path.join(os.path.dirname(HERE), "UserData")  # 教室與校園圖仍放在 UserData
 
 pytestmark = pytest.mark.cli  # 這個檔案的測試全部標成 cli
 
@@ -42,9 +43,11 @@ def RunSession(dataDir, inputs):
 
 @pytest.fixture(name="dataDir")
 def DataDir(tmp_path):
-    shutil.copy(SEED, tmp_path / main.SEED_FILE)
+    """把 TestInput 的 Courses/、Students/ 和 UserData 的固定資料複製到 tmp_path，程式在這裡讀寫。"""
+    for directoryName in ("Courses", "Students"):
+        shutil.copytree(os.path.join(TEST_INPUT, directoryName), tmp_path / directoryName)
     for filename in ("Classroom.json", "CampusGraph.json"):
-        shutil.copy(os.path.join(os.path.dirname(SEED), filename), tmp_path / filename)
+        shutil.copy(os.path.join(USER_DATA, filename), tmp_path / filename)
     return tmp_path
 
 
@@ -197,27 +200,25 @@ def test_ClassroomInUseCannotBeDeleted(dataDir):
 # ======================================================================
 # 存檔與重新啟動（不會改到種子檔）
 # ======================================================================
-def test_RestartLoadsPreviousSaveAndSeedUntouched(dataDir):
-    """第一次執行新增課程 → 第二次執行讀得到 → 種子檔完全沒變。"""
-    seedBytes = (dataDir / main.SEED_FILE).read_bytes()
-
+def test_RestartLoadsPreviousSaveAndTestInputUntouched(dataDir):
+    """第一次執行新增課程 → 存成 Courses/NEW101.json → 第二次執行讀得到；原本的 TestInput 沒被改到。"""
     first = RunSession(dataDir, ["1", *NewCourse, "0"])
-    assert "讀取種子檔" in first
+    assert "[載入] 讀取資料" in first
+    assert (dataDir / "Courses" / "NEW101.json").exists()
 
     second = RunSession(dataDir, ["4", "NEW101", "", "", "", "", "0"])
-    assert "讀取上次的存檔" in second
     assert "[查詢] 共 1 筆課程" in second
 
-    assert (dataDir / main.SEED_FILE).read_bytes() == seedBytes
+    assert not os.path.exists(os.path.join(TEST_INPUT, "Courses", "NEW101.json"))
 
 
-def test_CorruptedSaveFallsBackToSeed(dataDir):
-    """db.json 壞掉 → 警告並改用種子檔，壞檔有備份。"""
-    (dataDir / "db.json").write_text("{ 壞掉的 json", encoding="utf-8")
+def test_CorruptedCourseFileSkippedAndBackedUp(dataDir):
+    """其中一個課程檔壞掉 → 警告並略過該檔，其他課程照常查詢，壞檔有備份。"""
+    (dataDir / "Courses" / "BROKEN.json").write_text("{ 壞掉的 json", encoding="utf-8")
     out = RunSession(dataDir, ["4", "CS101", "", "", "", "", "0"])
-    assert "[警告] 存檔" in out and "損毀" in out
+    assert "[警告] 載入時略過 1 筆" in out and "BROKEN.json" in out
     assert "[查詢] 共 1 筆課程" in out
-    assert (dataDir / "db.json.corrupt.bak").exists()
+    assert (dataDir / "Courses" / "BROKEN.json.corrupt.bak").exists()
 
 
 def test_ManagerInterfaceDecoupling(dataDir):

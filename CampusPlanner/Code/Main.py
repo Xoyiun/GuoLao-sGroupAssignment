@@ -18,12 +18,10 @@ from Constants import (
     CAPACITY_EXCEEDS_ROOM,
     CLASSROOM_IN_USE,
     CLASSROOM_NOT_FOUND,
-    COURSE_DATA_DIRECTORY,
     COURSE_HAS_STUDENTS,
     COURSE_NOT_FOUND,
     DAY_NAMES,
     DEFAULT_MAX_CREDITS,
-    DEFAULT_WORK_FILE,
     DUPLICATE_ID,
     DUPLICATE_SLOT,
     ERROR_REASONS,
@@ -40,14 +38,12 @@ from Constants import (
     NOT_FOUND,
     OK,
     SAVE_FAILED,
-    SEED_FILE,
-    STUDENT_DATA_DIRECTORY,
     VALID_DAYS,
     VALID_PERIODS,
 )
 import CourseDataManager as courseDataManager
 
-# 用 __file__ 算路徑，從哪個資料夾執行都找得到種子檔
+# 用 __file__ 算路徑，從哪個資料夾執行都找得到資料資料夾
 HERE = os.path.dirname(os.path.abspath(__file__))
 # 課程、學生的 ID 分檔與固定資料都放在 CampusPlanner/UserData
 DATADIR = os.path.join(os.path.dirname(HERE), "UserData")
@@ -466,25 +462,9 @@ def MenuText():
 
 
 def OpenManager(dataDir, show=print):
-    """初始化並開啟資料管理器，顯示載入狀態日誌。"""
-    seedPath = os.path.join(dataDir, SEED_FILE)
-    workPath = os.path.join(dataDir, DEFAULT_WORK_FILE)
-    courseDirectory = os.path.join(dataDir, COURSE_DATA_DIRECTORY)
-    studentDirectory = os.path.join(dataDir, STUDENT_DATA_DIRECTORY)
-
-    if (
-        os.path.exists(workPath)
-        or os.path.isdir(courseDirectory)
-        or os.path.isdir(studentDirectory)
-    ):
-        manager = courseDataManager.CourseDataManager(dataDir, savePath=dataDir)
-        if not manager.corrupted:
-            show(f"[載入] 讀取上次的存檔：{dataDir}")
-            return manager
-        show(f"[警告] 存檔 {workPath} 損毀，已備份為 .corrupt.bak，改用種子檔重新開始。")
-
-    manager = courseDataManager.CourseDataManager(seedPath, savePath=dataDir)
-    show(f"[載入] 讀取種子檔：{seedPath}")
+    """初始化並開啟資料管理器，讀寫都在 dataDir，顯示載入狀態日誌。"""
+    manager = courseDataManager.CourseDataManager(dataDir, savePath=dataDir)
+    show(f"[載入] 讀取資料：{dataDir}")
     return manager
 
 
