@@ -21,7 +21,7 @@ import shutil
 import pytest
 
 import CourseDataManager as courseDataManager
-from ConflictChecker import CheckTimeConflict
+from ConflictChecker import CheckTimeConflict, FindClassroomConflicts
 from StorageManager import StorageManager, LoadDatabase
 from TimeSlotUtils import GetWeekday, LOCAL_TIME_ZONE
 from VenueManager import AddActivity
@@ -145,6 +145,19 @@ def test_EventsAreStoredAsDateBasedCourses(database):
         for course in eventCourses
         for slot in course["time_slots"]
     )
+
+
+@pytest.mark.acceptance
+def test_SeedHasNoClassroomDoubleBooking(database):
+    """種子資料中不能有兩門課（含活動）在同一教室、同一時段上課，否則這些課永遠無法被加選。"""
+    clashes = [
+        (course["course_id"], otherCourseId)
+        for course in database["courses"]
+        for otherCourseId, _ in FindClassroomConflicts(
+            database, course["classroom_id"], course["time_slots"], excludeCourseId=course["course_id"]
+        )
+    ]
+    assert clashes == []
 
 
 @pytest.mark.acceptance
