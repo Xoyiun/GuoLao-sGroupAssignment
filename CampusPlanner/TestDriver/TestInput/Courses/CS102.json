@@ -8,15 +8,15 @@
   "classroom": "IB-101",
   "time_slots": [
     {
-      "day": 2,
+      "day": 4,
       "period": "2"
     },
     {
-      "day": 2,
+      "day": 4,
       "period": "3"
     },
     {
-      "day": 2,
+      "day": 4,
       "period": "4"
     }
   ],
