@@ -119,7 +119,7 @@ def test_SeedUsesReferenceFormatAndLoadsFixedData(database):
     assert database["courses"][0]["title"] == raw["course"][0]["name"]
     assert database["classrooms"][0]["building_name"] == "研揚大樓"
     assert len(database["campus_graph"]["nodes"]) == 10
-    assert len(database["courses"]) == 23 and database["activities"] == []
+    assert len(database["courses"]) == 23 and "activities" not in database
 
 
 @pytest.mark.acceptance
@@ -188,7 +188,7 @@ def test_NewActivitiesAreStoredAsEventCourses(database):
     eventCourse = courseDataManager.FindCourse(database, "ACT-NEW")
     assert eventCourse["course_type"] == "event"
     assert eventCourse["credits"] == 0
-    assert database["activities"] == []
+    assert "activities" not in database
 
 
 # ======================================================================
@@ -588,6 +588,21 @@ def test_PDefaultSavePathIsSameDirectory(tmp_path):
     assert (seedCopy / "Courses" / "CS101.json").read_bytes() == seedBytes
     assert (seedCopy / "Courses" / "NEW101.json").exists()
 
+
+
+@pytest.mark.persistence
+def test_PSaveSkipsUnchangedFiles(tmp_path):
+    """存檔只寫有變動的檔案：新增一門課後，原有課程檔不會被重寫。"""
+    CopyInputData(tmp_path)
+    m = courseDataManager.CourseDataManager(str(tmp_path))
+    assert m.Save() is True  # 第一次存檔把檔案統一成程式的寫法
+    cs101 = tmp_path / "Courses" / "CS101.json"
+    before = cs101.stat().st_mtime_ns
+
+    assert m.AddCourse(NewCourse()) == (True, courseDataManager.OK)
+
+    assert (tmp_path / "Courses" / "NEW101.json").exists()
+    assert cs101.stat().st_mtime_ns == before
 
 
 @pytest.mark.persistence

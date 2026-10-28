@@ -216,9 +216,7 @@ def DeleteClassroom(database, classroomId):
     room = FindClassroom(database, classroomId)
     if room is None:
         return False, NOT_FOUND
-    inUse = any(course["classroom_id"] == classroomId for course in database["courses"]) or any(
-        activity["classroom_id"] == classroomId for activity in database["activities"]
-    )
+    inUse = any(course["classroom_id"] == classroomId for course in database["courses"])  # 含 event 活動
     if inUse:
         return False, CLASSROOM_IN_USE
     database["classrooms"].remove(room)
