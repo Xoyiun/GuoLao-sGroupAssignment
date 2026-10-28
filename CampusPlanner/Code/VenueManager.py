@@ -43,13 +43,9 @@ def FindAvailableClassrooms(database: dict, timeSlots: list[dict], minCapacity: 
     requiredEquipment = set(requiredEquipment or [])
     occupiedRooms = set()
 
-    for course in database.get("courses", []):
+    for course in database.get("courses", []):  # 活動以 event 課程存放，一併計入
         if TimeSlotsOverlap(timeSlots, course.get("time_slots", [])):
             occupiedRooms.add(course.get("classroom_id"))
-
-    for activity in database.get("activities", []):
-        if TimeSlotsOverlap(timeSlots, activity.get("time_slots", [])):
-            occupiedRooms.add(activity.get("classroom_id"))
 
     candidates = []
     for room in database.get("classrooms", []):
@@ -83,13 +79,7 @@ def AddActivity(database: dict, activity: dict) -> tuple[bool, str]:
     activityId = activity.get("activity_id")
     if not activityId:
         return False, INVALID_FIELD
-    if (
-        courseDataManager.FindCourse(database, activityId) is not None
-        or any(
-            existingActivity.get("activity_id") == activityId
-            for existingActivity in database.get("activities", [])
-        )
-    ):
+    if courseDataManager.FindCourse(database, activityId) is not None:
         return False, DUPLICATE_ID
 
     classroomId = activity.get("classroom_id")

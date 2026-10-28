@@ -175,7 +175,6 @@ def CreateEmptyDatabase():
         "classrooms": [],
         "courses": [],
         "students": [],
-        "activities": [],  # 活動都存成 event 課程，這裡固定為空清單，留給 F2–F4 現有程式讀取
         "campus_graph": {"nodes": [], "edges": []},
     }
 
@@ -283,9 +282,17 @@ def IsSafeRecordId(recordId):
 
 
 def WriteJsonFile(record, filePath):
+    """內容跟檔案現有的一樣就不寫（每次存檔不必重寫所有檔案）；要寫時先寫暫存檔再取代。"""
+    content = json.dumps(record, ensure_ascii=False, indent=2)
+    try:
+        with open(filePath, "r", encoding="utf-8") as dataFile:
+            if dataFile.read() == content:
+                return
+    except (OSError, UnicodeDecodeError):
+        pass  # 檔案不存在或讀不了，就照常寫入
     temporaryFilePath = filePath + ".tmp"
     with open(temporaryFilePath, "w", encoding="utf-8") as dataFile:
-        json.dump(record, dataFile, ensure_ascii=False, indent=2)
+        dataFile.write(content)
     os.replace(temporaryFilePath, filePath)
 
 
@@ -421,7 +428,7 @@ class StorageManager:
             for course in self.data["courses"]
             if course.get("course_type") == "event"
         ]
-        return [*self.data["activities"], *eventCourses]
+        return eventCourses
 
     def GetCampusGraph(self):
         return self.data["campus_graph"]
