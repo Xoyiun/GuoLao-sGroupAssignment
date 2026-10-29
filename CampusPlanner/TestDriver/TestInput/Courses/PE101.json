@@ -1,0 +1,20 @@
+{
+  "course_id": "PE101",
+  "name": "體育：羽球",
+  "credits": 1,
+  "type": "Required",
+  "teacher": "馮教練",
+  "capacity": 30,
+  "classroom": "T4-202",
+  "time_slots": [
+    {
+      "day": 5,
+      "period": "1"
+    },
+    {
+      "day": 5,
+      "period": "2"
+    }
+  ],
+  "enrolled_count": 30
+}

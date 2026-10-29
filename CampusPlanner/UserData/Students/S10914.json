@@ -1,0 +1,11 @@
+{
+  "student_id": "S10914",
+  "name": "曾子軒",
+  "department": "資工系",
+  "max_credits": 25,
+  "enrolled_courses": [
+    "PE101",
+    "CS101"
+  ],
+  "grade": 1
+}
