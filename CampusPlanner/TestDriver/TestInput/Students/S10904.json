@@ -1,0 +1,11 @@
+{
+  "student_id": "S10904",
+  "name": "黃雅婷",
+  "department": "資工系",
+  "max_credits": 25,
+  "enrolled_courses": [
+    "CS101",
+    "ENG101"
+  ],
+  "grade": 1
+}

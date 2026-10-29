@@ -60,6 +60,7 @@ uv sync
 
 * **執行主程式**：
   ```bash
+  #目前還沒有想好實現，暫時沒用
   uv run main
   ```
 
@@ -78,6 +79,16 @@ uv sync
   ```bash
   uv remove 套件名稱
   ```
+
+---
+
+### 5. CampusPlanner 資料檔
+
+動態資料依 ID 分檔保存：課程位於 `CampusPlanner/UserData/Courses/{course_id}.json`，學生位於 `CampusPlanner/UserData/Students/{student_id}.json`。測試輸入使用相同結構，放在 `CampusPlanner/TestDriver/TestInput`。教室與校園圖仍分別保存在 `Classroom.json` 和 `CampusGraph.json`。
+
+活動資料會依 `CampusPlanner/Reference/Formate/Course.json` 的 `event` 格式轉為課程，使用活動 ID 作為 `course_id`、學分為 0、教師預設為 `NPC`。活動時段的日期使用 Unix 時間戳；目前測試資料的日期為 2026-09-27、2026-10-06、2026-10-18，時間皆為台北時區 00:00。
+
+只支援 ID 分檔格式：舊的整份 JSON 種子檔（`04_data_format.json`）與 `db.json` 已不再讀取。程式直接讀寫 `CampusPlanner/UserData`；某個資料檔損毀時會略過該檔並備份成 `{檔名}.corrupt.bak`，其他資料照常載入。
 
 ---
 ⚠️ **注意**：`.venv/` 資料夾已加入 `.gitignore`，**請勿將 `.venv` 推送到 Git**。

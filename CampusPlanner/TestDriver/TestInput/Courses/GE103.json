@@ -1,0 +1,20 @@
+{
+  "course_id": "GE103",
+  "name": "心理學概論",
+  "credits": 2,
+  "type": "unRequired",
+  "teacher": "何教授",
+  "capacity": 120,
+  "classroom": "IB-101",
+  "time_slots": [
+    {
+      "day": 1,
+      "period": "3"
+    },
+    {
+      "day": 1,
+      "period": "4"
+    }
+  ],
+  "enrolled_count": 90
+}

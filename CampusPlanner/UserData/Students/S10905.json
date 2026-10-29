@@ -1,0 +1,11 @@
+{
+  "student_id": "S10905",
+  "name": "王大衛",
+  "department": "管院",
+  "max_credits": 25,
+  "enrolled_courses": [
+    "MA101",
+    "CS202"
+  ],
+  "grade": 1
+}

@@ -1,0 +1,11 @@
+{
+  "student_id": "S10910",
+  "name": "許家豪",
+  "department": "資工系",
+  "max_credits": 25,
+  "enrolled_courses": [
+    "CS301",
+    "CS302"
+  ],
+  "grade": 1
+}

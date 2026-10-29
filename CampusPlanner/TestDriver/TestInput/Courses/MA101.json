@@ -1,0 +1,28 @@
+{
+  "course_id": "MA101",
+  "name": "微積分",
+  "credits": 4,
+  "type": "Required",
+  "teacher": "張教授",
+  "capacity": 120,
+  "classroom": "IB-101",
+  "time_slots": [
+    {
+      "day": 2,
+      "period": "3"
+    },
+    {
+      "day": 2,
+      "period": "4"
+    },
+    {
+      "day": 5,
+      "period": "2"
+    },
+    {
+      "day": 5,
+      "period": "3"
+    }
+  ],
+  "enrolled_count": 110
+}
