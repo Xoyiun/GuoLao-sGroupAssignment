@@ -8,6 +8,7 @@ MARKERS = {
     "persistence": "存檔與容錯載入（F6 相關，不計入 30 個）",
     "acceptance": "F1 驗收條件（資料量）",
     "cli": "main.py 命令列介面（test_main.py，不計入 30 個）",  # 新增：main.py 的測試標記
+    "f2": "F2 衝堂與選課檢查（test_f2.py）",
 }
 
 
