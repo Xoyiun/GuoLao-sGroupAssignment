@@ -1,0 +1,21 @@
+{
+  "course_id": "ACT02",
+  "name": "程式競賽培訓工作坊",
+  "credits": 0,
+  "type": "event",
+  "teacher": "NPC",
+  "capacity": 60,
+  "classroom": "IB-101",
+  "time_slots": [
+    {
+      "day": 1792252800,
+      "period": "8"
+    },
+    {
+      "day": 1792252800,
+      "period": "9"
+    }
+  ],
+  "enrolled_count": 40,
+  "student_ids": ["S10903", "S10904"]
+}

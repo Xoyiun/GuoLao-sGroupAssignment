@@ -1,0 +1,47 @@
+{
+  "classroom": [
+    {
+      "room_id": "TR-310",
+      "capacity": 60,
+      "equipment": [
+        "projector",
+        "mic",
+        "computer"
+      ]
+    },
+    {
+      "room_id": "IB-101",
+      "capacity": 120,
+      "equipment": [
+        "projector",
+        "mic",
+        "computer",
+        "audio"
+      ]
+    },
+    {
+      "room_id": "E2-201",
+      "capacity": 50,
+      "equipment": [
+        "projector",
+        "blackboard"
+      ]
+    },
+    {
+      "room_id": "MA-101",
+      "capacity": 80,
+      "equipment": [
+        "projector",
+        "mic",
+        "computer"
+      ]
+    },
+    {
+      "room_id": "T4-202",
+      "capacity": 45,
+      "equipment": [
+        "projector"
+      ]
+    }
+  ]
+}

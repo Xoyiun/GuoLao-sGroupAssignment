@@ -1,0 +1,24 @@
+{
+  "course_id": "CS203",
+  "name": "軟體工程",
+  "credits": 3,
+  "type": "unRequired",
+  "teacher": "林教授",
+  "capacity": 120,
+  "classroom": "IB-101",
+  "time_slots": [
+    {
+      "day": 3,
+      "period": "2"
+    },
+    {
+      "day": 3,
+      "period": "3"
+    },
+    {
+      "day": 3,
+      "period": "4"
+    }
+  ],
+  "enrolled_count": 70
+}

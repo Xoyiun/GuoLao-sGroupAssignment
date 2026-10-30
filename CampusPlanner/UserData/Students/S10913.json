@@ -1,0 +1,11 @@
+{
+  "student_id": "S10913",
+  "name": "郭佳玲",
+  "department": "資工系",
+  "max_credits": 25,
+  "enrolled_courses": [
+    "CS103",
+    "CS303"
+  ],
+  "grade": 1
+}

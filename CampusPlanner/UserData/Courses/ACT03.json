@@ -1,0 +1,21 @@
+{
+  "course_id": "ACT03",
+  "name": "職涯發展與履歷講座",
+  "credits": 0,
+  "type": "event",
+  "teacher": "NPC",
+  "capacity": 80,
+  "classroom": "MA-101",
+  "time_slots": [
+    {
+      "day": 1790438400,
+      "period": "7"
+    },
+    {
+      "day": 1790438400,
+      "period": "8"
+    }
+  ],
+  "enrolled_count": 50,
+  "student_ids": ["S10905", "S10906"]
+}

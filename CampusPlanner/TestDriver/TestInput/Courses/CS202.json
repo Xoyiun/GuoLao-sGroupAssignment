@@ -1,0 +1,24 @@
+{
+  "course_id": "CS202",
+  "name": "資料庫系統",
+  "credits": 3,
+  "type": "unRequired",
+  "teacher": "楊教授",
+  "capacity": 80,
+  "classroom": "MA-101",
+  "time_slots": [
+    {
+      "day": 2,
+      "period": "6"
+    },
+    {
+      "day": 2,
+      "period": "7"
+    },
+    {
+      "day": 2,
+      "period": "8"
+    }
+  ],
+  "enrolled_count": 65
+}
