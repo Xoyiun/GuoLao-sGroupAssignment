@@ -42,6 +42,7 @@ from Constants import (
     VALID_PERIODS,
 )
 import CourseDataManager as courseDataManager
+import Timetable as timetableModule
 
 # 用 __file__ 算路徑，從哪個資料夾執行都找得到資料資料夾
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -436,6 +437,91 @@ def ListClassroomsFlow(manager, ask, show):
     ShowResults(show, "教室", manager.GetClassrooms(), FormatClassroom)
 
 
+
+def ViewTimetableFlow(manager, ask, show):
+    student_id = AskIdentifier(ask, "請輸入學號：")
+    db = {
+        "courses": manager.QueryCourses(),
+        "students": manager.QueryStudents(),
+    }
+
+    timetable = timetableModule.build_timetable(db, student_id)
+    if timetable is None:
+        show(f"[錯誤] 找不到學生：{student_id}")
+        return
+
+    summary = timetableModule.summarize_timetable(timetable, db, student_id)
+    show(f"\n學生 {student_id} 的每週課表：")
+    show("星期 | " + " | ".join(timetableModule.PERIODS))
+
+    for day_index, row in enumerate(timetable):
+        cells = [cell if cell is not None else "--" for cell in row]
+        daily_count = summary["daily_period_counts"][day_index]
+        show(f"星期{day_index + 1} | " + " | ".join(cells) + f" | 上課 {daily_count} 節")
+
+    show(f"總學分：{summary['total_credits']}")
+    show(f"佔用節數：{sum(summary['daily_period_counts'])}")
+    show(f"空堂數：{summary['free_period_count']}")
+
+def QueryTimetableFlow(manager, ask, show):
+    student_id = AskIdentifier(ask, "請輸入學號：")
+    db = {"courses": manager.QueryCourses(), "students": manager.QueryStudents()}
+    timetable = timetableModule.build_timetable(db, student_id)
+    if timetable is None:
+        show(f"[錯誤] 找不到學生：{student_id}")
+        return
+
+    day_text = AskText(ask, "星期（1-7，留空不限）：")
+    day = ParseInt(day_text) if day_text else None
+    period = AskText(ask, "節次（留空不限）：") or None
+    course_id = AskText(ask, "課程／活動代碼（留空不限）：") or None
+
+    if day is not None and not isinstance(day, int):
+        show("[錯誤] 星期必須輸入 1 到 7。")
+        return
+    try:
+        results = timetableModule.query_timetable(timetable, day, period, course_id)
+    except ValueError as error:
+        show(f"[錯誤] {error}")
+        return
+
+    if not results:
+        show("符合條件的課表時段是空的。")
+        return
+    for result_day, result_period, result_id in results:
+        show(f"星期{result_day} 第{result_period}節：{result_id}")
+
+
+def FindFreeSlotsFlow(manager, ask, show):
+    student_id = AskIdentifier(ask, "請輸入學號：")
+    db = {"courses": manager.QueryCourses(), "students": manager.QueryStudents()}
+    timetable = timetableModule.build_timetable(db, student_id)
+    if timetable is None:
+        show(f"[錯誤] 找不到學生：{student_id}")
+        return
+
+    day = ParseInt(AskText(ask, "星期（1-7）："))
+    start_period = AskText(ask, "開始節次（1-9、a-c）：")
+    end_period = AskText(ask, "結束節次（1-9、a-c）：")
+    min_length = ParseInt(AskText(ask, "至少連續幾節："))
+
+    if not isinstance(day, int) or not isinstance(min_length, int):
+        show("[錯誤] 星期和連續節數都必須輸入整數。")
+        return
+    try:
+        slots = timetableModule.find_free_slots(
+            timetable, day, start_period, end_period, min_length
+        )
+    except ValueError as error:
+        show(f"[錯誤] {error}")
+        return
+
+    if not slots:
+        show("指定範圍內沒有符合長度的連續空堂。")
+        return
+    for first_period, last_period in slots:
+        show(f"星期{day} 第{first_period}節到第{last_period}節為空堂。")
+
 # ======================================================================
 # 四、選單與啟動 (Menu & Main Loop)
 # ======================================================================
@@ -451,11 +537,14 @@ MENU = (
     ("9", "新增教室", AddClassroomFlow),
     ("10", "刪除教室", DeleteClassroomFlow),
     ("11", "列出教室", ListClassroomsFlow),
+    ("12", "查看個人課表", ViewTimetableFlow),
+    ("13", "依條件查詢個人課表", QueryTimetableFlow),
+    ("14", "查詢連續空堂", FindFreeSlotsFlow),
 )
 
 
 def MenuText():
-    lines = ["", "===== F1 課程與學生資料管理 ====="]
+    lines = ["", "===== 校園選課與課表規劃系統 ====="]
     lines += [f" {key:>2}. {label}" for key, label, _ in MENU]
     lines.append("  0. 離開")
     return "\n".join(lines)
