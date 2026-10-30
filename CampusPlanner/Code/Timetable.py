@@ -49,14 +49,6 @@ def GenerateWeeklyTimetable(database: dict, studentId: str) -> tuple[bool, str, 
                 slotType = "activity" if course.get("course_type") == "event" else "course"
                 matrix[day][period] = {"type": slotType, "id": courseId, "title": course.get("title")}
 
-    enrolledActs = set(student.get("enrolled_activities", []))
-    for activity in database.get("activities", []):
-        if activity.get("activity_id") in enrolledActs:
-            for slot in activity.get("time_slots", []):
-                day, period = GetWeekday(slot.get("day")), slot.get("period")
-                if day in matrix and period in matrix[day]:
-                    matrix[day][period] = {"type": "activity", "id": activity["activity_id"], "title": activity.get("title")}
-
     busyCount = sum(1 for day in matrix for period in matrix[day] if matrix[day][period] is not None)
     totalSlots = len(VALID_DAYS) * len(VALID_PERIODS)
 

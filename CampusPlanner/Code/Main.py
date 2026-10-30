@@ -467,19 +467,9 @@ def MenuText():
 
 
 def OpenManager(dataDir, show=print):
-    """初始化並開啟資料管理器，顯示載入狀態日誌。"""
-    courseDirectory = os.path.join(dataDir, COURSE_DATA_DIRECTORY)
-    studentDirectory = os.path.join(dataDir, STUDENT_DATA_DIRECTORY)
-
-    if os.path.isdir(courseDirectory) or os.path.isdir(studentDirectory):
-        manager = courseDataManager.CourseDataManager(dataDir, savePath=dataDir)
-        if not manager.corrupted:
-            show(f"[載入] 讀取資料目錄：{dataDir}")
-            return manager
-        show(f"[警告] 資料目錄損毀，改用空資料庫重新開始。")
-
+    """初始化並開啟資料管理器，讀寫都在 dataDir，顯示載入狀態日誌。"""
     manager = courseDataManager.CourseDataManager(dataDir, savePath=dataDir)
-    show(f"[載入] 讀取資料目錄：{dataDir}")
+    show(f"[載入] 讀取資料：{dataDir}")
     return manager
 
 
