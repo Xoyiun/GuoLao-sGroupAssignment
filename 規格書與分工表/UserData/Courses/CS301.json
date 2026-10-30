@@ -1,0 +1,24 @@
+{
+  "course_id": "CS301",
+  "name": "人工智慧概論",
+  "credits": 3,
+  "type": "unRequired",
+  "teacher": "李教授",
+  "capacity": 60,
+  "classroom": "TR-310",
+  "time_slots": [
+    {
+      "day": 3,
+      "period": "6"
+    },
+    {
+      "day": 3,
+      "period": "7"
+    },
+    {
+      "day": 3,
+      "period": "8"
+    }
+  ],
+  "enrolled_count": 58
+}

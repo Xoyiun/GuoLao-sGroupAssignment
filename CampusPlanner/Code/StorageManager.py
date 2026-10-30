@@ -1,7 +1,7 @@
 """資料存取層：只負責讀檔與存檔，不含任何業務規則（功能 F6）。
 
 - 不建立全域實例，由呼叫端自行建立 StorageManager 後傳入。
-- 種子資料（jsonPath）與工作資料（savePath）可分開，避免弄髒測資。
+- 來源資料（jsonPath）與工作資料（savePath）可分開，避免弄髒來源。
 - 依 Reference/Formate 正規化動態資料，並合併獨立的教室與校園圖固定資料。
 - 副程式只負責執行讀寫與狀態回傳（True/False），不主動印出介面文字。
 """
@@ -15,9 +15,7 @@ from Constants import (
     CAMPUS_GRAPH_FILE,
     CLASSROOM_FILE,
     COURSE_DATA_DIRECTORY,
-    DEFAULT_WORK_FILE,
     REQUIRED_KEYS,
-    SEED_FILE,
     STUDENT_DATA_DIRECTORY,
     VALID_PERIODS,
 )
@@ -133,7 +131,7 @@ def AdaptActivityCourse(activity, index, errors):
 
 
 def LoadSupplementaryData(rawData, path):
-    """從種子資料旁的固定資料檔補入教室與校園圖。"""
+    """從資料目錄旁的固定資料檔補入教室與校園圖。"""
     errors = []
     if not isinstance(rawData, dict):
         return rawData, errors
@@ -194,12 +192,12 @@ def AdaptReferenceClassroom(room, buildingNames):
         return room
 
     classroomId = room.get("room_id")
-    buildingId = classroomId.split("-", 1)[0] if isinstance(classroomId, str) else ""
+    roomPrefix = classroomId.split("-", 1)[0] if isinstance(classroomId, str) else ""
+    buildingId = roomPrefix if roomPrefix in buildingNames else ""
     return {
         "classroom_id": classroomId,
-        "building_id": room.get("building_id") or buildingId,
-        "building_name": room.get("building_name")
-        or buildingNames.get(buildingId, ""),
+        "building_id": buildingId,
+        "building_name": buildingNames.get(buildingId, ""),
         "capacity": room.get("capacity"),
         "equipment": room.get("equipment"),
     }
@@ -349,7 +347,7 @@ def LoadDatabase(path):
 
     回傳 (database, errors, corrupted)。
     - 分檔目錄：讀取 Courses/ 與 Students/，固定資料由同目錄補入
-    - 舊版 JSON：繼續支援單一種子檔或 db.json
+    - 單一 JSON 檔：支援直接指定 JSON 路徑匯入舊格式資料
     - 檔案不存在：空資料庫，corrupted=False
     - 檔案損毀或無法讀取：空資料庫，corrupted=True
     - 單筆壞資料：略過並寫入 errors
@@ -363,17 +361,7 @@ def LoadDatabase(path):
             database, normalizationErrors = NormalizeDatabase(rawData)
             return database, errors + companionErrors + normalizationErrors, False
 
-        legacyPath = next(
-            (
-                os.path.join(path, fileName)
-                for fileName in (DEFAULT_WORK_FILE, SEED_FILE)
-                if os.path.isfile(os.path.join(path, fileName))
-            ),
-            None,
-        )
-        if legacyPath is None:
-            return CreateEmptyDatabase(), [f"找不到資料檔：{path}"], False
-        path = legacyPath
+        return CreateEmptyDatabase(), [], False
     if not os.path.exists(path):
         return CreateEmptyDatabase(), [f"找不到檔案 {path}，使用空資料庫"], False
     try:
@@ -461,8 +449,6 @@ def ClassroomRecordsForFile(classrooms):
         }
         record.update({
             "room_id": classroom["classroom_id"],
-            "building_id": classroom.get("building_id", ""),
-            "building_name": classroom.get("building_name", ""),
             "capacity": classroom["capacity"],
             "equipment": classroom.get("equipment", []),
         })
@@ -516,7 +502,7 @@ def SaveEntityDirectory(database, path):
 class StorageManager:
     """持有一份資料庫並負責讀寫檔案；業務規則由其他模組的純函式處理。"""
 
-    def __init__(self, jsonPath="04_data_format.json", savePath=None, autosave=True):
+    def __init__(self, jsonPath=".", savePath=None, autosave=True):
         self.jsonPath = jsonPath
         self.defaultSavePath = savePath is None
         if savePath is None:
@@ -525,21 +511,14 @@ class StorageManager:
                 if os.path.isdir(jsonPath)
                 else os.path.dirname(os.path.abspath(jsonPath))
             )
-            savePath = os.path.join(sourceDirectory, DEFAULT_WORK_FILE)
+            savePath = sourceDirectory
         self.savePath = savePath
         self.autosave = autosave
         self.data, self.loadErrors, self.corrupted = LoadDatabase(jsonPath)
         if self.corrupted:
             corruptedPath = jsonPath
             if os.path.isdir(jsonPath):
-                corruptedPath = next(
-                    (
-                        os.path.join(jsonPath, fileName)
-                        for fileName in (DEFAULT_WORK_FILE, SEED_FILE)
-                        if os.path.isfile(os.path.join(jsonPath, fileName))
-                    ),
-                    "",
-                )
+                corruptedPath = ""
             if corruptedPath and os.path.isfile(corruptedPath):
                 shutil.copy2(corruptedPath, corruptedPath + ".corrupt.bak")
 

@@ -1,0 +1,20 @@
+{
+  "course_id": "PE102",
+  "name": "體育：網球",
+  "credits": 1,
+  "type": "Required",
+  "teacher": "鄧教練",
+  "capacity": 30,
+  "classroom": "T4-202",
+  "time_slots": [
+    {
+      "day": 2,
+      "period": "1"
+    },
+    {
+      "day": 2,
+      "period": "2"
+    }
+  ],
+  "enrolled_count": 25
+}

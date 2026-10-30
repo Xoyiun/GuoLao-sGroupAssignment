@@ -16,6 +16,5 @@ python_files = [
     "TestDriver.py",
 ]
 testpaths = [
-    "CampusPlanner/TestDriver",
+    ".",
 ]
-

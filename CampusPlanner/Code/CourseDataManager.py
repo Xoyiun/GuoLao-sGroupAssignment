@@ -3,7 +3,7 @@
 核心函式都是純函式：function(database, ...) -> (ok, code)，不碰檔案、不用全域變數，
 可直接用 dict 測試。CourseDataManager 將純函式接上 StorageManager 的存檔。
 
-欄位使用 StorageManager 正規化後的內部格式；種子檔依 Reference/Formate 定義，
+欄位使用 StorageManager 正規化後的內部格式；參考資料依 Reference/Formate 定義，
 由 F6 載入時轉換：
   course : course_id, title, credits, required, teacher, classroom_id,
            capacity, enrolled_count, time_slots[{day, period}]
@@ -105,7 +105,7 @@ def RemainingSeats(course):
 # 驗證（純函式，皆回傳 (ok, code)）
 # ======================================================================
 def ValidateTimeSlots(timeSlots):
-    """防止種子檔的time_slot設定錯誤 或是防止未來add_course時設定錯誤
+    """防止 time_slot 設定錯誤，或防止新增課程時設定錯誤
 
     F4 活動的 time_slots 格式跟課程相同（星期 1–7、節次 1–9, a, b, c），新增活動時可共用。
     """
