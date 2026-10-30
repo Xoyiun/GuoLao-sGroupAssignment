@@ -40,14 +40,14 @@ CATEGORIES = [
     ("acceptance", "驗收條件", "F1 資料量驗收（不計入核心 30 個）", None),
 ]
 CORE = [c for c in CATEGORIES if c[3] is not None]
-STATUS_LABEL = {"passed": "通過", "failed": "失敗", "skipped": "略過", "notrun": "未執行"}
-STATUS_ICON = {"passed": "✓", "failed": "✗", "skipped": "–", "notrun": "?"}
+STATUSLABEL = {"passed": "通過", "failed": "失敗", "skipped": "略過", "notrun": "未執行"}
+STATUSICON = {"passed": "✓", "failed": "✗", "skipped": "–", "notrun": "?"}
 
 
 # ----------------------------------------------------------------------
 # 讀取測試檔的標記與說明（不需要 import 測試檔，也不需要 pytest）
 # ----------------------------------------------------------------------
-def parse_tests(path):
+def ParseTests(path):
     with open(path, encoding="utf-8") as f:
         tree = ast.parse(f.read())
     tests = []
@@ -75,14 +75,14 @@ def parse_tests(path):
 # ----------------------------------------------------------------------
 # 讀取 pytest 的 junit XML 結果
 # ----------------------------------------------------------------------
-def parse_results(xml_path):
-    root = ET.parse(xml_path).getroot()
+def ParseResults(xmlPath):
+    root = ET.parse(xmlPath).getroot()
     suite = root if root.tag == "testsuite" else root.find("testsuite")
     meta = {
         "timestamp": suite.get("timestamp", "") if suite is not None else "",
         "hostname": suite.get("hostname", "") if suite is not None else "",
     }
-    by_func = {}
+    byFunc = {}
     for tc in root.iter("testcase"):
         full = tc.get("name", "")
         base = full.split("[", 1)[0]
@@ -93,13 +93,13 @@ def parse_results(xml_path):
                 message = ((child.get("message") or "") + "\n" + (child.text or "")).strip()
             elif child.tag == "skipped":
                 status = "skipped"
-        by_func.setdefault(base, []).append(
+        byFunc.setdefault(base, []).append(
             {"case": full, "status": status, "time": float(tc.get("time") or 0), "message": message}
         )
-    return by_func, meta
+    return byFunc, meta
 
 
-def func_status(cases):
+def FuncStatus(cases):
     if not cases:
         return "notrun"
     if any(c["status"] == "failed" for c in cases):
@@ -109,7 +109,7 @@ def func_status(cases):
     return "passed"
 
 
-def short_id(name):
+def ShortId(name):
     m = re.match(r"test_([a-z])(\d+)_", name)
     return f"{m.group(1).upper()}{m.group(2)}" if m else name[len("test_"):]
 
@@ -164,59 +164,59 @@ buttons.forEach(b=>b.addEventListener('click',()=>{
 """
 
 
-def esc(s):
+def Esc(s):
     return html.escape(str(s), quote=True)
 
 
-def build_html(title, tests, by_func, meta, test_file):
+def BuildHtml(title, tests, byFunc, meta, testFile):
     # 分組
     groups = {key: [] for key, *_ in CATEGORIES}
     groups["uncategorized"] = []
     for t in tests:
-        cases = by_func.get(t["name"], [])
-        t = dict(t, cases=cases, status=func_status(cases))
+        cases = byFunc.get(t["name"], [])
+        t = dict(t, cases=cases, status=FuncStatus(cases))
         keys = [m for m in t["marks"] if m in groups] or ["uncategorized"]
         for k in keys:
             groups[k].append(t)
 
-    all_cases = [c for cases in by_func.values() for c in cases]
-    n_cases = len(all_cases)
-    n_pass = sum(1 for c in all_cases if c["status"] == "passed")
-    n_fail = sum(1 for c in all_cases if c["status"] == "failed")
-    n_skip = sum(1 for c in all_cases if c["status"] == "skipped")
-    total_time = sum(c["time"] for c in all_cases)
-    rate = (n_pass / n_cases * 100) if n_cases else 0
-    ok = n_cases > 0 and n_fail == 0
+    allCases = [c for cases in byFunc.values() for c in cases]
+    nCases = len(allCases)
+    nPass = sum(1 for c in allCases if c["status"] == "passed")
+    nFail = sum(1 for c in allCases if c["status"] == "failed")
+    nSkip = sum(1 for c in allCases if c["status"] == "skipped")
+    totalTime = sum(c["time"] for c in allCases)
+    rate = (nPass / nCases * 100) if nCases else 0
+    ok = nCases > 0 and nFail == 0
 
     out = []
     out.append(f'<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">'
                f'<meta name="viewport" content="width=device-width,initial-scale=1">'
-               f'<title>{esc(title)}</title><style>{CSS}</style></head><body><main>')
-    out.append(f"<h1>{esc(title)}</h1>")
+               f'<title>{Esc(title)}</title><style>{CSS}</style></head><body><main>')
+    out.append(f"<h1>{Esc(title)}</h1>")
     when = meta.get("timestamp") or datetime.datetime.now().isoformat(timespec="seconds")
-    out.append(f'<p class="sub">測試檔：{esc(os.path.basename(test_file))} ｜ 執行時間：{esc(when[:19].replace("T", " "))}'
-               f' ｜ 耗時 {total_time:.2f} 秒</p>')
+    out.append(f'<p class="sub">測試檔：{Esc(os.path.basename(testFile))} ｜ 執行時間：{Esc(when[:19].replace("T", " "))}'
+               f' ｜ 耗時 {totalTime:.2f} 秒</p>')
 
-    if n_cases == 0:
+    if nCases == 0:
         out.append('<div class="banner bad">✗ 沒有讀到任何測試結果</div>')
     elif ok:
-        out.append(f'<div class="banner ok">✓ 全部通過：{n_pass} / {n_cases} 個測試案例</div>')
+        out.append(f'<div class="banner ok">✓ 全部通過：{nPass} / {nCases} 個測試案例</div>')
     else:
-        out.append(f'<div class="banner bad">✗ 有 {n_fail} 個測試案例失敗（共 {n_cases} 個）</div>')
+        out.append(f'<div class="banner bad">✗ 有 {nFail} 個測試案例失敗（共 {nCases} 個）</div>')
 
     # 總覽卡片
     out.append('<div class="grid">')
-    out.append(f'<div class="card"><div class="label">測試案例總數</div><div class="num">{n_cases}</div>'
-               f'<div class="note">通過 {n_pass}・失敗 {n_fail}・略過 {n_skip}</div></div>')
+    out.append(f'<div class="card"><div class="label">測試案例總數</div><div class="num">{nCases}</div>'
+               f'<div class="note">通過 {nPass}・失敗 {nFail}・略過 {nSkip}</div></div>')
     out.append(f'<div class="card"><div class="label">通過率</div><div class="num">{rate:.0f}%</div>'
-               f'<div class="bar"><div class="fill{" bad" if n_fail else ""}" style="width:{rate:.1f}%"></div></div></div>')
-    core_total = core_pass = 0
-    for key, name, _d, target in CORE:
+               f'<div class="bar"><div class="fill{" bad" if nFail else ""}" style="width:{rate:.1f}%"></div></div></div>')
+    coreTotal = corePass = 0
+    for key, name, d, target in CORE:
         funcs = groups[key]
-        core_total += len(funcs)
-        core_pass += sum(1 for f in funcs if f["status"] == "passed")
+        coreTotal += len(funcs)
+        corePass += sum(1 for f in funcs if f["status"] == "passed")
     out.append(f'<div class="card"><div class="label">核心案例（正常＋邊界＋錯誤）</div>'
-               f'<div class="num">{core_pass} / {sum(c[3] for c in CORE)}</div>'
+               f'<div class="num">{corePass} / {sum(c[3] for c in CORE)}</div>'
                f'<div class="note">目標：各類 10 個，共 30 個</div></div>')
     out.append("</div>")
 
@@ -224,15 +224,15 @@ def build_html(title, tests, by_func, meta, test_file):
     out.append("<h2>核心案例進度</h2>")
     out.append('<p class="catdesc">作業要求正常、邊界、錯誤各至少 10 個測試案例（此處以測試函式計）。</p>')
     out.append('<div class="grid">')
-    for key, name, _d, target in CORE:
+    for key, name, d, target in CORE:
         funcs = groups[key]
         passed = sum(1 for f in funcs if f["status"] == "passed")
         pct = min(passed / target * 100, 100)
         note = f"共 {len(funcs)} 個函式" + ("" if len(funcs) == target else f"（目標 {target}）")
-        out.append(f'<div class="card"><div class="label">{esc(name)}</div>'
+        out.append(f'<div class="card"><div class="label">{Esc(name)}</div>'
                    f'<div class="num">{passed} / {target}</div>'
                    f'<div class="bar"><div class="fill{" bad" if passed < len(funcs) else ""}" style="width:{pct:.0f}%"></div></div>'
-                   f'<div class="note">{esc(note)}</div></div>')
+                   f'<div class="note">{Esc(note)}</div></div>')
     out.append("</div>")
 
     # 篩選
@@ -247,23 +247,23 @@ def build_html(title, tests, by_func, meta, test_file):
         funcs = groups[key]
         if not funcs:
             continue
-        out.append(f"<h2>{esc(name)}（{len(funcs)}）</h2>")
-        out.append(f'<p class="catdesc">{esc(desc)}</p>')
+        out.append(f"<h2>{Esc(name)}（{len(funcs)}）</h2>")
+        out.append(f'<p class="catdesc">{Esc(desc)}</p>')
         out.append('<table><thead><tr><th>編號</th><th>測試內容與預期</th><th>結果</th><th>案例數</th></tr></thead><tbody>')
         for f in funcs:
             cases = f["cases"]
             n = len(cases)
-            n_ok = sum(1 for c in cases if c["status"] == "passed")
-            counts = f"{n_ok}/{n}" if n else "–"
+            nOk = sum(1 for c in cases if c["status"] == "passed")
+            counts = f"{nOk}/{n}" if n else "–"
             fails = [c for c in cases if c["status"] == "failed"]
             detail = ""
             if fails:
                 body = "\n\n".join(f"[{c['case']}]\n{c['message']}" for c in fails)
-                detail = f"<details><summary>查看失敗訊息</summary><pre>{esc(body)}</pre></details>"
+                detail = f"<details><summary>查看失敗訊息</summary><pre>{Esc(body)}</pre></details>"
             out.append(
-                f'<tr data-status="{f["status"]}"><td class="id">{esc(short_id(f["name"]))}</td>'
-                f'<td>{esc(f["desc"])}<span class="fname">{esc(f["name"])}</span>{detail}</td>'
-                f'<td><span class="badge {f["status"]}">{STATUS_ICON[f["status"]]} {STATUS_LABEL[f["status"]]}</span></td>'
+                f'<tr data-status="{f["status"]}"><td class="id">{Esc(ShortId(f["name"]))}</td>'
+                f'<td>{Esc(f["desc"])}<span class="fname">{Esc(f["name"])}</span>{detail}</td>'
+                f'<td><span class="badge {f["status"]}">{STATUSICON[f["status"]]} {STATUSLABEL[f["status"]]}</span></td>'
                 f'<td class="num">{counts}</td></tr>'
             )
         out.append("</tbody></table>")
@@ -275,61 +275,61 @@ def build_html(title, tests, by_func, meta, test_file):
 
 
 # ----------------------------------------------------------------------
-def run_pytest(test_file, xml_path):
+def RunPytest(testFile, xmlPath):
     """在測試檔所在資料夾執行 pytest，結果寫成 junit XML。有測試失敗時 pytest 回傳非 0，這是正常的。"""
     env = dict(os.environ, PYTHONIOENCODING="utf-8")
     proc = subprocess.run(
-        [sys.executable, "-m", "pytest", os.path.basename(test_file), "--junitxml", xml_path, "-q"],
-        cwd=os.path.dirname(os.path.abspath(test_file)),
+        [sys.executable, "-m", "pytest", os.path.basename(testFile), "--junitxml", xmlPath, "-q"],
+        cwd=os.path.dirname(os.path.abspath(testFile)),
         capture_output=True, env=env,
     )
     text = proc.stdout.decode("utf-8", errors="replace") + proc.stderr.decode("utf-8", errors="replace")
-    if not os.path.exists(xml_path) or os.path.getsize(xml_path) == 0:
+    if not os.path.exists(xmlPath) or os.path.getsize(xmlPath) == 0:
         raise RuntimeError("pytest 沒有產生結果檔。請確認已安裝 pytest（pip install pytest）。\n" + text[-1500:])
     return proc.returncode, text
 
 
-def main():
+def Main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description="把 pytest 結果做成單一 HTML 報告")
-    ap.add_argument("test_file", nargs="?", default="test_f1.py", help="測試檔（預設 test_f1.py）")
+    ap.add_argument("testFile", nargs="?", default="test_f1.py", help="測試檔（預設 test_f1.py）")
     ap.add_argument("-o", "--output", help="輸出的 HTML 檔名（預設 report_<測試檔名>.html）")
-    ap.add_argument("--from-xml", help="直接讀既有的 junit XML，不重新執行測試")
+    ap.add_argument("--from-xml", dest="fromXml", help="直接讀既有的 junit XML，不重新執行測試")
     ap.add_argument("--title", help="報告標題")
     args = ap.parse_args()
 
-    test_file = args.test_file
-    if not os.path.exists(test_file):
-        sys.exit(f"找不到測試檔：{test_file}")
-    stem = os.path.splitext(os.path.basename(test_file))[0]
+    testFile = args.testFile
+    if not os.path.exists(testFile):
+        sys.exit(f"找不到測試檔：{testFile}")
+    stem = os.path.splitext(os.path.basename(testFile))[0]
     output = args.output or f"report_{stem.replace('test_', '')}.html"
     title = args.title or f"{stem.replace('test_', '').upper()} 測試報告"
 
-    tmp_xml = None
-    if args.from_xml:
-        xml_path = args.from_xml
+    tmpXml = None
+    if args.fromXml:
+        xmlPath = args.fromXml
     else:
-        fd, tmp_xml = tempfile.mkstemp(suffix=".xml")
+        fd, tmpXml = tempfile.mkstemp(suffix=".xml")
         os.close(fd)
-        xml_path = tmp_xml
-        code, _text = run_pytest(test_file, xml_path)
+        xmlPath = tmpXml
+        code, text = RunPytest(testFile, xmlPath)
     try:
-        by_func, meta = parse_results(xml_path)
+        byFunc, meta = ParseResults(xmlPath)
     finally:
-        if tmp_xml and os.path.exists(tmp_xml):
-            os.remove(tmp_xml)
+        if tmpXml and os.path.exists(tmpXml):
+            os.remove(tmpXml)
 
-    tests = parse_tests(test_file)
-    page = build_html(title, tests, by_func, meta, test_file)
+    tests = ParseTests(testFile)
+    page = BuildHtml(title, tests, byFunc, meta, testFile)
     with open(output, "w", encoding="utf-8") as f:
         f.write(page)
 
-    cases = [c for v in by_func.values() for c in v]
+    cases = [c for v in byFunc.values() for c in v]
     failed = sum(1 for c in cases if c["status"] == "failed")
     print(f"已產生 {output}：{len(cases)} 個案例，失敗 {failed} 個")
     sys.exit(1 if failed else 0)
 
 
 if __name__ == "__main__":
-    main()
+    Main()

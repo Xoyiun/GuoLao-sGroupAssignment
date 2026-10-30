@@ -1,0 +1,24 @@
+{
+  "course_id": "PHY101",
+  "name": "普通物理",
+  "credits": 3,
+  "type": "unRequired",
+  "teacher": "劉教授",
+  "capacity": 50,
+  "classroom": "E2-201",
+  "time_slots": [
+    {
+      "day": 4,
+      "period": "6"
+    },
+    {
+      "day": 4,
+      "period": "7"
+    },
+    {
+      "day": 4,
+      "period": "8"
+    }
+  ],
+  "enrolled_count": 42
+}

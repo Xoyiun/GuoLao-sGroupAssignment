@@ -1,0 +1,24 @@
+{
+  "course_id": "CS103",
+  "name": "演算法",
+  "credits": 3,
+  "type": "Required",
+  "teacher": "黃教授",
+  "capacity": 50,
+  "classroom": "E2-201",
+  "time_slots": [
+    {
+      "day": 3,
+      "period": "5"
+    },
+    {
+      "day": 3,
+      "period": "6"
+    },
+    {
+      "day": 3,
+      "period": "7"
+    }
+  ],
+  "enrolled_count": 48
+}

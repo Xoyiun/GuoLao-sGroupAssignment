@@ -1,0 +1,21 @@
+{
+  "course_id": "ACT01",
+  "name": "資工系迎新茶會",
+  "credits": 0,
+  "type": "event",
+  "teacher": "NPC",
+  "capacity": 100,
+  "classroom": "TR-310",
+  "time_slots": [
+    {
+      "day": 1791216000,
+      "period": "5"
+    },
+    {
+      "day": 1791216000,
+      "period": "6"
+    }
+  ],
+  "enrolled_count": 80,
+  "student_ids": ["S10901", "S10902"]
+}

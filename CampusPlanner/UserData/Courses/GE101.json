@@ -1,0 +1,20 @@
+{
+  "course_id": "GE101",
+  "name": "哲學思考與現代生活",
+  "credits": 2,
+  "type": "unRequired",
+  "teacher": "趙教授",
+  "capacity": 45,
+  "classroom": "T4-202",
+  "time_slots": [
+    {
+      "day": 4,
+      "period": "3"
+    },
+    {
+      "day": 4,
+      "period": "4"
+    }
+  ],
+  "enrolled_count": 45
+}

@@ -1,0 +1,11 @@
+{
+  "student_id": "S10903",
+  "name": "張志強",
+  "department": "資工系",
+  "max_credits": 25,
+  "enrolled_courses": [
+    "CS102",
+    "CS103"
+  ],
+  "grade": 1
+}

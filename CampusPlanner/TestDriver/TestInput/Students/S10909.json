@@ -1,0 +1,11 @@
+{
+  "student_id": "S10909",
+  "name": "楊冠宇",
+  "department": "資工系",
+  "max_credits": 25,
+  "enrolled_courses": [
+    "CS202",
+    "CS301"
+  ],
+  "grade": 1
+}

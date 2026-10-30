@@ -17,15 +17,30 @@
         },
         {
             "course_id": "363142",
-            "name": "NPC 新生茶會",
+            "name": "Programming II",
             "credits": 3,
+            "type": "unRequired",
+            "teacher": "KUO JONG-YIH",
+            "capacity": 94,
+            "classroom": "6TB-327",
+            "time_slots": [
+                {
+                    "day": 1,
+                    "period": "4"
+                }
+            ]
+        },
+        {
+            "course_id": "3631499",
+            "name": "NPC 新生茶會",
+            "credits": 0,
             "type": "event",
             "teacher": "NPC",
             "capacity": 30,
             "classroom": "6TB-625",
             "time_slots": [
                 {
-                    "day": 1,
+                    "day": 1790524800,
                     "period": "9"
                 }
             ],

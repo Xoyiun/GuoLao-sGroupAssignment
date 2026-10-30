@@ -1,0 +1,11 @@
+{
+  "student_id": "S10906",
+  "name": "李欣怡",
+  "department": "管院",
+  "max_credits": 25,
+  "enrolled_courses": [
+    "MA101",
+    "GE102"
+  ],
+  "grade": 1
+}
