@@ -11,6 +11,9 @@
 """
 
 import os
+import json
+import shutil
+import sys
 
 from TimeSlotUtils import GetDateLabel, GetWeekday
 from Constants import (
@@ -18,6 +21,7 @@ from Constants import (
     CAPACITY_EXCEEDS_ROOM,
     CLASSROOM_IN_USE,
     CLASSROOM_NOT_FOUND,
+    COURSE_DATA_DIRECTORY,
     COURSE_HAS_STUDENTS,
     COURSE_NOT_FOUND,
     DAY_NAMES,
@@ -38,12 +42,13 @@ from Constants import (
     NOT_FOUND,
     OK,
     SAVE_FAILED,
+    STUDENT_DATA_DIRECTORY,
     VALID_DAYS,
     VALID_PERIODS,
 )
 import CourseDataManager as courseDataManager
 
-# 用 __file__ 算路徑，從哪個資料夾執行都找得到資料資料夾
+# 用 __file__ 算路徑，從哪個資料夾執行都找得到 UserData
 HERE = os.path.dirname(os.path.abspath(__file__))
 # 課程、學生的 ID 分檔與固定資料都放在 CampusPlanner/UserData
 DATADIR = os.path.join(os.path.dirname(HERE), "UserData")
@@ -468,6 +473,111 @@ def OpenManager(dataDir, show=print):
     return manager
 
 
+IMPORT_ENTRIES = {
+    "classroom": "Classroom.json",
+    "campusgraph": "CampusGraph.json",
+    "courses": COURSE_DATA_DIRECTORY,
+    "students": STUDENT_DATA_DIRECTORY,
+}
+
+
+def ImportData(sourceDir, dataDir, selectedEntries=None, show=print):
+    """匯入資料；未指定區塊時覆寫整個 UserData，指定時只覆寫該區塊。"""
+    sourceDir = os.path.abspath(sourceDir)
+    dataDir = os.path.abspath(dataDir)
+    if not os.path.isdir(sourceDir):
+        show(f"[錯誤] 匯入來源不存在或不是資料夾：{sourceDir}")
+        return False
+    os.makedirs(dataDir, exist_ok=True)
+
+    entries = (
+        tuple(IMPORT_ENTRIES.values())
+        if selectedEntries is None
+        else tuple(IMPORT_ENTRIES[name] for name in selectedEntries)
+    )
+    sourceEntries = [entry for entry in entries if os.path.exists(os.path.join(sourceDir, entry))]
+    if len(sourceEntries) != len(entries):
+        missing = [entry for entry in entries if entry not in sourceEntries]
+        show(f"[錯誤] 匯入來源缺少資料：{', '.join(missing)}")
+        return False
+    if not sourceEntries:
+        show(f"[錯誤] 匯入來源沒有可用的資料檔：{sourceDir}")
+        return False
+
+    for entry in sourceEntries:
+        sourcePath = os.path.join(sourceDir, entry)
+        if os.path.isfile(sourcePath) and entry.lower().endswith(".json"):
+            try:
+                with open(sourcePath, encoding="utf-8") as file:
+                    json.load(file)
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+                show(f"[錯誤] JSON 檔案無法讀取 {sourcePath}：{error}")
+                return False
+        elif os.path.isdir(sourcePath):
+            for root, _, files in os.walk(sourcePath):
+                for fileName in files:
+                    if not fileName.lower().endswith(".json"):
+                        continue
+                    filePath = os.path.join(root, fileName)
+                    try:
+                        with open(filePath, encoding="utf-8") as file:
+                            json.load(file)
+                    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+                        show(f"[錯誤] JSON 檔案無法讀取 {filePath}：{error}")
+                        return False
+
+    try:
+        if selectedEntries is None:
+            for entry in os.listdir(dataDir):
+                targetPath = os.path.join(dataDir, entry)
+                if os.path.isdir(targetPath):
+                    shutil.rmtree(targetPath)
+                else:
+                    os.remove(targetPath)
+        for entry in sourceEntries:
+            sourcePath = os.path.join(sourceDir, entry)
+            targetPath = os.path.join(dataDir, entry)
+            if os.path.exists(targetPath):
+                if os.path.isdir(targetPath):
+                    shutil.rmtree(targetPath)
+                else:
+                    os.remove(targetPath)
+            if os.path.isdir(sourcePath):
+                shutil.copytree(sourcePath, targetPath)
+            else:
+                shutil.copy2(sourcePath, targetPath)
+    except OSError as error:
+        show(f"[錯誤] 匯入資料失敗：{error}")
+        return False
+
+    show(f"[成功] 已將資料匯入：{dataDir}")
+    return True
+
+
+def HiddenImportCommand(arguments, show=print):
+    """處理不顯示於互動選單的 CI 匯入指令。"""
+    if not arguments or arguments[0].lower() != "import":
+        return None
+    options = list(arguments[1:])
+    selectedEntries = None
+    if "--only" in options:
+        index = options.index("--only")
+        if index + 1 >= len(options):
+            show("用法：python Main.py import [--only classroom,campusgraph,courses,students] <來源> [目標]")
+            return False
+        selectedEntries = [name.strip().lower() for name in options[index + 1].split(",") if name.strip()]
+        if not selectedEntries or any(name not in IMPORT_ENTRIES for name in selectedEntries):
+            show("錯誤：--only 只能使用 classroom、campusgraph、courses、students")
+            return False
+        del options[index:index + 2]
+    if len(options) not in (1, 2):
+        show("用法：python Main.py import [--only classroom,campusgraph,courses,students] <來源> [目標]")
+        return False
+    sourceDir = options[0]
+    dataDir = options[1] if len(options) == 2 else DATADIR
+    return ImportData(sourceDir, dataDir, selectedEntries, show)
+
+
 def Run(manager, ask=input, show=print):
     """主介面迴圈：負責使用者互動、呼叫流程並處理終止/日誌顯示。"""
     if manager.loadErrors:
@@ -498,10 +608,17 @@ def Run(manager, ask=input, show=print):
             show(f"[錯誤] 發生未預期的錯誤：{error}")
 
 
-def Main(ask=input, show=print, dataDir=DATADIR):
+def Main(ask=input, show=print, dataDir=DATADIR, arguments=None):
+    importResult = HiddenImportCommand(
+        sys.argv[1:] if arguments is None else arguments,
+        show,
+    )
+    if importResult is not None:
+        return importResult
     manager = OpenManager(dataDir, show)
     Run(manager, ask, show)
 
 
 if __name__ == "__main__":
-    Main()
+    result = Main()
+    raise SystemExit(1 if result is False else 0)

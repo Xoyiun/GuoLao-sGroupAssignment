@@ -1,0 +1,11 @@
+{
+  "student_id": "S10911",
+  "name": "鄭婷婷",
+  "department": "管院",
+  "max_credits": 25,
+  "enrolled_courses": [
+    "GE101",
+    "CS104"
+  ],
+  "grade": 1
+}

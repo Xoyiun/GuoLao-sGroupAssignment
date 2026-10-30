@@ -1,0 +1,24 @@
+{
+  "course_id": "CS102",
+  "name": "資料結構",
+  "credits": 3,
+  "type": "Required",
+  "teacher": "陳教授",
+  "capacity": 120,
+  "classroom": "IB-101",
+  "time_slots": [
+    {
+      "day": 2,
+      "period": "2"
+    },
+    {
+      "day": 2,
+      "period": "3"
+    },
+    {
+      "day": 2,
+      "period": "4"
+    }
+  ],
+  "enrolled_count": 80
+}
