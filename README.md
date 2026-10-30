@@ -84,9 +84,36 @@ uv sync
 
 ### 5. CampusPlanner 資料檔
 
-動態資料依 ID 分檔保存：課程位於 `CampusPlanner/UserData/Courses/{course_id}.json`，學生位於 `CampusPlanner/UserData/Students/{student_id}.json`。測試輸入使用相同結構，放在 `CampusPlanner/TestDriver/TestInput`。教室與校園圖仍分別保存在 `Classroom.json` 和 `CampusGraph.json`。
+動態資料依 ID 分檔保存：課程位於 `CampusPlanner/UserData/Courses/{course_id}.json`，學生位於 `CampusPlanner/UserData/Students/{student_id}.json`。測試驅動與測試輸入已遷移至根目錄的 `TestDriver.py`、`TestDriver/` 與 `TestDriver/TestInput`。教室與校園圖仍分別保存在 `Classroom.json` 和 `CampusGraph.json`。
 
-活動資料會依 `CampusPlanner/Reference/Formate/Course.json` 的 `event` 格式轉為課程，使用活動 ID 作為 `course_id`、學分為 0、教師預設為 `NPC`。活動時段的日期使用 Unix 時間戳；目前測試資料的日期為 2026-09-27、2026-10-06、2026-10-18，時間皆為台北時區 00:00。載入器仍可讀取舊的整份 JSON 種子檔及 `db.json`，新存檔則寫入 ID 分檔目錄。
+活動資料會依 `CampusPlanner/Reference/Formate/Course.json` 的 `event` 格式轉為課程，使用活動 ID 作為 `course_id`、學分為 0、教師預設為 `NPC`。活動時段的日期使用 Unix 時間戳；目前測試資料的日期為 2026-09-27、2026-10-06、2026-10-18，時間皆為台北時區 00:00。新存檔寫入 ID 分檔目錄。
 
 ---
 ⚠️ **注意**：`.venv/` 資料夾已加入 `.gitignore`，**請勿將 `.venv` 推送到 Git**。
+
+#### CI 快速匯入空白 UserData
+
+`Main.py` 提供隱藏的 `import` 指令，不會出現在互動選單中。來源資料夾必須包含
+`Classroom.json`、`CampusGraph.json`、`Courses/`、`Students/`：
+
+```powershell
+python CampusPlanner/Code/Main.py import <來源資料夾> [目標UserData資料夾]
+```
+
+未指定目標資料夾時，預設匯入至 `CampusPlanner/UserData`。預設會先驗證所有
+JSON 檔案，再覆寫整個目標資料夾。若只要覆寫單一資料區塊，可使用：
+
+```powershell
+python CampusPlanner/Code/Main.py import --only classroom <來源資料夾> [目標UserData資料夾]
+```
+
+`--only` 支援 `classroom`、`campusgraph`、`courses`、`students`，也可用逗號指定多個區塊。
+
+#### 執行測試
+
+測試驅動位於專案根目錄，可直接執行完整測試或傳入 pytest 參數：
+
+```powershell
+python TestDriver.py
+python TestDriver.py -m normal -v
+```

@@ -1,0 +1,11 @@
+{
+  "student_id": "S10907",
+  "name": "吳承翰",
+  "department": "工院",
+  "max_credits": 25,
+  "enrolled_courses": [
+    "PHY101",
+    "MA101"
+  ],
+  "grade": 1
+}

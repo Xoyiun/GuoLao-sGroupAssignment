@@ -72,8 +72,6 @@ VALID_PERIODS = ("1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c")
 # ======================================================================
 # 三、檔案與儲存常數 (File & Storage Constants)
 # ======================================================================
-SEED_FILE = "04_data_format.json"          # 種子資料檔名
-DEFAULT_WORK_FILE = "db.json"              # 工作資料檔名（避免覆蓋種子檔）
 COURSE_DATA_DIRECTORY = "Courses"          # 依課程代號分開存放課程資料
 STUDENT_DATA_DIRECTORY = "Students"        # 依學號分開存放學生資料
 CLASSROOM_FILE = "Classroom.json"          # 教室固定資料檔名
