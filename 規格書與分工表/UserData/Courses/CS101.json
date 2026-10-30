@@ -1,0 +1,24 @@
+{
+  "course_id": "CS101",
+  "name": "計算機程式設計",
+  "credits": 4,
+  "type": "Required",
+  "teacher": "林教授",
+  "capacity": 60,
+  "classroom": "TR-310",
+  "time_slots": [
+    {
+      "day": 1,
+      "period": "2"
+    },
+    {
+      "day": 1,
+      "period": "3"
+    },
+    {
+      "day": 1,
+      "period": "4"
+    }
+  ],
+  "enrolled_count": 44
+}

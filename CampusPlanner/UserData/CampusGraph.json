@@ -2,12 +2,68 @@
   "campus_graph": {
     "nodes": [
       {
-        "node_id": "TR",
-        "name": "研揚大樓"
+        "node_id": "MAIN",
+        "name": "忠孝東路正門"
+      },
+      {
+        "node_id": "ADM",
+        "name": "行政大樓"
+      },
+      {
+        "node_id": "LIB",
+        "name": "圖書館"
+      },
+      {
+        "node_id": "ART",
+        "name": "藝文中心"
+      },
+      {
+        "node_id": "CEN",
+        "name": "共同科館"
+      },
+      {
+        "node_id": "1TB",
+        "name": "第一教學大樓"
+      },
+      {
+        "node_id": "2TB",
+        "name": "第二教學大樓"
+      },
+      {
+        "node_id": "3TB",
+        "name": "第三教學大樓"
+      },
+      {
+        "node_id": "T4",
+        "name": "第四教學大樓"
+      },
+      {
+        "node_id": "5TB",
+        "name": "第五教學大樓（生物科技館）"
+      },
+      {
+        "node_id": "6TB",
+        "name": "第六教學大樓"
+      },
+      {
+        "node_id": "CHEM",
+        "name": "化學館"
+      },
+      {
+        "node_id": "RED",
+        "name": "紅樓"
+      },
+      {
+        "node_id": "HIST",
+        "name": "校史館"
       },
       {
         "node_id": "IB",
-        "name": "綜合研究大樓"
+        "name": "國際大樓"
+      },
+      {
+        "node_id": "TR",
+        "name": "研揚大樓"
       },
       {
         "node_id": "E2",
@@ -18,105 +74,312 @@
         "name": "管理大樓"
       },
       {
-        "node_id": "T4",
-        "name": "第四教學大樓"
+        "node_id": "HALL",
+        "name": "國父百年紀念館"
       },
       {
-        "node_id": "T3",
-        "name": "第三教學大樓"
+        "node_id": "KH",
+        "name": "光華館"
       },
       {
-        "node_id": "AU",
-        "name": "視聽館"
+        "node_id": "HTR",
+        "name": "宏裕科技研究大樓"
       },
       {
-        "node_id": "LIB",
-        "name": "圖書館"
+        "node_id": "CENG",
+        "name": "化學工程館"
       },
       {
-        "node_id": "GYM",
-        "name": "體育館"
+        "node_id": "MSE",
+        "name": "分子科學與工程館"
       },
       {
-        "node_id": "ADM",
-        "name": "行政大樓"
+        "node_id": "CIV",
+        "name": "土木館"
+      },
+      {
+        "node_id": "MAT",
+        "name": "材資館"
+      },
+      {
+        "node_id": "DES",
+        "name": "設計館"
+      },
+      {
+        "node_id": "SAC",
+        "name": "學生活動中心"
+      },
+      {
+        "node_id": "SPORT",
+        "name": "運動場"
+      },
+      {
+        "node_id": "DORM",
+        "name": "學生宿舍"
+      },
+      {
+        "node_id": "EAST",
+        "name": "東校區"
+      },
+      {
+        "node_id": "EIG",
+        "name": "億光大樓"
+      },
+      {
+        "node_id": "PIONEER",
+        "name": "先鋒國際研發大樓"
+      },
+      {
+        "node_id": "TEXTILE",
+        "name": "紡織館"
+      },
+      {
+        "node_id": "GSC",
+        "name": "綜合科館"
+      },
+      {
+        "node_id": "SYH",
+        "name": "思源講堂"
+      },
+      {
+        "node_id": "HSC",
+        "name": "科研哈佛講堂"
       }
     ],
     "edges": [
       {
-        "from": "TR",
+        "from": "MAIN",
+        "to": "ADM",
+        "weight": 160,
+        "walk_minutes": 2
+      },
+      {
+        "from": "MAIN",
+        "to": "ART",
+        "weight": 240,
+        "walk_minutes": 3
+      },
+      {
+        "from": "ADM",
+        "to": "LIB",
+        "weight": 160,
+        "walk_minutes": 2
+      },
+      {
+        "from": "ADM",
+        "to": "1TB",
+        "weight": 240,
+        "walk_minutes": 3
+      },
+      {
+        "from": "LIB",
+        "to": "CEN",
+        "weight": 160,
+        "walk_minutes": 2
+      },
+      {
+        "from": "LIB",
+        "to": "2TB",
+        "weight": 240,
+        "walk_minutes": 3
+      },
+      {
+        "from": "ART",
+        "to": "CEN",
+        "weight": 240,
+        "walk_minutes": 3
+      },
+      {
+        "from": "CEN",
+        "to": "3TB",
+        "weight": 160,
+        "walk_minutes": 2
+      },
+      {
+        "from": "3TB",
+        "to": "T4",
+        "weight": 160,
+        "walk_minutes": 2
+      },
+      {
+        "from": "T4",
+        "to": "5TB",
+        "weight": 240,
+        "walk_minutes": 3
+      },
+      {
+        "from": "5TB",
+        "to": "6TB",
+        "weight": 240,
+        "walk_minutes": 3
+      },
+      {
+        "from": "2TB",
+        "to": "CHEM",
+        "weight": 160,
+        "walk_minutes": 2
+      },
+      {
+        "from": "CHEM",
+        "to": "RED",
+        "weight": 160,
+        "walk_minutes": 2
+      },
+      {
+        "from": "RED",
+        "to": "HIST",
+        "weight": 160,
+        "walk_minutes": 2
+      },
+      {
+        "from": "6TB",
         "to": "IB",
+        "weight": 240,
+        "walk_minutes": 3
+      },
+      {
+        "from": "IB",
+        "to": "TR",
+        "weight": 240,
         "walk_minutes": 3
       },
       {
         "from": "TR",
         "to": "E2",
+        "weight": 400,
         "walk_minutes": 5
       },
       {
         "from": "IB",
         "to": "MA",
+        "weight": 320,
         "walk_minutes": 4
       },
       {
-        "from": "IB",
+        "from": "MA",
         "to": "T4",
+        "weight": 240,
+        "walk_minutes": 3
+      },
+      {
+        "from": "6TB",
+        "to": "HALL",
+        "weight": 160,
         "walk_minutes": 2
       },
       {
-        "from": "E2",
-        "to": "T3",
+        "from": "HALL",
+        "to": "KH",
+        "weight": 160,
+        "walk_minutes": 2
+      },
+      {
+        "from": "KH",
+        "to": "HTR",
+        "weight": 160,
+        "walk_minutes": 2
+      },
+      {
+        "from": "HTR",
+        "to": "CENG",
+        "weight": 240,
         "walk_minutes": 3
       },
       {
-        "from": "E2",
-        "to": "LIB",
-        "walk_minutes": 6
+        "from": "CENG",
+        "to": "MSE",
+        "weight": 160,
+        "walk_minutes": 2
       },
       {
-        "from": "MA",
-        "to": "T4",
+        "from": "HALL",
+        "to": "CIV",
+        "weight": 240,
         "walk_minutes": 3
       },
       {
+        "from": "CIV",
+        "to": "MAT",
+        "weight": 160,
+        "walk_minutes": 2
+      },
+      {
+        "from": "MAT",
+        "to": "DES",
+        "weight": 160,
+        "walk_minutes": 2
+      },
+      {
         "from": "MA",
-        "to": "ADM",
+        "to": "SAC",
+        "weight": 320,
+        "walk_minutes": 4
+      },
+      {
+        "from": "SAC",
+        "to": "EAST",
+        "weight": 400,
         "walk_minutes": 5
       },
       {
-        "from": "T4",
-        "to": "T3",
-        "walk_minutes": 2
+        "from": "EAST",
+        "to": "SPORT",
+        "weight": 240,
+        "walk_minutes": 3
       },
       {
-        "from": "T3",
-        "to": "AU",
+        "from": "EAST",
+        "to": "DORM",
+        "weight": 320,
         "walk_minutes": 4
       },
       {
-        "from": "AU",
-        "to": "LIB",
-        "walk_minutes": 3
+        "from": "E2",
+        "to": "CENG",
+        "weight": 320,
+        "walk_minutes": 4
       },
       {
         "from": "LIB",
-        "to": "GYM",
+        "to": "SPORT",
+        "weight": 560,
         "walk_minutes": 7
       },
       {
-        "from": "ADM",
-        "to": "GYM",
-        "walk_minutes": 8
+        "from": "MAIN",
+        "to": "PIONEER",
+        "weight": 240,
+        "walk_minutes": 3
       },
       {
-        "from": "TR",
-        "to": "T4",
-        "walk_minutes": 6
+        "from": "EAST",
+        "to": "EIG",
+        "weight": 240,
+        "walk_minutes": 3
       },
       {
-        "from": "MA",
-        "to": "LIB",
-        "walk_minutes": 5
+        "from": "CEN",
+        "to": "GSC",
+        "weight": 160,
+        "walk_minutes": 2
+      },
+      {
+        "from": "GSC",
+        "to": "SYH",
+        "weight": 160,
+        "walk_minutes": 2
+      },
+      {
+        "from": "HTR",
+        "to": "HSC",
+        "weight": 160,
+        "walk_minutes": 2
+      },
+      {
+        "from": "TEXTILE",
+        "to": "DES",
+        "weight": 240,
+        "walk_minutes": 3
       }
     ]
   }

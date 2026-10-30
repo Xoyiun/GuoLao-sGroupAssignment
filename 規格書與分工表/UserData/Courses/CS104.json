@@ -1,0 +1,24 @@
+{
+  "course_id": "CS104",
+  "name": "物件導向程式設計",
+  "credits": 3,
+  "type": "unRequired",
+  "teacher": "王教授",
+  "capacity": 80,
+  "classroom": "MA-101",
+  "time_slots": [
+    {
+      "day": 4,
+      "period": "2"
+    },
+    {
+      "day": 4,
+      "period": "3"
+    },
+    {
+      "day": 4,
+      "period": "4"
+    }
+  ],
+  "enrolled_count": 30
+}

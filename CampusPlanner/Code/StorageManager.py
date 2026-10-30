@@ -112,12 +112,12 @@ def AdaptReferenceClassroom(room, buildingNames):
         return room
 
     classroomId = room.get("room_id")
-    buildingId = classroomId.split("-", 1)[0] if isinstance(classroomId, str) else ""
+    roomPrefix = classroomId.split("-", 1)[0] if isinstance(classroomId, str) else ""
+    buildingId = roomPrefix if roomPrefix in buildingNames else ""
     return {
         "classroom_id": classroomId,
-        "building_id": room.get("building_id") or buildingId,
-        "building_name": room.get("building_name")
-        or buildingNames.get(buildingId, ""),
+        "building_id": buildingId,
+        "building_name": buildingNames.get(buildingId, ""),
         "capacity": room.get("capacity"),
         "equipment": room.get("equipment"),
     }
@@ -337,8 +337,6 @@ def ClassroomRecordsForFile(classrooms):
         }
         record.update({
             "room_id": classroom["classroom_id"],
-            "building_id": classroom.get("building_id", ""),
-            "building_name": classroom.get("building_name", ""),
             "capacity": classroom["capacity"],
             "equipment": classroom.get("equipment", []),
         })

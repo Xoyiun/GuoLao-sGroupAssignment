@@ -1,0 +1,11 @@
+{
+  "student_id": "S10915",
+  "name": "彭智勝",
+  "department": "資工系",
+  "max_credits": 25,
+  "enrolled_courses": [
+    "PE102",
+    "MA102"
+  ],
+  "grade": 1
+}

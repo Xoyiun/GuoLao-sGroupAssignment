@@ -1,0 +1,1188 @@
+{
+  "classroom": [
+    {
+      "room_id": "TR-310",
+      "capacity": 60,
+      "equipment": [
+        "projector",
+        "mic",
+        "computer"
+      ]
+    },
+    {
+      "room_id": "IB-101",
+      "capacity": 120,
+      "equipment": [
+        "projector",
+        "mic",
+        "computer",
+        "audio"
+      ]
+    },
+    {
+      "room_id": "E2-201",
+      "capacity": 50,
+      "equipment": [
+        "projector",
+        "blackboard"
+      ]
+    },
+    {
+      "room_id": "MA-101",
+      "capacity": 80,
+      "equipment": [
+        "projector",
+        "mic",
+        "computer"
+      ]
+    },
+    {
+      "room_id": "T4-202",
+      "capacity": 45,
+      "equipment": [
+        "projector"
+      ]
+    },
+    {
+      "room_id": "6TB-327",
+      "capacity": 94,
+      "equipment": [
+        "projector",
+        "computer"
+      ]
+    },
+    {
+      "room_id": "6TB-625",
+      "capacity": 94,
+      "equipment": [
+        "projector",
+        "computer"
+      ]
+    },
+    {
+      "room_id": "1TB-1F",
+      "capacity": 48,
+      "equipment": []
+    },
+    {
+      "room_id": "1TB-301",
+      "capacity": 55,
+      "equipment": []
+    },
+    {
+      "room_id": "1TB-302",
+      "capacity": 55,
+      "equipment": []
+    },
+    {
+      "room_id": "1TB-303",
+      "capacity": 55,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-109",
+      "capacity": 72,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-201",
+      "capacity": 68,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-202",
+      "capacity": 90,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-206",
+      "capacity": 30,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-207",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-208",
+      "capacity": 68,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-209",
+      "capacity": 68,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-210",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-301",
+      "capacity": 68,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-302",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-303",
+      "capacity": 90,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-306",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-307",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-308",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-309",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-310",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-401",
+      "capacity": 68,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-402",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-403",
+      "capacity": 90,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-406",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-407",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-408",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-409",
+      "capacity": 68,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-410",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-501",
+      "capacity": 68,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-502",
+      "capacity": 30,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-503",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-504",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-505",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-506",
+      "capacity": 68,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-507",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-508",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-509",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "3TB-510",
+      "capacity": 30,
+      "equipment": []
+    },
+    {
+      "room_id": "2TB-103",
+      "capacity": 48,
+      "equipment": []
+    },
+    {
+      "room_id": "2TB-201",
+      "capacity": 70,
+      "equipment": []
+    },
+    {
+      "room_id": "2TB-202",
+      "capacity": 56,
+      "equipment": []
+    },
+    {
+      "room_id": "2TB-203",
+      "capacity": 56,
+      "equipment": []
+    },
+    {
+      "room_id": "2TB-204",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "2TB-205",
+      "capacity": 56,
+      "equipment": []
+    },
+    {
+      "room_id": "2TB-206",
+      "capacity": 56,
+      "equipment": []
+    },
+    {
+      "room_id": "2TB-207",
+      "capacity": 75,
+      "equipment": []
+    },
+    {
+      "room_id": "2TB-301",
+      "capacity": 70,
+      "equipment": []
+    },
+    {
+      "room_id": "2TB-302",
+      "capacity": 56,
+      "equipment": []
+    },
+    {
+      "room_id": "2TB-303",
+      "capacity": 56,
+      "equipment": []
+    },
+    {
+      "room_id": "2TB-304",
+      "capacity": 48,
+      "equipment": []
+    },
+    {
+      "room_id": "2TB-305",
+      "capacity": 56,
+      "equipment": []
+    },
+    {
+      "room_id": "2TB-306",
+      "capacity": 56,
+      "equipment": []
+    },
+    {
+      "room_id": "2TB-307",
+      "capacity": 75,
+      "equipment": []
+    },
+    {
+      "room_id": "5TB-303",
+      "capacity": 60,
+      "equipment": []
+    },
+    {
+      "room_id": "EIG-0405",
+      "capacity": 405,
+      "equipment": []
+    },
+    {
+      "room_id": "EIG-0612",
+      "capacity": 612,
+      "equipment": []
+    },
+    {
+      "room_id": "EIG-0628",
+      "capacity": 628,
+      "equipment": []
+    },
+    {
+      "room_id": "EIG-0712",
+      "capacity": 712,
+      "equipment": []
+    },
+    {
+      "room_id": "EIG-0713",
+      "capacity": 713,
+      "equipment": []
+    },
+    {
+      "room_id": "EIG-0728",
+      "capacity": 728,
+      "equipment": []
+    },
+    {
+      "room_id": "EIG-0835",
+      "capacity": 835,
+      "equipment": []
+    },
+    {
+      "room_id": "EIG-0935",
+      "capacity": 935,
+      "equipment": []
+    },
+    {
+      "room_id": "EIG-1035",
+      "capacity": 1035,
+      "equipment": []
+    },
+    {
+      "room_id": "EIG-1113",
+      "capacity": 1113,
+      "equipment": []
+    },
+    {
+      "room_id": "EIG-1343",
+      "capacity": 1343,
+      "equipment": []
+    },
+    {
+      "room_id": "PIONEER-1401",
+      "capacity": 1401,
+      "equipment": []
+    },
+    {
+      "room_id": "PIONEER-1402",
+      "capacity": 1402,
+      "equipment": []
+    },
+    {
+      "room_id": "PIONEER-201",
+      "capacity": 72,
+      "equipment": []
+    },
+    {
+      "room_id": "PIONEER-202",
+      "capacity": 36,
+      "equipment": []
+    },
+    {
+      "room_id": "PIONEER-203",
+      "capacity": 68,
+      "equipment": []
+    },
+    {
+      "room_id": "PIONEER-303",
+      "capacity": 168,
+      "equipment": []
+    },
+    {
+      "room_id": "PIONEER-401",
+      "capacity": 120,
+      "equipment": []
+    },
+    {
+      "room_id": "PIONEER-402",
+      "capacity": 80,
+      "equipment": []
+    },
+    {
+      "room_id": "PIONEER-403",
+      "capacity": 48,
+      "equipment": []
+    },
+    {
+      "room_id": "PIONEER-404",
+      "capacity": 90,
+      "equipment": []
+    },
+    {
+      "room_id": "PIONEER-501",
+      "capacity": 120,
+      "equipment": []
+    },
+    {
+      "room_id": "PIONEER-502",
+      "capacity": 80,
+      "equipment": []
+    },
+    {
+      "room_id": "PIONEER-503",
+      "capacity": 90,
+      "equipment": []
+    },
+    {
+      "room_id": "PIONEER-504",
+      "capacity": 78,
+      "equipment": []
+    },
+    {
+      "room_id": "PIONEER-601",
+      "capacity": 72,
+      "equipment": []
+    },
+    {
+      "room_id": "PIONEER-602",
+      "capacity": 60,
+      "equipment": []
+    },
+    {
+      "room_id": "KH-400",
+      "capacity": 100,
+      "equipment": []
+    },
+    {
+      "room_id": "KH-403",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "KH-404",
+      "capacity": 90,
+      "equipment": []
+    },
+    {
+      "room_id": "KH-405",
+      "capacity": 80,
+      "equipment": []
+    },
+    {
+      "room_id": "KH-406",
+      "capacity": 80,
+      "equipment": []
+    },
+    {
+      "room_id": "KH-409",
+      "capacity": 45,
+      "equipment": []
+    },
+    {
+      "room_id": "6TB-224",
+      "capacity": 30,
+      "equipment": []
+    },
+    {
+      "room_id": "6TB-226",
+      "capacity": 40,
+      "equipment": []
+    },
+    {
+      "room_id": "6TB-227",
+      "capacity": 90,
+      "equipment": []
+    },
+    {
+      "room_id": "6TB-325",
+      "capacity": 70,
+      "equipment": []
+    },
+    {
+      "room_id": "6TB-326",
+      "capacity": 40,
+      "equipment": []
+    },
+    {
+      "room_id": "6TB-426",
+      "capacity": 35,
+      "equipment": []
+    },
+    {
+      "room_id": "6TB-427",
+      "capacity": 90,
+      "equipment": []
+    },
+    {
+      "room_id": "6TB-525",
+      "capacity": 70,
+      "equipment": []
+    },
+    {
+      "room_id": "6TB-526",
+      "capacity": 40,
+      "equipment": []
+    },
+    {
+      "room_id": "6TB-527",
+      "capacity": 90,
+      "equipment": []
+    },
+    {
+      "room_id": "6TB-626",
+      "capacity": 40,
+      "equipment": []
+    },
+    {
+      "room_id": "6TB-627",
+      "capacity": 90,
+      "equipment": []
+    },
+    {
+      "room_id": "6TB-725",
+      "capacity": 70,
+      "equipment": []
+    },
+    {
+      "room_id": "6TB-726",
+      "capacity": 35,
+      "equipment": []
+    },
+    {
+      "room_id": "6TB-727",
+      "capacity": 90,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-103A",
+      "capacity": 20,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-301_1",
+      "capacity": 36,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-302",
+      "capacity": 55,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-303A",
+      "capacity": 20,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-312",
+      "capacity": 60,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-313",
+      "capacity": 60,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-401",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-403",
+      "capacity": 40,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-411",
+      "capacity": 40,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-412",
+      "capacity": 60,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-413",
+      "capacity": 60,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-606",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-614",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-615",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-616",
+      "capacity": 15,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-714",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-715",
+      "capacity": 70,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-716",
+      "capacity": 30,
+      "equipment": []
+    },
+    {
+      "room_id": "CEN-AUD",
+      "capacity": 168,
+      "equipment": []
+    },
+    {
+      "room_id": "MSE-107",
+      "capacity": 20,
+      "equipment": []
+    },
+    {
+      "room_id": "MSE-205",
+      "capacity": 79,
+      "equipment": []
+    },
+    {
+      "room_id": "MSE-207",
+      "capacity": 55,
+      "equipment": []
+    },
+    {
+      "room_id": "MSE-306",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "MSE-BR6",
+      "capacity": 48,
+      "equipment": []
+    },
+    {
+      "room_id": "CHEM-103",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "CHEM-207",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "CHEM-301",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "CENG-101",
+      "capacity": 100,
+      "equipment": []
+    },
+    {
+      "room_id": "CENG-105",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "CENG-305",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "T4-102",
+      "capacity": 47,
+      "equipment": []
+    },
+    {
+      "room_id": "T4-103",
+      "capacity": 72,
+      "equipment": []
+    },
+    {
+      "room_id": "T4-203",
+      "capacity": 72,
+      "equipment": []
+    },
+    {
+      "room_id": "T4-204",
+      "capacity": 90,
+      "equipment": []
+    },
+    {
+      "room_id": "T4-302",
+      "capacity": 48,
+      "equipment": []
+    },
+    {
+      "room_id": "T4-303",
+      "capacity": 72,
+      "equipment": []
+    },
+    {
+      "room_id": "T4-304",
+      "capacity": 90,
+      "equipment": []
+    },
+    {
+      "room_id": "HALL-102",
+      "capacity": 20,
+      "equipment": []
+    },
+    {
+      "room_id": "HALL-401",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "HALL-402",
+      "capacity": 15,
+      "equipment": []
+    },
+    {
+      "room_id": "CIV-1F_1",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "CIV-1F_2",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "CIV-201",
+      "capacity": 201,
+      "equipment": []
+    },
+    {
+      "room_id": "CIV-2F",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "CIV-3F",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "CIV-5F_1",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "CIV-5F_2",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "SYH-HALL",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "MAT-205",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "HSC-HALL",
+      "capacity": 100,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-1222",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-1223",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-231",
+      "capacity": 80,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-232",
+      "capacity": 80,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-234",
+      "capacity": 80,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-235",
+      "capacity": 80,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-240",
+      "capacity": 62,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-243",
+      "capacity": 60,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-332",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-334",
+      "capacity": 40,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-427",
+      "capacity": 16,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-430",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-441",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-442",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-640",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-732",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-734",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-735",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-823",
+      "capacity": 40,
+      "equipment": []
+    },
+    {
+      "room_id": "HTR-825",
+      "capacity": 40,
+      "equipment": []
+    },
+    {
+      "room_id": "TEXTILE-501A",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "TEXTILE-503",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-AUD3",
+      "capacity": 205,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-AUD2",
+      "capacity": 205,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-104",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-110_1",
+      "capacity": 34,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-110_2",
+      "capacity": 38,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-112",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-216",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-219",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-306",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-322",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-327",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-328",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-328_1",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-414",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-417",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-421",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-422",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-428",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-429",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-501",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-502",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-511",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-513",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-514",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-610",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-715",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-802",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-B02",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "GSC-B05",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-106",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-207",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-251",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-252",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-301",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-354",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-355",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-401",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-403",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-407",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-409",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-452",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-453",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-503",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-507",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-509",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-603",
+      "capacity": 50,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-703",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-753",
+      "capacity": 60,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-B01",
+      "capacity": 90,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-B02",
+      "capacity": 1,
+      "equipment": []
+    },
+    {
+      "room_id": "DES-B03",
+      "capacity": 1,
+      "equipment": []
+    }
+  ]
+}
