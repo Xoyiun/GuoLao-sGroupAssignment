@@ -36,6 +36,7 @@ ACTIVITY_CONFLICT = "ACTIVITY_CONFLICT"      # 活動時段衝突
 CREDIT_LIMIT_EXCEEDED = "CREDIT_LIMIT_EXCEEDED"  # 超過學分上限
 COURSE_FULL = "COURSE_FULL"                  # 課程人數已達上限（無剩餘名額）
 ALREADY_ENROLLED = "ALREADY_ENROLLED"        # 學生已經選了這門課
+NOT_ENROLLED = "NOT_ENROLLED"                # 退選時學生沒有選這門課
 
 # F3 課表與空閒時段
 STUDENT_NOT_FOUND = "STUDENT_NOT_FOUND"      # 查無該學生
@@ -124,6 +125,7 @@ ERROR_REASONS = {
     CREDIT_LIMIT_EXCEEDED: "加選後學分超過學分上限",
     COURSE_FULL: "課程人數已額滿",
     ALREADY_ENROLLED: "已經選過這門課",
+    NOT_ENROLLED: "沒有選這門課，無法退選",
     STUDENT_NOT_FOUND: "查無該學生資料",
     NO_FREE_SLOTS: "指定區間內無可用空閒時段",
     NO_AVAILABLE_ROOM: "無符合容量、設備或時段之可用教室",
@@ -140,6 +142,6 @@ ERROR_REASONS = {
 # INVALID_FIELD 依實體種類給不同提示
 INVALID_FIELD_REASONS = {
     "course": "資料格式錯誤（代號、名稱、教師不可空白；必選修請輸入「必」或「選」）",
-    "student": "資料格式錯誤（學號、姓名、系級不可空白）",
+    "student": "資料格式錯誤（學號、姓名、系所不可空白；年級須為正整數）",
     "classroom": "資料格式錯誤（教室代號不可空白）",
 }

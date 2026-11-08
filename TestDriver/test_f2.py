@@ -14,6 +14,7 @@ from Constants import (
     ALREADY_ENROLLED,
     COURSE_FULL,
     CREDIT_LIMIT_EXCEEDED,
+    NOT_ENROLLED,
     NOT_FOUND,
     OK,
     ROOM_CONFLICT,
@@ -130,3 +131,42 @@ def test_ClassroomConflictIgnoresTheCourseItself():
     slots = [{"day": 1, "period": "1"}]
     assert conflictChecker.CheckClassroomConflict(database, "R1", slots, excludeCourseId="A") == (True, OK)
     assert conflictChecker.CheckClassroomConflict(database, "R1", slots) == (False, ROOM_CONFLICT)
+
+
+def test_AddingActivityThatClashesWithCourseIsActivityConflict():
+    """新報名的活動跟已選課程撞時段 → 也算活動衝突（規範：活動不得與已選課程重疊）。"""
+    tuesday = int(datetime.datetime(2026, 10, 6, tzinfo=LOCAL_TIME_ZONE).timestamp())
+    database = Database(
+        [Course("A", [(2, "5")]), Course("ACT", [(tuesday, "5")], classroomId="R2", credits=0, courseType="event")],
+        enrolled=["A"],
+    )
+    ok, code, conflicts = conflictChecker.CheckEnrollmentConflicts(database, "S1", "ACT")
+    assert not ok and code == ACTIVITY_CONFLICT
+    assert conflicts[0]["conflict_with_course"] == "A"
+
+
+def test_EnrollUpdatesStudentAndCourseTogether():
+    """加選成功 → 學生已選清單和課程人數一起更新。"""
+    database = Database([Course("A", [(1, "1")], enrolledCount=5)])
+    assert conflictChecker.EnrollCourse(database, "S1", "A") == (True, OK, [])
+    assert database["students"][0]["enrolled_courses"] == ["A"]
+    assert database["courses"][0]["enrolled_count"] == 6
+
+
+def test_EnrollWithConflictChangesNothing():
+    """有衝突就不加選，學生清單與課程人數都不變。"""
+    database = Database([Course("A", [(1, "1")]), Course("B", [(1, "1")], classroomId="R2")], enrolled=["A"])
+    ok, code, _ = conflictChecker.EnrollCourse(database, "S1", "B")
+    assert (ok, code) == (False, TIME_CONFLICT)
+    assert database["students"][0]["enrolled_courses"] == ["A"]
+    assert database["courses"][1]["enrolled_count"] == 0
+
+
+def test_DropCourse():
+    """退選 → 移出清單、人數減 1（不低於 0）；沒選過或不存在要回報錯誤。"""
+    database = Database([Course("A", [(1, "1")], enrolledCount=0)], enrolled=["A"])
+    assert conflictChecker.DropCourse(database, "S1", "A") == (True, OK)
+    assert database["students"][0]["enrolled_courses"] == []
+    assert database["courses"][0]["enrolled_count"] == 0
+    assert conflictChecker.DropCourse(database, "S1", "A") == (False, NOT_ENROLLED)
+    assert conflictChecker.DropCourse(database, "S1", "NOPE") == (False, NOT_FOUND)
