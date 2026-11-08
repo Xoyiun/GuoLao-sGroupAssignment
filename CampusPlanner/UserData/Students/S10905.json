@@ -5,7 +5,8 @@
   "max_credits": 25,
   "enrolled_courses": [
     "MA101",
-    "CS202"
+    "CS202",
+    "ACT03"
   ],
   "grade": 1
 }
