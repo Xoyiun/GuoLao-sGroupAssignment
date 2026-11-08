@@ -17,6 +17,7 @@ from Constants import (
     ALREADY_ENROLLED,
     COURSE_FULL,
     CREDIT_LIMIT_EXCEEDED,
+    NOT_ENROLLED,
     NOT_FOUND,
     OK,
     ROOM_CONFLICT,
@@ -124,14 +125,15 @@ def CheckEnrollmentConflicts(database: dict, studentId: str, courseId: str) -> t
     courseSlots = course.get("time_slots", [])
     slotConflicts = []
 
-    # 1. 學生已選課程與已報名活動的時段衝突
+    # 1. 學生已選課程與已報名活動的時段衝突；新項目或已選項目任一方是活動，就算活動衝突
+    addingActivity = course.get("course_type") == "event"
     for enrolledCourse in enrolledCourses:
         ok, _, overlappingSlots = CheckTimeConflict(courseSlots, enrolledCourse.get("time_slots", []))
         if not ok:
-            isActivity = enrolledCourse.get("course_type") == "event"
+            withActivity = enrolledCourse.get("course_type") == "event"
             slotConflicts.append({
-                "type": ACTIVITY_CONFLICT if isActivity else TIME_CONFLICT,
-                "conflict_with_activity" if isActivity else "conflict_with_course": enrolledCourse["course_id"],
+                "type": ACTIVITY_CONFLICT if withActivity or addingActivity else TIME_CONFLICT,
+                "conflict_with_activity" if withActivity else "conflict_with_course": enrolledCourse["course_id"],
                 "slots": overlappingSlots,
             })
 
@@ -154,7 +156,7 @@ def CheckEnrollmentConflicts(database: dict, studentId: str, courseId: str) -> t
         limitConflicts.append({"type": COURSE_FULL, "course_id": courseId})
 
     # 4. 學分上限
-    currentCredits = sum(enrolledCourse["credits"] for enrolledCourse in enrolledCourses)
+    currentCredits = courseDataManager.CountCredits(database, studentId)
     if currentCredits + course["credits"] > student["max_credits"]:
         limitConflicts.append({
             "type": CREDIT_LIMIT_EXCEEDED,
@@ -167,3 +169,38 @@ def CheckEnrollmentConflicts(database: dict, studentId: str, courseId: str) -> t
     if conflicts:
         return False, conflicts[0]["type"], conflicts
     return True, OK, []
+
+
+def EnrollCourse(database: dict, studentId: str, courseId: str) -> tuple[bool, str, list[dict]]:
+    """加選課程或報名活動：所有檢查都通過才加入學生的 enrolled_courses，並將課程人數加 1。
+
+    已選清單與課程人數必須在同一個函式裡一起更新，其他功能不得各自修改其中一邊。
+    回傳：與 CheckEnrollmentConflicts 相同的 (ok, code, conflicts)；失敗時資料不變。
+    """
+    ok, code, conflicts = CheckEnrollmentConflicts(database, studentId, courseId)
+    if not ok:
+        return False, code, conflicts
+    student = courseDataManager.FindStudent(database, studentId)
+    course = courseDataManager.FindCourse(database, courseId)
+    student["enrolled_courses"].append(courseId)
+    course["enrolled_count"] = course.get("enrolled_count", 0) + 1
+    return True, OK, []
+
+
+def DropCourse(database: dict, studentId: str, courseId: str) -> tuple[bool, str]:
+    """退選課程或取消報名活動：從學生的 enrolled_courses 移除，並將課程人數減 1（不低於 0）。
+
+    回傳：
+        - 成功：(True, OK)
+        - 學生或課程不存在：(False, NOT_FOUND)
+        - 學生沒有選這門課：(False, NOT_ENROLLED)
+    """
+    student = courseDataManager.FindStudent(database, studentId)
+    course = courseDataManager.FindCourse(database, courseId)
+    if student is None or course is None:
+        return False, NOT_FOUND
+    if courseId not in student["enrolled_courses"]:
+        return False, NOT_ENROLLED
+    student["enrolled_courses"].remove(courseId)
+    course["enrolled_count"] = max(0, course.get("enrolled_count", 0) - 1)
+    return True, OK

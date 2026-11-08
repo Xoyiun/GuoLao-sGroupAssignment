@@ -22,6 +22,7 @@ import pytest
 
 import CourseDataManager as courseDataManager
 from ConflictChecker import CheckTimeConflict, FindClassroomConflicts
+from Constants import ROOM_CONFLICT
 from StorageManager import StorageManager, LoadDatabase
 from TimeSlotUtils import GetWeekday, LOCAL_TIME_ZONE
 from VenueManager import AddActivity
@@ -532,6 +533,33 @@ def test_XAddClassroomBadEquipment(database, equipment):
     room = {"classroom_id": "X-2", "capacity": 10, "equipment": equipment}
     assert courseDataManager.AddClassroom(database, room) == (False, courseDataManager.INVALID_FIELD)
     assert courseDataManager.FindClassroom(database, "X-2") is None
+
+
+@pytest.mark.extra
+def test_XAddCourseRejectsClassroomDoubleBooking(database):
+    """新增課程排在已被 CS101 佔用的 TR-310 星期一第 2 節 → ROOM_CONFLICT，資料不變（D11）。"""
+    clash = NewCourse(time_slots=[{"day": 1, "period": "2"}])
+    assert courseDataManager.AddCourse(database, clash) == (False, ROOM_CONFLICT)
+    assert courseDataManager.FindCourse(database, "NEW101") is None
+
+
+@pytest.mark.extra
+def test_XUpdateCourseRoomCheckIgnoresItself(database):
+    """修改課程時不會被自己的時段擋住；改到被別門課佔用的時段才回報 ROOM_CONFLICT（D11）。"""
+    assert courseDataManager.UpdateCourse(database, "CS101", {"teacher": "新教授"}) == (True, courseDataManager.OK)
+    moveIntoMa102 = {"time_slots": [{"day": 1, "period": "6"}]}
+    assert courseDataManager.UpdateCourse(database, "CS101", moveIntoMa102) == (False, ROOM_CONFLICT)
+    assert courseDataManager.FindCourse(database, "CS101")["time_slots"][0] == {"day": 1, "period": "2"}
+
+
+@pytest.mark.extra
+@pytest.mark.parametrize("grade, expected", [(2, True), (0, False), ("二", False)])
+def test_XStudentGrade(database, grade, expected):
+    """系級的「級」：年級須為正整數，新增時一併保存。"""
+    ok, _ = courseDataManager.AddStudent(database, NewStudent(grade=grade))
+    assert ok is expected
+    if expected:
+        assert courseDataManager.FindStudent(database, "S99999")["grade"] == grade
 
 
 # ======================================================================

@@ -31,17 +31,18 @@ def build_timetable(db, student_id):
                 timetable[row_index][period_index] = record.get("course_id")
 
     # 先排課程，避免活動資料覆蓋課程格。
+    # 載入後課程類型存在 course_type（檔案裡的 type 會在 F6 載入時轉換）。
     for course in db.get("courses", []):
-        if course.get("type") == "event":
+        if course.get("course_type") == "event":
             continue
         if course.get("course_id") in selected_ids:
             place_slots(course)
 
-    # 活動記錄在 courses 資料清單中，但只加入此學生參加的活動。
+    # 活動也存在 courses 清單中；學生報名的活動記在 enrolled_courses。
     for activity in db.get("courses", []):
         if activity.get("course_type") != "event":
             continue
-        if student_id in activity.get("student_ids", []):
+        if activity.get("course_id") in selected_ids:
             place_slots(activity)
 
     return timetable
@@ -69,7 +70,7 @@ def summarize_timetable(timetable, db, student_id):
     total_credits = sum(
         course.get("credits", 0)
         for course in db.get("courses", [])
-        if course.get("course_id") in selected_ids and course.get("type") != "event"
+        if course.get("course_id") in selected_ids and course.get("course_type") != "event"
     )
     daily_period_counts = [sum(cell is not None for cell in row) for row in timetable]
     free_period_count = sum(cell is None for row in timetable for cell in row)
@@ -78,7 +79,39 @@ def summarize_timetable(timetable, db, student_id):
         "daily_period_counts": daily_period_counts,
         "total_credits": total_credits,
         "free_period_count": free_period_count,
+        "gap_period_count": sum(count_gap_periods(row) for row in timetable),
     }
+
+
+def count_gap_periods(row):
+    """一天中第一個和最後一個有課的節次之間，沒有課的節數（即「空堂」）；沒課或只有一段課為 0。"""
+    busy = [index for index, cell in enumerate(row) if cell is not None]
+    if not busy:
+        return 0
+    return sum(row[index] is None for index in range(busy[0], busy[-1] + 1))
+
+
+def find_free_slots_between(timetable, start_day, start_period, end_day, end_period, min_length=1):
+    """跨日查詢：從 (start_day, start_period) 到 (end_day, end_period) 之間，長度至少 min_length 的連續空堂。
+
+    連續空堂不跨越午夜，每天分開計算；第一天從 start_period 開始、最後一天到 end_period 為止，
+    中間的日子查整天。回傳 [(星期, 開始節次, 結束節次), ...]。
+    """
+    for day in (start_day, end_day):
+        if not isinstance(day, int) or isinstance(day, bool) or not 1 <= day <= 7:
+            raise ValueError("day must be between 1 and 7")
+    if start_period not in PERIODS or end_period not in PERIODS:
+        raise ValueError("invalid period")
+    if (start_day, PERIODS.index(start_period)) > (end_day, PERIODS.index(end_period)):
+        raise ValueError("start must not be after end")
+
+    results = []
+    for day in range(start_day, end_day + 1):
+        first = start_period if day == start_day else PERIODS[0]
+        last = end_period if day == end_day else PERIODS[-1]
+        for free_start, free_end in find_free_slots(timetable, day, first, last, min_length):
+            results.append((day, free_start, free_end))
+    return results
 
 
 def find_free_slots(timetable, day, start_period, end_period, min_length=1):
