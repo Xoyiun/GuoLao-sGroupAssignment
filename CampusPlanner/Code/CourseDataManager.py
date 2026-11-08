@@ -93,6 +93,35 @@ def CountEnrolled(database, courseId):
     )
 
 
+def CountCredits(database, studentId):
+    """學生目前已選課程的總學分（活動學分為 0）；找不到學生回傳 0。
+
+    F2 加選時計算學分上限、F3 課表統計每週總學分都會用到。
+    """
+    student = FindStudent(database, studentId)
+    if student is None:
+        return 0
+    return sum(
+        course["credits"]
+        for course in (FindCourse(database, courseId) for courseId in student["enrolled_courses"])
+        if course is not None
+    )
+
+
+def RoomConflictCode(database, course, excludeCourseId=None):
+    """課程排定的教室在同時段已被其他課程或活動佔用時回傳 ROOM_CONFLICT，否則 OK。
+
+    教室衝堂的判斷屬於 F2（ConflictChecker）；ConflictChecker 也匯入本模組，
+    所以這裡延後到呼叫時才匯入，避免循環匯入。
+    """
+    from ConflictChecker import CheckClassroomConflict
+
+    _, code = CheckClassroomConflict(
+        database, course["classroom_id"], course["time_slots"], excludeCourseId
+    )
+    return code
+
+
 def RemainingSeats(course):
     """剩餘名額 = 人數上限 − 目前人數 (enrolled_count)。
 
@@ -166,6 +195,8 @@ def ValidateStudentFields(database, student):
     maxCredits = student.get("max_credits")
     if not IsInteger(maxCredits) or maxCredits < 1:
         return False, INVALID_CREDITS
+    if "grade" in student and (not IsInteger(student["grade"]) or student["grade"] < 1):
+        return False, INVALID_FIELD  # 系級的「級」：年級須為正整數
     courses = student.get("enrolled_courses")
     if not isinstance(courses, list) or len(set(courses)) != len(courses):
         return False, INVALID_STUDENT_COURSES
@@ -242,6 +273,9 @@ def AddCourse(database, course):
     ok, code = ValidateCourseFields(database, course)
     if not ok:
         return False, code
+    code = RoomConflictCode(database, course)
+    if code != OK:
+        return False, code
 
     newCourse = {fieldName: copy.deepcopy(course[fieldName])
                  for fieldName in ("course_id", *COURSE_FIELDS)}
@@ -272,6 +306,9 @@ def UpdateCourse(database, courseId, changes):
         return False, code
     if candidate["capacity"] < max(course.get("enrolled_count", 0), CountEnrolled(database, courseId)):
         return False, INVALID_CAPACITY
+    code = RoomConflictCode(database, candidate, excludeCourseId=courseId)
+    if code != OK:
+        return False, code
 
     course.update(candidate)
     return True, OK
@@ -346,8 +383,11 @@ def AddStudent(database, student):
     ok, code = ValidateStudentFields(database, student)
     if not ok:
         return False, code
-    database["students"].append({fieldName: copy.deepcopy(student[fieldName]) for fieldName in (
-        "student_id", *STUDENT_FIELDS)})
+    newStudent = {fieldName: copy.deepcopy(student[fieldName]) for fieldName in (
+        "student_id", *STUDENT_FIELDS)}
+    if "grade" in student:
+        newStudent["grade"] = student["grade"]
+    database["students"].append(newStudent)
     return True, OK
 
 
@@ -356,14 +396,14 @@ def UpdateStudent(database, studentId, changes):
 
     輸入：
         student_id: 欲修改的學號
-        changes: 欲異動的欄位字典（如 name, department, max_credits）
+        changes: 欲異動的欄位字典（如 name, department, grade, max_credits）
     回傳：
         (ok, code): 成功為 (True, OK)，失敗為 (False, 錯誤碼)
     """
     student = FindStudent(database, studentId)
     if student is None:
         return False, NOT_FOUND
-    allowed = {"name", "department", "max_credits"}
+    allowed = {"name", "department", "grade", "max_credits"}
     if not isinstance(changes, dict) or not set(changes) <= allowed:
         return False, INVALID_FIELD
     candidate = {**student, **changes}
@@ -490,3 +530,27 @@ class CourseDataManager(StorageManager):
 
     def QueryStudents(self, **conditions):
         return QueryStudents(self.data, **conditions)
+
+    # ---- F2 選課（規則在 ConflictChecker；延後匯入避免循環匯入）----
+    def CountCredits(self, studentId: str) -> int:
+        return CountCredits(self.data, studentId)
+
+    def CheckEnrollment(self, studentId, courseId):
+        """只檢查不加選，回傳 (ok, code, conflicts)。"""
+        from ConflictChecker import CheckEnrollmentConflicts
+
+        return CheckEnrollmentConflicts(self.data, studentId, courseId)
+
+    def EnrollCourse(self, studentId, courseId):
+        """加選：全部檢查通過才寫入並存檔，回傳 (ok, code, conflicts)。"""
+        from ConflictChecker import EnrollCourse
+
+        ok, code, conflicts = EnrollCourse(self.data, studentId, courseId)
+        ok, code = self.SaveIfSuccessful((ok, code))
+        return ok, code, conflicts
+
+    def DropCourse(self, studentId, courseId):
+        """退選並存檔，回傳 (ok, code)。"""
+        from ConflictChecker import DropCourse
+
+        return self.SaveIfSuccessful(DropCourse(self.data, studentId, courseId))

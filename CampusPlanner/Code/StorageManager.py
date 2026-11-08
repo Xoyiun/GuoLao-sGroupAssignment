@@ -286,7 +286,7 @@ def WriteJsonFile(record, filePath):
     content = json.dumps(record, ensure_ascii=False, indent=2)
     try:
         with open(filePath, "r", encoding="utf-8") as dataFile:
-            if dataFile.read() == content:
+            if dataFile.read().rstrip("\n") == content:  # 只差檔尾換行也視為相同
                 return
     except (OSError, UnicodeDecodeError):
         pass  # 檔案不存在或讀不了，就照常寫入

@@ -18,6 +18,10 @@ import sys
 from TimeSlotUtils import GetDateLabel, GetWeekday
 from Constants import (
     ACTION,
+    ALREADY_ENROLLED,
+    COURSE_FULL,
+    CREDIT_LIMIT_EXCEEDED,
+    ROOM_CONFLICT,
     CAPACITY_EXCEEDS_ROOM,
     CLASSROOM_IN_USE,
     CLASSROOM_NOT_FOUND,
@@ -212,8 +216,9 @@ def FormatCourse(course):
 def FormatStudent(student):
     """A1234567 王大明 | 資工系 | 學分上限 25 | 已選 CS101、CS102"""
     courses = "、".join(student["enrolled_courses"]) or "（尚未選課）"
+    grade = f" {student['grade']} 年級" if "grade" in student else ""
     return (
-        f"{student['student_id']} {student['name']} | {student['department']} | "
+        f"{student['student_id']} {student['name']} | {student['department']}{grade} | "
         f"學分上限 {student['max_credits']} | 已選 {courses}"
     )
 
@@ -351,7 +356,8 @@ def AddStudentFlow(manager, ask, show):
     student = {
         "student_id": AskIdentifier(ask, "學號（例如 S11200001）："),
         "name": AskText(ask, "姓名："),
-        "department": AskText(ask, "系級："),
+        "department": AskText(ask, "系所（例如 資工系）："),
+        "grade": ParseInt(AskText(ask, "年級（例如 1）：")),
     }
     maxText = AskText(ask, f"學分上限（Enter 預設 {DEFAULT_MAX_CREDITS}）：")
     student["max_credits"] = ParseInt(maxText) if maxText else DEFAULT_MAX_CREDITS
@@ -370,7 +376,8 @@ def UpdateStudentFlow(manager, ask, show):
     show("目前資料：" + FormatStudent(student))
     changes = AskChanges(ask, [
         ("name", "姓名（Enter 不修改）：", str.strip),
-        ("department", "系級（Enter 不修改）：", str.strip),
+        ("department", "系所（Enter 不修改）：", str.strip),
+        ("grade", "年級（Enter 不修改）：", ParseInt),
         ("max_credits", "學分上限（Enter 不修改）：", ParseInt),
     ])
     if not changes:
@@ -466,7 +473,20 @@ def ViewTimetableFlow(manager, ask, show):
 
     show(f"總學分：{summary['total_credits']}")
     show(f"佔用節數：{sum(summary['daily_period_counts'])}")
-    show(f"空堂數：{summary['free_period_count']}")
+    show(f"空堂數（上課日中兩堂課之間的空節）：{summary['gap_period_count']}")
+    show(f"整週空白節數：{summary['free_period_count']}")
+
+    # 圖例：分別標示課程與活動的時段占用情況
+    shown = []
+    for row in timetable:
+        for cell in row:
+            if cell is not None and cell not in shown:
+                shown.append(cell)
+    for code in shown:
+        course = manager.FindCourse(code)
+        kind = "活動" if course and course.get("course_type") == "event" else "課程"
+        title = course["title"] if course else ""
+        show(f"  {code}：{title}（{kind}）")
 
 def QueryTimetableFlow(manager, ask, show):
     student_id = AskIdentifier(ask, "請輸入學號：")
@@ -505,17 +525,19 @@ def FindFreeSlotsFlow(manager, ask, show):
         show(f"[錯誤] 找不到學生：{student_id}")
         return
 
-    day = ParseInt(AskText(ask, "星期（1-7）："))
-    start_period = AskText(ask, "開始節次（1-9、a-c）：")
-    end_period = AskText(ask, "結束節次（1-9、a-c）：")
+    day = ParseInt(AskText(ask, "開始星期（1-7）："))
+    start_period = AskText(ask, "開始節次（1-9、a-c）：").lower()
+    end_day_text = AskText(ask, "結束星期（1-7，Enter 表示同一天）：")
+    end_day = ParseInt(end_day_text) if end_day_text else day
+    end_period = AskText(ask, "結束節次（1-9、a-c）：").lower()
     min_length = ParseInt(AskText(ask, "至少連續幾節："))
 
-    if not isinstance(day, int) or not isinstance(min_length, int):
+    if not all(isinstance(value, int) for value in (day, end_day, min_length)):
         show("[錯誤] 星期和連續節數都必須輸入整數。")
         return
     try:
-        slots = timetableModule.find_free_slots(
-            timetable, day, start_period, end_period, min_length
+        slots = timetableModule.find_free_slots_between(
+            timetable, day, start_period, end_day, end_period, min_length
         )
     except ValueError as error:
         show(f"[錯誤] {error}")
@@ -524,8 +546,92 @@ def FindFreeSlotsFlow(manager, ask, show):
     if not slots:
         show("指定範圍內沒有符合長度的連續空堂。")
         return
-    for first_period, last_period in slots:
-        show(f"星期{day} 第{first_period}節到第{last_period}節為空堂。")
+    for slot_day, first_period, last_period in slots:
+        show(f"星期{DAY_NAMES[slot_day]} 第{first_period}節到第{last_period}節為空堂。")
+
+# F2 選課流程
+def FormatSlotList(slots):
+    """[{'day': 2, 'period': '3'}, {'day': 2, 'period': '4'}] → '星期二第 3、4 節'（日期時段會附上日期）。"""
+    groups = {}
+    for slot in slots:
+        dateLabel = GetDateLabel(slot["day"]) or ""
+        groups.setdefault((GetWeekday(slot["day"]), dateLabel), []).append(slot["period"])
+    parts = []
+    for (day, dateLabel), periods in sorted(groups.items()):
+        periods.sort(key=VALID_PERIODS.index)
+        dayLabel = f"{dateLabel}（星期{DAY_NAMES[day]}）" if dateLabel else f"星期{DAY_NAMES[day]}"
+        parts.append(f"{dayLabel}第 {'、'.join(periods)} 節")
+    return "；".join(parts)
+
+
+def CourseLabel(manager, courseId):
+    """'CS102' → 'CS102 資料結構'；找不到課程就只回傳代號。"""
+    course = manager.FindCourse(courseId)
+    return f"{courseId} {course['title']}" if course else courseId
+
+
+def ConflictLines(manager, conflict):
+    """把一筆衝突轉成兩行說明：(衝突摘要, 補充說明)。"""
+    conflictType = conflict["type"]
+    if conflictType == COURSE_FULL:
+        course = manager.FindCourse(conflict["course_id"])
+        return "課程已額滿", f"人數上限：{course['capacity']}，目前人數：{course.get('enrolled_count', 0)}"
+    if conflictType == CREDIT_LIMIT_EXCEEDED:
+        afterCredits = conflict["current_credits"] + conflict["course_credits"]
+        return "學分超過上限", f"加選後 {afterCredits} 學分，超過上限 {conflict['max_credits']} 學分"
+    summary = FormatSlotList(conflict["slots"])
+    if conflictType == ROOM_CONFLICT:
+        return summary, f"教室 {conflict['classroom_id']} 已排定：{CourseLabel(manager, conflict['conflict_with_course'])}"
+    if "conflict_with_activity" in conflict:
+        return summary, f"已參加活動：{CourseLabel(manager, conflict['conflict_with_activity'])}"
+    return summary, f"已選課程：{CourseLabel(manager, conflict['conflict_with_course'])}"
+
+
+def EnrollCourseFlow(manager, ask, show):
+    """加選課程或報名活動；失敗時一次列出所有衝突（格式依作業規範 F2 的輸出範例）。"""
+    studentId = AskIdentifier(ask, "學號：")
+    student = manager.FindStudent(studentId)
+    if student is None:
+        show(f"[錯誤] 加選失敗：找不到學生 {studentId}。")
+        return
+    courseId = AskIdentifier(ask, "欲加選的課程或活動代號：")
+    course = manager.FindCourse(courseId)
+    if course is None:
+        show(f"[錯誤] 加選失敗：找不到課程 {courseId}。")
+        return
+
+    currentCredits = manager.CountCredits(studentId)
+    ok, code, conflicts = manager.EnrollCourse(studentId, courseId)
+    show(f"學生：{studentId} {student['name']}")
+    show(f"欲加選：{courseId} {course['title']}")
+    if ok:
+        show("選課結果：成功")
+    elif code == ALREADY_ENROLLED or code == SAVE_FAILED:
+        show(f"選課結果：失敗（{ERROR_REASONS[code]}）")
+    else:
+        show("選課結果：失敗")
+        for number, conflict in enumerate(conflicts, start=1):
+            summary, detail = ConflictLines(manager, conflict)
+            show(f"衝突 {number}：{summary}")
+            show(detail)
+    show(f"目前學分：{currentCredits}")
+    show(f"加選後學分：{currentCredits + course['credits']}")
+    show(f"學分上限：{student['max_credits']}")
+
+
+def DropCourseFlow(manager, ask, show):
+    """退選課程或取消報名活動，同步更新課程人數。"""
+    studentId = AskIdentifier(ask, "學號：")
+    courseId = AskIdentifier(ask, "欲退選的課程或活動代號：")
+    ok, code = manager.DropCourse(studentId, courseId)
+    if ok:
+        show(f"[成功] 學生 {studentId} 已退選 {CourseLabel(manager, courseId)}。")
+    elif code == NOT_FOUND:
+        target = "學生" if manager.FindStudent(studentId) is None else "課程"
+        show(f"[錯誤] 退選失敗：找不到{target} {studentId if target == '學生' else courseId}。")
+    else:
+        show(f"[錯誤] 退選失敗：{ERROR_REASONS.get(code, code)}。")
+
 
 # ======================================================================
 # 四、選單與啟動 (Menu & Main Loop)
@@ -545,6 +651,8 @@ MENU = (
     ("12", "查看個人課表", ViewTimetableFlow),
     ("13", "依條件查詢個人課表", QueryTimetableFlow),
     ("14", "查詢連續空堂", FindFreeSlotsFlow),
+    ("15", "加選課程／報名活動", EnrollCourseFlow),
+    ("16", "退選課程／取消報名", DropCourseFlow),
 )
 
 
