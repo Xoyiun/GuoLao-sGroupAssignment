@@ -1,12 +1,15 @@
 .venv/
 
+# DataManager default working file
 db.json
 
+# Python and pytest caches
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
 
+# Backups created for corrupted JSON files
 *.corrupt.bak
 Code/report_*.html
 CampusPlanner/TestDriver/report_*.html
 report_*.html
-
