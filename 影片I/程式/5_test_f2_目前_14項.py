@@ -1,0 +1,204 @@
+"""F2 多層次衝堂與選課檢查 的自動化測試。
+
+每個測試自己組一份小資料庫，衝突情境一目了然，不受種子資料變動影響。
+執行：python -m pytest -m f2 -v
+"""
+
+import datetime
+
+import pytest
+
+import ConflictChecker as conflictChecker
+from Constants import (
+    ACTIVITY_CONFLICT,
+    ALREADY_ENROLLED,
+    COURSE_FULL,
+    CREDIT_LIMIT_EXCEEDED,
+    NOT_ENROLLED,
+    NOT_FOUND,
+    OK,
+    ROOM_CONFLICT,
+    TIME_CONFLICT,
+)
+from TimeSlotUtils import LOCAL_TIME_ZONE
+
+pytestmark = pytest.mark.f2
+
+
+def Course(courseId, slots, classroomId="R1", credits=3, capacity=30, enrolledCount=0, courseType=None):
+    """組一門課；slots 寫成 [(星期, 節次), ...]。"""
+    course = {
+        "course_id": courseId,
+        "title": courseId,
+        "credits": credits,
+        "required": False,
+        "teacher": "T",
+        "classroom_id": classroomId,
+        "capacity": capacity,
+        "enrolled_count": enrolledCount,
+        "time_slots": [{"day": day, "period": period} for day, period in slots],
+    }
+    if courseType:
+        course["course_type"] = courseType
+    return course
+
+
+def Database(courses, enrolled=(), maxCredits=25):
+    """學生 S1 已選 enrolled 裡的課程。"""
+    return {
+        "classrooms": [{"classroom_id": "R1", "capacity": 50}, {"classroom_id": "R2", "capacity": 50}],
+        "courses": courses,
+        "students": [{
+            "student_id": "S1", "name": "測試生", "department": "資工系",
+            "max_credits": maxCredits, "enrolled_courses": list(enrolled),
+        }],
+        "campus_graph": {"nodes": [], "edges": []},
+    }
+
+
+def test_NoConflictPasses():
+    database = Database([Course("A", [(1, "1")]), Course("NEW", [(2, "1")], classroomId="R2")], enrolled=["A"])
+    assert conflictChecker.CheckEnrollmentConflicts(database, "S1", "NEW") == (True, OK, [])
+
+
+def test_AllConflictsListedAndSortedByDayAndPeriod():
+    """學生衝堂、教室衝堂、額滿、學分超過同時發生 → 全部列出，時段衝突依星期、節次排序，限制排最後。"""
+    database = Database(
+        [
+            Course("THU", [(4, "5")], classroomId="R2", credits=10),
+            Course("TUE", [(2, "3"), (2, "4")], classroomId="R2", credits=10),
+            Course("ROOM", [(1, "a")], classroomId="R1"),           # 學生沒選，但跟 NEW 搶同一間教室
+            Course("NEW", [(4, "5"), (2, "4"), (2, "3"), (1, "a")], classroomId="R1",
+                   credits=6, capacity=30, enrolledCount=30),
+        ],
+        enrolled=["THU", "TUE"],
+    )
+    ok, code, conflicts = conflictChecker.CheckEnrollmentConflicts(database, "S1", "NEW")
+
+    assert not ok and code == ROOM_CONFLICT
+    assert [conflict["type"] for conflict in conflicts] == [
+        ROOM_CONFLICT, TIME_CONFLICT, TIME_CONFLICT, COURSE_FULL, CREDIT_LIMIT_EXCEEDED,
+    ]
+    assert conflicts[0]["conflict_with_course"] == "ROOM"
+    assert conflicts[1]["conflict_with_course"] == "TUE"
+    assert conflicts[1]["slots"] == [{"day": 2, "period": "3"}, {"day": 2, "period": "4"}]
+    assert conflicts[2]["conflict_with_course"] == "THU"
+    assert conflicts[4]["current_credits"] == 20 and conflicts[4]["max_credits"] == 25
+
+
+def test_PeriodsLettersSortAfterNine():
+    """同一天的節次 9 要排在 a 前面（不是照字串大小）。"""
+    database = Database(
+        [Course("A", [(3, "a")], classroomId="R2"), Course("B", [(3, "9")], classroomId="R2"),
+         Course("NEW", [(3, "a"), (3, "9")])],
+        enrolled=["A", "B"],
+    )
+    _, _, conflicts = conflictChecker.CheckEnrollmentConflicts(database, "S1", "NEW")
+    assert [conflict["conflict_with_course"] for conflict in conflicts] == ["B", "A"]
+
+
+def test_ActivityOnDateConflictsWithWeeklyCourse():
+    """學生報名的活動（event 課程，日期時段）落在新課程同一星期、同一節 → 活動衝突。"""
+    tuesday = int(datetime.datetime(2026, 10, 6, tzinfo=LOCAL_TIME_ZONE).timestamp())  # 星期二
+    database = Database(
+        [Course("ACT", [(tuesday, "5")], classroomId="R2", credits=0, courseType="event"),
+         Course("NEW", [(2, "5")])],
+        enrolled=["ACT"],
+    )
+    ok, code, conflicts = conflictChecker.CheckEnrollmentConflicts(database, "S1", "NEW")
+    assert not ok and code == ACTIVITY_CONFLICT
+    assert conflicts[0]["conflict_with_activity"] == "ACT"
+
+
+def test_MondayActivityConflictSortsBeforeTuesdayCourseConflict():
+    """已選順序是「星期二的課、星期一的活動」，衝突清單仍要依星期排：星期一的活動衝突在前。"""
+    monday = int(datetime.datetime(2026, 10, 5, tzinfo=LOCAL_TIME_ZONE).timestamp())  # 星期一
+    database = Database(
+        [Course("TUE", [(2, "3")], classroomId="R2"),
+         Course("ACT", [(monday, "5")], classroomId="R2", credits=0, courseType="event"),
+         Course("NEW", [(2, "3"), (1, "5")])],
+        enrolled=["TUE", "ACT"],
+    )
+    _, code, conflicts = conflictChecker.CheckEnrollmentConflicts(database, "S1", "NEW")
+    assert code == ACTIVITY_CONFLICT
+    assert [conflict["type"] for conflict in conflicts] == [ACTIVITY_CONFLICT, TIME_CONFLICT]
+    assert conflicts[0]["conflict_with_activity"] == "ACT"
+    assert conflicts[1]["conflict_with_course"] == "TUE"
+
+
+def test_ActivityDatesAreSortedByWeekdayNotByTimestamp():
+    """報名跨兩天的活動：10/8（星期四）的時間戳比 10/12（星期一）小，
+    但要先換算成星期再排序，所以星期一的衝突排在前面。拿掉換算這個測試就會失敗。"""
+    thursday = int(datetime.datetime(2026, 10, 8, tzinfo=LOCAL_TIME_ZONE).timestamp())
+    monday = int(datetime.datetime(2026, 10, 12, tzinfo=LOCAL_TIME_ZONE).timestamp())
+    database = Database(
+        [Course("THU", [(4, "2")], classroomId="R2"),
+         Course("MON", [(1, "2")], classroomId="R2"),
+         Course("ACT", [(thursday, "2"), (monday, "2")], credits=0, courseType="event")],
+        enrolled=["THU", "MON"],
+    )
+    _, code, conflicts = conflictChecker.CheckEnrollmentConflicts(database, "S1", "ACT")
+    assert code == ACTIVITY_CONFLICT
+    assert [conflict["conflict_with_course"] for conflict in conflicts] == ["MON", "THU"]
+
+
+def test_AlreadyEnrolledIsRejected():
+    """重複加選已選的課 → ALREADY_ENROLLED，不會誤報成跟自己衝堂。"""
+    database = Database([Course("A", [(1, "1")])], enrolled=["A"])
+    assert conflictChecker.CheckEnrollmentConflicts(database, "S1", "A") == (
+        False, ALREADY_ENROLLED, [{"type": ALREADY_ENROLLED, "course_id": "A"}]
+    )
+
+
+@pytest.mark.parametrize("studentId, courseId, target", [("NOPE", "A", "student"), ("S1", "NOPE", "course")])
+def test_UnknownStudentOrCourse(studentId, courseId, target):
+    database = Database([Course("A", [(1, "1")])])
+    ok, code, conflicts = conflictChecker.CheckEnrollmentConflicts(database, studentId, courseId)
+    assert (ok, code, conflicts[0]["target"]) == (False, NOT_FOUND, target)
+
+
+def test_ClassroomConflictIgnoresTheCourseItself():
+    """修改課程時排除自己，不會被自己的時段擋住。"""
+    database = Database([Course("A", [(1, "1")])])
+    slots = [{"day": 1, "period": "1"}]
+    assert conflictChecker.CheckClassroomConflict(database, "R1", slots, excludeCourseId="A") == (True, OK)
+    assert conflictChecker.CheckClassroomConflict(database, "R1", slots) == (False, ROOM_CONFLICT)
+
+
+def test_AddingActivityThatClashesWithCourseIsActivityConflict():
+    """新報名的活動跟已選課程撞時段 → 也算活動衝突（規範：活動不得與已選課程重疊）。"""
+    tuesday = int(datetime.datetime(2026, 10, 6, tzinfo=LOCAL_TIME_ZONE).timestamp())
+    database = Database(
+        [Course("A", [(2, "5")]), Course("ACT", [(tuesday, "5")], classroomId="R2", credits=0, courseType="event")],
+        enrolled=["A"],
+    )
+    ok, code, conflicts = conflictChecker.CheckEnrollmentConflicts(database, "S1", "ACT")
+    assert not ok and code == ACTIVITY_CONFLICT
+    assert conflicts[0]["conflict_with_course"] == "A"
+
+
+def test_EnrollUpdatesStudentAndCourseTogether():
+    """加選成功 → 學生已選清單和課程人數一起更新。"""
+    database = Database([Course("A", [(1, "1")], enrolledCount=5)])
+    assert conflictChecker.EnrollCourse(database, "S1", "A") == (True, OK, [])
+    assert database["students"][0]["enrolled_courses"] == ["A"]
+    assert database["courses"][0]["enrolled_count"] == 6
+
+
+def test_EnrollWithConflictChangesNothing():
+    """有衝突就不加選，學生清單與課程人數都不變。"""
+    database = Database([Course("A", [(1, "1")]), Course("B", [(1, "1")], classroomId="R2")], enrolled=["A"])
+    ok, code, _ = conflictChecker.EnrollCourse(database, "S1", "B")
+    assert (ok, code) == (False, TIME_CONFLICT)
+    assert database["students"][0]["enrolled_courses"] == ["A"]
+    assert database["courses"][1]["enrolled_count"] == 0
+
+
+def test_DropCourse():
+    """退選 → 移出清單、人數減 1（不低於 0）；沒選過或不存在要回報錯誤。"""
+    database = Database([Course("A", [(1, "1")], enrolledCount=0)], enrolled=["A"])
+    assert conflictChecker.DropCourse(database, "S1", "A") == (True, OK)
+    assert database["students"][0]["enrolled_courses"] == []
+    assert database["courses"][0]["enrolled_count"] == 0
+    assert conflictChecker.DropCourse(database, "S1", "A") == (False, NOT_ENROLLED)
+    assert conflictChecker.DropCourse(database, "S1", "NOPE") == (False, NOT_FOUND)

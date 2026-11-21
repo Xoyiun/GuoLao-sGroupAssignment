@@ -110,6 +110,38 @@ def test_ActivityOnDateConflictsWithWeeklyCourse():
     assert conflicts[0]["conflict_with_activity"] == "ACT"
 
 
+def test_MondayActivityConflictSortsBeforeTuesdayCourseConflict():
+    """已選順序是「星期二的課、星期一的活動」，衝突清單仍要依星期排：星期一的活動衝突在前。"""
+    monday = int(datetime.datetime(2026, 10, 5, tzinfo=LOCAL_TIME_ZONE).timestamp())  # 星期一
+    database = Database(
+        [Course("TUE", [(2, "3")], classroomId="R2"),
+         Course("ACT", [(monday, "5")], classroomId="R2", credits=0, courseType="event"),
+         Course("NEW", [(2, "3"), (1, "5")])],
+        enrolled=["TUE", "ACT"],
+    )
+    _, code, conflicts = conflictChecker.CheckEnrollmentConflicts(database, "S1", "NEW")
+    assert code == ACTIVITY_CONFLICT
+    assert [conflict["type"] for conflict in conflicts] == [ACTIVITY_CONFLICT, TIME_CONFLICT]
+    assert conflicts[0]["conflict_with_activity"] == "ACT"
+    assert conflicts[1]["conflict_with_course"] == "TUE"
+
+
+def test_ActivityDatesAreSortedByWeekdayNotByTimestamp():
+    """報名跨兩天的活動：10/8（星期四）的時間戳比 10/12（星期一）小，
+    但要先換算成星期再排序，所以星期一的衝突排在前面。拿掉換算這個測試就會失敗。"""
+    thursday = int(datetime.datetime(2026, 10, 8, tzinfo=LOCAL_TIME_ZONE).timestamp())
+    monday = int(datetime.datetime(2026, 10, 12, tzinfo=LOCAL_TIME_ZONE).timestamp())
+    database = Database(
+        [Course("THU", [(4, "2")], classroomId="R2"),
+         Course("MON", [(1, "2")], classroomId="R2"),
+         Course("ACT", [(thursday, "2"), (monday, "2")], credits=0, courseType="event")],
+        enrolled=["THU", "MON"],
+    )
+    _, code, conflicts = conflictChecker.CheckEnrollmentConflicts(database, "S1", "ACT")
+    assert code == ACTIVITY_CONFLICT
+    assert [conflict["conflict_with_course"] for conflict in conflicts] == ["MON", "THU"]
+
+
 def test_AlreadyEnrolledIsRejected():
     """重複加選已選的課 → ALREADY_ENROLLED，不會誤報成跟自己衝堂。"""
     database = Database([Course("A", [(1, "1")])], enrolled=["A"])
