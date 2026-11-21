@@ -10,6 +10,7 @@ MARKERS = {
     "cli": "main.py 命令列介面（test_main.py，不計入 30 個）",  # 新增：main.py 的測試標記
     "f2": "F2 衝堂與選課檢查（test_f2.py）",
     "f3": "F3 個人課表與空閒時段（test_f3.py）",
+    "f4": "F4 校園活動與教室配置（test_f4.py）",
 }
 
 
