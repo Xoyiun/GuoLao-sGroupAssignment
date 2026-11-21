@@ -1,0 +1,84 @@
+﻿powershell : Preparing worktree (detached HEAD 5de6cf4)
+At line:1 char:430
++ ... | Out-Null; powershell -ExecutionPolicy Bypass -File 影片I\demo_old_vs_ ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Preparing workt...d HEAD 5de6cf4):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+===== 修改前：15feb67 的 ConflictChecker.py + 5de6cf4 的 test_f2.py =====
+Using CPython 3.14.7 interpreter at: C:\Users\user\AppData\Local\Python\pythoncore-3.14-64\python.exe
+Creating virtual environment at: .venv
+Installed 6 packages in 452ms
+============================= test session starts =============================
+platform win32 -- Python 3.14.7, pytest-9.1.1, pluggy-1.7.0 -- C:\Users\user\AppData\Local\Temp\f2-old-demo\.venv\Scripts\python.exe
+rootdir: C:\Users\user\AppData\Local\Temp\f2-old-demo
+configfile: pyproject.toml
+collecting ... collected 8 items
+
+CampusPlanner/TestDriver/test_f2.py::test_NoConflictPasses PASSED        [ 12%]
+CampusPlanner/TestDriver/test_f2.py::test_AllConflictsListedAndSortedByDayAndPeriod FAILED [ 25%]
+CampusPlanner/TestDriver/test_f2.py::test_PeriodsLettersSortAfterNine FAILED [ 37%]
+CampusPlanner/TestDriver/test_f2.py::test_ActivityOnDateConflictsWithWeeklyCourse PASSED [ 50%]
+CampusPlanner/TestDriver/test_f2.py::test_AlreadyEnrolledIsRejected FAILED [ 62%]
+CampusPlanner/TestDriver/test_f2.py::test_UnknownStudentOrCourse[NOPE-A-student] PASSED [ 75%]
+CampusPlanner/TestDriver/test_f2.py::test_UnknownStudentOrCourse[S1-NOPE-course] PASSED [ 87%]
+CampusPlanner/TestDriver/test_f2.py::test_ClassroomConflictIgnoresTheCourseItself PASSED [100%]
+
+================================== FAILURES ===================================
+E   AssertionError: assert (not False and 'COURSE_FULL' == 'ROOM_CONFLICT'
+      
+      - ROOM_CONFLICT
+      + COURSE_FULL)
+C:\Users\user\AppData\Local\Temp\f2-old-demo\CampusPlanner\TestDriver\test_f2.py:77: AssertionError: assert (not False and 'COURSE_FULL' == 'ROOM_CONFLICT'
+E   AssertionError: assert ['A', 'B'] == ['B', 'A']
+      
+      At index 0 diff: 'A' != 'B'
+      
+      Full diff:
+        [
+      +     'A',
+            'B',
+      -     'A',
+        ]
+C:\Users\user\AppData\Local\Temp\f2-old-demo\CampusPlanner\TestDriver\test_f2.py:96: AssertionError: assert ['A', 'B'] == ['B', 'A']
+E   AssertionError: assert (False, 'TIME...iod': '1'}]}]) == (False, 'ALRE...se_id': 'A'}])
+      
+      At index 1 diff: 'TIME_CONFLICT' != 'ALREADY_ENROLLED'
+      
+      Full diff:
+        (
+            False,
+      -     'ALREADY_ENROLLED',...
+      
+      ...Full output truncated (18 lines hidden), use '-vv' to show
+C:\Users\user\AppData\Local\Temp\f2-old-demo\CampusPlanner\TestDriver\test_f2.py:115: AssertionError: assert (False, 'TIME...iod': '1'}]}]) == (False, 'ALRE...se_id': 'A'}])
+=========================== short test summary info ===========================
+FAILED CampusPlanner/TestDriver/test_f2.py::test_AllConflictsListedAndSortedByDayAndPeriod
+FAILED CampusPlanner/TestDriver/test_f2.py::test_PeriodsLettersSortAfterNine
+FAILED CampusPlanner/TestDriver/test_f2.py::test_AlreadyEnrolledIsRejected - ...
+========================= 3 failed, 5 passed in 0.22s =========================
+
+===== 修改後：目前分支的 ConflictChecker.py + test_f2.py =====
+============================= test session starts =============================
+platform win32 -- Python 3.14.7, pytest-9.1.1, pluggy-1.7.0 -- C:\Users\user\Desktop\Homeworkpy\GuoLao-sGroupAssignment\.venv\Scripts\python.exe
+rootdir: C:\Users\user\Desktop\Homeworkpy\GuoLao-sGroupAssignment
+configfile: pyproject.toml
+collecting ... collected 14 items
+
+TestDriver/test_f2.py::test_NoConflictPasses PASSED                      [  7%]
+TestDriver/test_f2.py::test_AllConflictsListedAndSortedByDayAndPeriod PASSED [ 14%]
+TestDriver/test_f2.py::test_PeriodsLettersSortAfterNine PASSED           [ 21%]
+TestDriver/test_f2.py::test_ActivityOnDateConflictsWithWeeklyCourse PASSED [ 28%]
+TestDriver/test_f2.py::test_MondayActivityConflictSortsBeforeTuesdayCourseConflict PASSED [ 35%]
+TestDriver/test_f2.py::test_ActivityDatesAreSortedByWeekdayNotByTimestamp PASSED [ 42%]
+TestDriver/test_f2.py::test_AlreadyEnrolledIsRejected PASSED             [ 50%]
+TestDriver/test_f2.py::test_UnknownStudentOrCourse[NOPE-A-student] PASSED [ 57%]
+TestDriver/test_f2.py::test_UnknownStudentOrCourse[S1-NOPE-course] PASSED [ 64%]
+TestDriver/test_f2.py::test_ClassroomConflictIgnoresTheCourseItself PASSED [ 71%]
+TestDriver/test_f2.py::test_AddingActivityThatClashesWithCourseIsActivityConflict PASSED [ 78%]
+TestDriver/test_f2.py::test_EnrollUpdatesStudentAndCourseTogether PASSED [ 85%]
+TestDriver/test_f2.py::test_EnrollWithConflictChangesNothing PASSED      [ 92%]
+TestDriver/test_f2.py::test_DropCourse PASSED                            [100%]
+
+============================= 14 passed in 0.18s ==============================
