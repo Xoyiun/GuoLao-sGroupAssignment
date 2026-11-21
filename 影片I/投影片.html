@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>F2 加選衝突檢查</title>
+<style>
+  :root {
+    --bg: #f4f1ea; --card: #fffdf8; --ink: #1f2328; --muted: #5d6470;
+    --accent: #b5452b; --accent-soft: #f6e1d9; --ok: #2f7a4f; --ok-soft: #dcefe3;
+    --bad: #b3261e; --bad-soft: #f9dedc; --line: #ddd6c8; --code: #26292e;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #2b2b2b; }
+  body { font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif; color: var(--ink); }
+  .deck { position: fixed; inset: 0; display: grid; place-items: center; }
+  .slide {
+    position: absolute; width: 1280px; height: 720px; background: var(--bg);
+    padding: 64px 80px 56px; display: none; flex-direction: column; overflow: hidden;
+    transform-origin: center center;
+  }
+  .slide.active { display: flex; }
+  .tag { font-size: 18px; letter-spacing: .08em; color: var(--accent); font-weight: 700; margin-bottom: 10px; }
+  h1 { font-size: 52px; margin: 0 0 24px; line-height: 1.2; }
+  h2 { font-size: 40px; margin: 0 0 28px; line-height: 1.25; }
+  p, li { font-size: 26px; line-height: 1.6; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin-bottom: 10px; }
+  .muted { color: var(--muted); }
+  .speaker { position: absolute; right: 80px; bottom: 28px; font-size: 18px; color: var(--muted); }
+  .pageno { position: absolute; left: 80px; bottom: 28px; font-size: 18px; color: var(--muted); }
+  code, .mono { font-family: "Cascadia Code", Consolas, monospace; }
+  code { background: var(--accent-soft); padding: 1px 8px; border-radius: 6px; font-size: .92em; }
+  .grid { display: grid; gap: 20px; }
+  .g2 { grid-template-columns: 1fr 1fr; } .g3 { grid-template-columns: repeat(3, 1fr); }
+  .g5 { grid-template-columns: repeat(5, 1fr); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+  .card h3 { margin: 0 0 10px; font-size: 26px; }
+  .card p { font-size: 22px; margin: 0; }
+  .num { font-size: 44px; font-weight: 800; color: var(--accent); line-height: 1; margin-bottom: 10px; }
+  .bad { background: var(--bad-soft); border-color: #eab8b4; }
+  .ok { background: var(--ok-soft); border-color: #b4d8c1; }
+  .term {
+    background: var(--code); color: #e6e6e6; border-radius: 12px; padding: 20px 26px;
+    font-family: "Cascadia Code", Consolas, monospace; font-size: 21px; line-height: 1.55; white-space: pre;
+  }
+  .term .r { color: #ff8a80; } .term .g { color: #8be0a4; } .term .y { color: #ffd479; } .term .d { color: #9aa0a6; }
+  table { border-collapse: collapse; width: 100%; font-size: 23px; background: var(--card); }
+  th, td { border-bottom: 1px solid var(--line); padding: 13px 16px; text-align: left; vertical-align: top; }
+  th { background: #ebe5d8; font-size: 21px; }
+  td.b { color: var(--bad); } td.o { color: var(--ok); font-weight: 600; }
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; align-items: stretch; }
+  .flow .card { position: relative; }
+  .flow .card:not(:last-child)::after {
+    content: "→"; position: absolute; right: -14px; top: 50%; transform: translate(50%, -50%);
+    font-size: 30px; color: var(--accent); font-weight: 700;
+  }
+  .shot {
+    flex: 1; border: 3px dashed var(--accent); border-radius: 14px; display: grid; place-items: center;
+    color: var(--accent); font-size: 26px; background: repeating-linear-gradient(45deg, #fff8f3, #fff8f3 14px, #fcefe8 14px, #fcefe8 28px);
+  }
+  .quote { font-size: 30px; border-left: 6px solid var(--accent); padding: 6px 0 6px 24px; margin: 0 0 22px; }
+  .verdict { display: inline-block; padding: 4px 16px; border-radius: 999px; font-weight: 700; font-size: 22px; }
+  .verdict.no { background: var(--bad); color: #fff; } .verdict.yes { background: var(--ok); color: #fff; }
+  .title-slide { justify-content: center; }
+  .title-slide h1 { font-size: 64px; }
+  .closing { justify-content: center; align-items: center; text-align: center; }
+  .closing h1 { font-size: 58px; }
+  .chat { flex: 1; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+  .msg { display: flex; gap: 10px; align-items: flex-start; }
+  .msg.user { flex-direction: row-reverse; }
+  .avatar { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 700; color: #fff; background: var(--muted); }
+  .msg.ai .avatar { background: var(--accent); }
+  .bubble { max-width: 88%; border-radius: 12px; padding: 10px 14px; font-size: 17px; line-height: 1.55; background: #f3efe6; }
+  .msg.user .bubble { background: #dfe9f5; }
+  .bubble p { font-size: 17px; margin: 0 0 6px; line-height: 1.55; } .bubble p:last-child { margin: 0; }
+  .bubble .meta { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  .bubble code { font-size: 15px; }
+  .bubble .cut { color: var(--muted); }
+  .source { font-size: 15px; color: var(--muted); margin-top: 10px; }
+  @media print {
+    @page { size: 1280px 720px; margin: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    html, body { background: var(--bg); height: auto; }
+    .deck { position: static; display: block; }
+    .slide { display: flex !important; position: relative; transform: none !important; break-after: page; }
+    .slide:last-child { break-after: auto; }
+    .hint { display: none; }
+  }
+  .hint { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); color: #aaa; font-size: 13px; font-family: sans-serif; }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- 1 開場 -->
+  <section class="slide title-slide">
+    <div class="tag">計算機程式設計團體作業｜影片 I</div>
+    <h1>加選時，一次找出所有衝突</h1>
+    <p class="muted">F2 多層次衝堂與選課檢查 ── 團隊與 AI 的協作歷程</p>
+    <p class="muted" style="margin-top:40px">A 索云・B 阿福・C Steve・D 竹・E 晴・F minnn</p>
+    <div class="speaker">索云</div>
+  </section>
+
+  <!-- 2 問題情境 -->
+  <section class="slide">
+    <div class="tag">I-1 問題情境</div>
+    <h2>林美玲想加選 GE101……</h2>
+    <div class="term" style="font-size:21px; margin-bottom:22px">衝突 1：星期四第 3、4 節　已選課程：CS102 資料結構
+衝突 2：課程已額滿</div>
+    <p style="margin:0 0 16px">一次列出所有衝突 → 加選時要檢查五項：</p>
+    <div class="grid g5">
+      <div class="card"><div class="num">1</div><h3>學生衝堂</h3><p>和已選課程同時段</p></div>
+      <div class="card"><div class="num">2</div><h3>教室衝堂</h3><p>教室被別的課佔用</p></div>
+      <div class="card"><div class="num">3</div><h3>活動衝突</h3><p>和已報名活動同時段</p></div>
+      <div class="card"><div class="num">4</div><h3>人數上限</h3><p>課程已額滿</p></div>
+      <div class="card"><div class="num">5</div><h3>學分上限</h3><p>加選後超過上限</p></div>
+    </div>
+    <div class="speaker">索云</div>
+  </section>
+
+  <!-- 3 三個難點 -->
+  <section class="slide">
+    <div class="tag">I-1 問題情境</div>
+    <h2>三個難點</h2>
+    <div class="grid g3">
+      <div class="card"><h3>① 資料分散</h3>
+        <p>學生衝堂：看學生的已選清單<br>教室衝堂：要掃<b>全校課程</b><br>→ 教室最容易漏掉</p></div>
+      <div class="card"><h3>② 排序</h3>
+        <p>課程 <code>day</code> = 星期 1～7<br>活動 <code>day</code> = 日期時間戳<br><span class="mono" style="font-size:19px">2026-10-06 → 1791216000</span><br>直接比大小，活動永遠排最後<br>→ 先換算成星期</p></div>
+      <div class="card"><h3>③ 特殊情況</h3><p>已經選過的課再加選一次<br>時段一定跟自己重疊<br>→ 該怎麼回報？</p></div>
+    </div>
+    <div class="speaker">索云</div>
+  </section>
+
+  <!-- 4 問題分解 -->
+  <section class="slide">
+    <div class="tag">I-2 問題分解</div>
+    <h2>拆成四個步驟</h2>
+    <div class="flow">
+      <div class="card"><div class="num">1</div><h3>前置檢查</h3><p>學生、課程存在？<br>已經選過？<br><span class="muted">→ 直接回傳</span></p></div>
+      <div class="card"><div class="num">2</div><h3>時段類衝突</h3><p>學生衝堂<br>活動衝突<br>教室衝堂<br><span class="muted">需要排序</span></p></div>
+      <div class="card"><div class="num">3</div><h3>限制類衝突</h3><p>人數額滿<br>學分超過上限<br><span class="muted">排在最後</span></p></div>
+      <div class="card"><div class="num">4</div><h3>收集 → 排序 → 回傳</h3><p>只回傳錯誤碼與資料<br><span class="muted">文字由 CLI 決定</span></p></div>
+    </div>
+    <p class="muted" style="margin-top:34px; font-size:22px"><code>CampusPlanner/Code/ConflictChecker.py</code> 的 <code>CheckEnrollmentConflicts</code></p>
+    <div class="speaker">Steve</div>
+  </section>
+
+  <!-- 5 原始解法 -->
+  <section class="slide">
+    <div class="tag">I-3 原始解法（詢問 AI 之前）</div>
+    <h2>初版：逐項檢查，append 進清單</h2>
+    <div class="grid g2">
+      <div class="term"><span class="d"># 15feb67（10/21）</span>
+conflicts = []
+<span class="y"># 1. 人數上限</span>
+<span class="y"># 2. 學分上限</span>
+<span class="y"># 3. 已選課程衝堂</span>
+<span class="y"># 4. 已報名活動衝突</span>
+<span class="d">#    讀 database["activities"]</span>
+if conflicts:
+    return False, conflicts[0]["type"], conflicts
+return True, OK, []</div>
+      <div>
+        <p style="margin-top:0">✅ 不會遇到第一個就停</p>
+        <div class="card bad" style="margin-bottom:14px"><h3>✗ 加選時沒檢查教室</h3></div>
+        <div class="card bad" style="margin-bottom:14px"><h3>✗ 衝突清單沒有排序</h3><p>額滿、學分反而排最前面</p></div>
+        <div class="card bad"><h3>✗ 沒有排除自己</h3><p>重複加選 → 誤報「跟自己衝堂」</p></div>
+      </div>
+    </div>
+    <div class="speaker">索云</div>
+  </section>
+
+  <!-- 6 第一輪 -->
+  <section class="slide">
+    <div class="tag">I-4 AI 協作・第一輪</div>
+    <h2 style="margin-bottom:18px">「你會怎麼優化」── 範圍太廣</h2>
+    <div class="chat">
+      <div class="msg user"><div class="avatar">我</div><div class="bubble"><div class="meta">10/28 20:56</div>你會怎麼優化</div></div>
+      <div class="msg ai"><div class="avatar">AI</div><div class="bubble">
+        <p>要看「優化」想達成什麼。以下是我這幾次看程式時注意到的地方……</p>
+        <p><b>1. 先修會影響正確性的</b><br><b>活動衝突檢查現在形同虛設</b>：<code>ConflictChecker.py</code> 還在讀 <code>enrolled_activities</code> 和 <code>database["activities"]</code>……活動衝突這一項現在等於沒檢查。<br>選課人數有兩個來源……</p>
+        <p><b>2. 存檔效率</b>：每做一個動作就重寫所有檔案……<br><b>3. 可讀性和維護</b>：<code>UserData</code> 和 <code>TestInput</code> 各有一份資料、<code>Main.py</code> 有 620 行……</p>
+      </div></div>
+    </div>
+    <div class="source">對話重現｜文字節錄自 2026-10-28 與 AI（Claude Code）的原始對話紀錄，「……」為刪節，全文見 AI對話節錄_20261028.md</div>
+    <div class="speaker">Steve</div>
+  </section>
+
+  <!-- 7 第二輪 -->
+  <section class="slide">
+    <div class="tag">I-4 AI 協作・第二輪</div>
+    <h2 style="margin-bottom:18px">標準收斂到「F2 驗收條件」</h2>
+    <div class="grid" style="flex:1; grid-template-columns: 1.55fr 1fr; min-height:0">
+      <div style="display:flex; flex-direction:column; min-height:0">
+        <div class="chat">
+          <div class="msg ai"><div class="avatar">AI</div><div class="bubble"><div class="meta">第一輪回答的結尾</div>要我先做哪一項？如果要做第 1 項，我會先檢查一遍組長寫的 <code>ConflictChecker.py</code> 有沒有<b>符合老師 F2 的驗收條件</b>（一次列出所有衝突、依星期和節次排序），再一起改。</div></div>
+          <div class="msg user"><div class="avatar">我</div><div class="bubble"><div class="meta">10/28 20:58</div>好 幫我處理</div></div>
+          <div class="msg ai"><div class="avatar">AI</div><div class="bubble"><div class="meta">10/28 21:04</div><b>F2 補齊驗收條件</b>：加選時多檢查教室衝堂；所有時段衝突依星期、節次排序；重複加選……會回報「已經選過」，不會誤報成跟自己衝堂。<br>新增 <code>test_f2.py</code> 8 個……<b>在舊程式上會失敗 3 個</b>。</div></div>
+        </div>
+        <div class="source">對話重現｜節錄自 10/28 原始紀錄，全文見 AI對話節錄_20261028.md</div>
+      </div>
+      <div>
+        <p style="margin-top:0">AI 找出三項缺口：</p>
+        <div class="card" style="margin-bottom:14px"><h3>教室衝堂</h3><p>加選時要檢查</p></div>
+        <div class="card" style="margin-bottom:14px"><h3>排序</h3><p>依星期、節次；限制類排最後</p></div>
+        <div class="card"><h3>重複加選</h3><p>新錯誤碼 <code>ALREADY_ENROLLED</code></p></div>
+      </div>
+    </div>
+    <div class="speaker">Steve</div>
+  </section>
+
+  <!-- 8 為什麼要改 -->
+  <section class="slide">
+    <div class="tag">I-4 為什麼要改 Prompt</div>
+    <h2>給標準，答案才能驗證</h2>
+    <table>
+      <tr><th style="width:22%"></th><th>第一輪</th><th>第二輪</th></tr>
+      <tr><td>問法</td><td>你會怎麼優化</td><td>好 幫我處理<br><span class="muted" style="font-size:19px">（同意 AI 提議：先對照 F2 驗收條件檢查）</span></td></tr>
+      <tr><td>標準</td><td class="b">沒有，AI 憑感覺</td><td class="o">老師 PDF 的驗收條件</td></tr>
+      <tr><td>產出</td><td class="b">一堆重構建議、一個錯誤結論</td><td class="o">三項缺口，每項對應規範原文</td></tr>
+      <tr><td>怎麼驗證</td><td class="b">無法判斷對錯</td><td class="o">測試在舊程式失敗 → 修改後通過</td></tr>
+    </table>
+    <div class="speaker">Steve</div>
+  </section>
+
+  <!-- 9 拒絕 -->
+  <section class="slide">
+    <div class="tag">I-5 AI 建議不能直接採用 ①</div>
+    <h2>「活動衝突形同虛設」 <span class="verdict no">拒絕</span></h2>
+    <div class="grid g2">
+      <div class="card"><h3>邏輯分析</h3>
+        <p>活動已存成 <code>course_type: "event"</code> 的課程<br>報名的活動記在 <code>enrolled_courses</code><br>→ 比對已選課程時<b>本來就檢查到活動</b><br><br>沒作用的是另一段讀 <code>activities</code> 的程式（欄位永遠是空的）→ 多餘，不是漏洞</p></div>
+      <div class="card"><h3>測試證明</h3>
+        <p class="mono" style="font-size:19px">test_ActivityOnDateConflictsWithWeeklyCourse</p>
+        <p style="margin-top:12px">報名 10/6（星期二）第 5 節的活動<br>再加選星期二第 5 節的課<br>→ <code>ACTIVITY_CONFLICT</code></p>
+        <p style="margin-top:12px">在<b>舊程式</b>上跑也通過</p></div>
+    </div>
+    <div class="speaker">晴</div>
+  </section>
+
+  <!-- 10 資料錯 -->
+  <section class="slide">
+    <div class="tag">I-5 AI 建議不能直接採用 ②</div>
+    <h2>是程式錯，還是資料錯？</h2>
+    <div class="grid g3">
+      <div class="card"><h3>現象</h3><p>補上教室檢查後，系統報出 <b>CS102</b> 和 <b>MA101</b> 撞教室<br>IB-101 星期二第 3、4 節</p></div>
+      <div class="card"><h3>查證</h3><p>迭代 0 的種子資料本來就排錯<br>→ <b>程式是對的</b></p></div>
+      <div class="card ok"><h3>團隊決定</h3><p>確認教室、老師、修課學生都沒衝突<br>→ CS102 改到星期四第 2–4 節<br><span class="mono" style="font-size:19px">c2b43a9</span>＋防撞期測試</p></div>
+    </div>
+    <p class="muted" style="margin-top:30px">「要改成什麼」不是 AI 能決定的。</p>
+    <div class="speaker">晴</div>
+  </section>
+
+  <!-- 11 比較表 -->
+  <section class="slide">
+    <div class="tag">I-6 修改前後比較</div>
+    <h2>commit 15feb67 → 5de6cf4</h2>
+    <table>
+      <tr><th style="width:20%">項目</th><th>修改前</th><th>修改後</th></tr>
+      <tr><td>教室衝堂</td><td class="b">加選時不檢查</td><td class="o">會檢查</td></tr>
+      <tr><td>排序</td><td class="b">沒有排序，額滿、學分在最前</td><td class="o">依星期、節次；活動日期先換算成星期</td></tr>
+      <tr><td>重複加選</td><td class="b">誤報跟自己衝堂</td><td class="o">回報 <code>ALREADY_ENROLLED</code></td></tr>
+      <tr><td>F2 測試</td><td class="b">新測試 8 個，3 個失敗</td><td class="o">14 個全過</td></tr>
+      <tr><td>全部測試</td><td class="b">101 個（1 個失敗）</td><td class="o">159 個全過</td></tr>
+    </table>
+    <div class="speaker">晴</div>
+  </section>
+
+  <!-- 12 測試示範 -->
+  <section class="slide">
+    <div class="tag">I-6 示範：舊程式跑新測試</div>
+    <h2><span class="mono" style="font-size:30px">影片I\demo_old_vs_new.ps1</span></h2>
+    <div class="grid g2">
+      <div class="term"><span class="y">修改前（15feb67 程式）</span>
+NoConflictPasses          <span class="g">PASSED</span>
+AllConflicts...Sorted     <span class="r">FAILED</span>
+PeriodsLettersSortAfter9  <span class="r">FAILED</span>
+ActivityOnDateConflicts   <span class="g">PASSED</span>
+AlreadyEnrolledIsRejected <span class="r">FAILED</span>
+UnknownStudentOrCourse ×2 <span class="g">PASSED</span>
+ClassroomConflictIgnore   <span class="g">PASSED</span>
+<span class="r">3 failed</span>, <span class="g">5 passed</span></div>
+      <div class="term"><span class="y">修改後（目前程式）</span>
+… 原本 8 個          <span class="g">PASSED</span>
+<span class="d"># 這次新補</span>
+MondayActivity…BeforeTuesday <span class="g">PASSED</span>
+ActivityDates…ByWeekday      <span class="g">PASSED</span>
+… 其餘               <span class="g">PASSED</span>
+<span class="g">14 passed</span>
+
+<span class="d"># 拿掉「日期換算成星期」</span>
+<span class="d"># → ActivityDates… 會失敗</span></div>
+    </div>
+    <p class="muted" style="margin-top:16px; font-size:21px">節次測試在舊程式失敗，是因為舊程式完全沒排序，不是字串排序錯。</p>
+    <div class="speaker">晴</div>
+  </section>
+
+  <!-- 13 CLI -->
+  <section class="slide">
+    <div class="tag">I-6 示範：CLI 選單 15</div>
+    <h2>一次列出所有衝突</h2>
+    <div class="term" style="font-size:23px"><span class="d">請選擇功能：</span>15   <span class="d">學號：</span>S10902   <span class="d">課程：</span>GE101
+學生：S10902 林美玲
+欲加選：GE101 哲學思考與現代生活
+選課結果：<span class="r">失敗</span>
+<span class="y">衝突 1：星期四第 3、4 節</span>
+已選課程：CS102 資料結構
+<span class="y">衝突 2：課程已額滿</span>
+人數上限：45，目前人數：45
+目前學分：7
+加選後學分：9
+學分上限：25</div>
+    <div class="speaker">晴</div>
+  </section>
+
+  <!-- 14 反思 -->
+  <section class="slide">
+    <div class="tag">I-7 團隊反思</div>
+    <h2>誰負責什麼</h2>
+    <div class="grid g2">
+      <div class="card ok"><h3>AI 有幫助的地方</h3>
+        <ul><li>對照規格逐條找漏洞</li><li>寫測試案例</li><li>整理問題分解圖</li></ul></div>
+      <div class="card bad"><h3>必須由我們判斷</h3>
+        <ul><li>AI 沒讀完程式就下結論</li><li>AI 曾說節次字串排序會錯（其實不會）</li><li>程式錯還是資料錯？</li><li>資料要改成什麼？</li></ul></div>
+    </div>
+    <div class="speaker">晴・索云・Steve</div>
+  </section>
+
+  <!-- 15 結尾 -->
+  <section class="slide closing">
+    <h1>AI 給的是建議，<br>測試和規格才是標準。</h1>
+    <p class="muted" style="margin-top:40px; font-size:22px">附件：逐字稿・投影片・demo_old_vs_new.ps1・test_f2.py・AI 協作紀錄・迭代 2 團隊週報 D04–D07</p>
+  </section>
+
+</div>
+<div class="hint">← → 換頁　F 全螢幕</div>
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  let index = 0;
+  slides.forEach((slide, i) => {
+    const no = document.createElement('div');
+    no.className = 'pageno';
+    no.textContent = `${i + 1} / ${slides.length}`;
+    slide.appendChild(no);
+  });
+  function fit() {
+    const scale = Math.min(innerWidth / 1280, innerHeight / 720);
+    slides.forEach(s => s.style.transform = `scale(${scale})`);
+  }
+  function show(i) {
+    index = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s, n) => s.classList.toggle('active', n === index));
+    try { history.replaceState(null, '', '#' + (index + 1)); } catch (e) {}
+  }
+  addEventListener('keydown', e => {
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) show(index + 1);
+    if (['ArrowLeft', 'PageUp'].includes(e.key)) show(index - 1);
+    if (e.key === 'Home') show(0);
+    if (e.key === 'End') show(slides.length - 1);
+    if (e.key === 'f' || e.key === 'F') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+  });
+  addEventListener('click', e => show(index + (e.clientX > innerWidth / 2 ? 1 : -1)));
+  addEventListener('resize', fit);
+  fit();
+  show((parseInt(location.hash.slice(1)) || 1) - 1);
+</script>
+</body>
+</html>
