@@ -12,11 +12,14 @@
 import copy
 
 from Constants import (
+    CAPACITY_EXCEEDS_ROOM,
     CLASSROOM_NOT_FOUND,
     DUPLICATE_ID,
+    INVALID_CAPACITY,
     INVALID_FIELD,
     NO_AVAILABLE_ROOM,
     OK,
+    ROOM_CONFLICT,
 )
 import CourseDataManager as courseDataManager
 from TimeSlotUtils import TimeSlotsOverlap
@@ -40,7 +43,16 @@ def FindAvailableClassrooms(database: dict, timeSlots: list[dict], minCapacity: 
     if not ok:
         return False, code, []
 
-    requiredEquipment = set(requiredEquipment or [])
+    if not courseDataManager.IsInteger(minCapacity) or minCapacity < 1:
+        return False, INVALID_CAPACITY, []
+    if requiredEquipment is None:
+        requiredEquipment = []
+    if not isinstance(requiredEquipment, list) or not all(
+        isinstance(item, str) and item.strip() for item in requiredEquipment
+    ):
+        return False, INVALID_FIELD, []
+
+    requiredEquipment = set(requiredEquipment)
     occupiedRooms = set()
 
     for course in database.get("courses", []):  # 活動以 event 課程存放，一併計入
@@ -60,6 +72,7 @@ def FindAvailableClassrooms(database: dict, timeSlots: list[dict], minCapacity: 
 
     if not candidates:
         return False, NO_AVAILABLE_ROOM, []
+    candidates.sort(key=lambda room: (room.get("capacity", 0), room.get("classroom_id", "")))
     return True, OK, candidates
 
 
@@ -77,7 +90,8 @@ def AddActivity(database: dict, activity: dict) -> tuple[bool, str]:
     if not isinstance(activity, dict):
         return False, INVALID_FIELD
     activityId = activity.get("activity_id")
-    if not activityId:
+    title = activity.get("title")
+    if not courseDataManager.IsNonemptyString(activityId) or not courseDataManager.IsNonemptyString(title):
         return False, INVALID_FIELD
     if courseDataManager.FindCourse(database, activityId) is not None:
         return False, DUPLICATE_ID
@@ -87,26 +101,49 @@ def AddActivity(database: dict, activity: dict) -> tuple[bool, str]:
     if not room:
         return False, CLASSROOM_NOT_FOUND
 
+    capacity = activity.get("capacity", room["capacity"])
+    if not courseDataManager.IsInteger(capacity) or capacity < 1:
+        return False, INVALID_CAPACITY
+    if capacity > room["capacity"]:
+        return False, CAPACITY_EXCEEDS_ROOM
+
+    requiredEquipment = activity.get("required_equipment", [])
+    if not isinstance(requiredEquipment, list) or not all(
+        isinstance(item, str) and item.strip() for item in requiredEquipment
+    ):
+        return False, INVALID_FIELD
+    if not set(requiredEquipment).issubset(set(room.get("equipment", []))):
+        return False, NO_AVAILABLE_ROOM
+
     slots = activity.get("time_slots", [])
     ok, code = courseDataManager.ValidateTimeSlots(slots)
     if not ok:
         return False, code
 
-    okAvail, codeAvail, available = FindAvailableClassrooms(database, slots)
+    okAvail, codeAvail, available = FindAvailableClassrooms(
+        database, slots, minCapacity=capacity, requiredEquipment=requiredEquipment
+    )
     if not okAvail or not any(classroom["classroom_id"] == classroomId for classroom in available):
-        return False, NO_AVAILABLE_ROOM
+        occupied = any(
+            course.get("classroom_id") == classroomId
+            and TimeSlotsOverlap(slots, course.get("time_slots", []))
+            for course in database.get("courses", [])
+        )
+        return False, ROOM_CONFLICT if occupied else codeAvail
 
     newCourse = {
         "course_id": activityId,
-        "title": activity.get("title"),
+        "title": title,
         "credits": 0,
         "required": False,
         "teacher": activity.get("teacher", "NPC"),
         "classroom_id": classroomId,
-        "capacity": activity.get("capacity", room["capacity"]),
+        "capacity": capacity,
         "time_slots": copy.deepcopy(slots),
         "enrolled_count": activity.get("enrolled_count", 0),
         "course_type": "event",
+        "activity_type": activity.get("activity_type", ""),
+        "required_equipment": copy.deepcopy(requiredEquipment),
     }
     database.setdefault("courses", []).append(newCourse)
     return True, OK
