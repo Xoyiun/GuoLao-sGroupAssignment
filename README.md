@@ -119,3 +119,6 @@ python CampusPlanner/Code/Main.py import --only classroom <來源資料夾> [目
 python TestDriver.py
 python TestDriver.py -m normal -v
 ```
+
+Push 或建立 Pull Request 時，GitHub Actions 會自動執行完整的 `TestDriver`
+測試套件（Python 3.14），並上傳 `test-results.xml` 測試結果供下載。
