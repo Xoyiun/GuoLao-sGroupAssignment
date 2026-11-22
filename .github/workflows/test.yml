@@ -28,9 +28,21 @@ jobs:
       - name: Run TestDriver
         run: uv run python TestDriver.py --junitxml=test-results.xml
 
+      - name: Generate HTML reports
+        if: always()
+        run: |
+          mkdir -p reports
+          for test_file in TestDriver/test_f1.py TestDriver/test_f2.py TestDriver/test_f3.py TestDriver/test_f4.py TestDriver/test_main.py; do
+            test_name="$(basename "$test_file" .py)"
+            uv run python -m pytest "$test_file" --junitxml="reports/${test_name}.xml" -q
+            uv run python TestDriver/make_report.py "$test_file" --from-xml "reports/${test_name}.xml" --output "reports/report_${test_name}.html"
+          done
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: test-results
-          path: test-results.xml
+          path: |
+            test-results.xml
+            reports/*.html

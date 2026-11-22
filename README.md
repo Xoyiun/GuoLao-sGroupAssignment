@@ -121,4 +121,5 @@ python TestDriver.py -m normal -v
 ```
 
 Push 或建立 Pull Request 時，GitHub Actions 會自動執行完整的 `TestDriver`
-測試套件（Python 3.14），並上傳 `test-results.xml` 測試結果供下載。
+測試套件（Python 3.14）。執行完成後會上傳 `test-results.xml`，以及
+F1–F4 與 CLI 各模組的 HTML 測試報告供下載。
