@@ -123,3 +123,9 @@ python TestDriver.py -m normal -v
 Push 或建立 Pull Request 時，GitHub Actions 會自動執行完整的 `TestDriver`
 測試套件（Python 3.14）。執行完成後會上傳 `test-results.xml`，以及
 F1–F4 與 CLI 各模組的 HTML 測試報告供下載。
+
+在 GitHub 倉庫頁面開啟 **Actions**，選擇執行結果後：
+
+- 頁面頂端的綠色勾號或紅色叉號代表整體測試成敗。
+- 執行頁面的 **Summary** 區塊會直接顯示總案例數、通過、失敗與略過數量。
+- 進入 **Artifacts** 可下載完整 XML 與各模組的 HTML 報告。

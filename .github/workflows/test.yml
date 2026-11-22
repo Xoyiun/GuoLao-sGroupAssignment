@@ -38,6 +38,67 @@ jobs:
             uv run python TestDriver/make_report.py "$test_file" --from-xml "reports/${test_name}.xml" --output "reports/report_${test_name}.html"
           done
 
+      - name: Write test summary
+        if: always()
+        env:
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import glob
+          import os
+          import xml.etree.ElementTree as ET
+
+          def counts(path):
+              root = ET.parse(path).getroot()
+              cases = list(root.iter("testcase"))
+              failures = sum(
+                  1
+                  for case in cases
+                  if case.find("failure") is not None or case.find("error") is not None
+              )
+              skipped = sum(1 for case in cases if case.find("skipped") is not None)
+              return len(cases), failures, skipped
+
+          summary = os.environ["GITHUB_STEP_SUMMARY"]
+          lines = ["## TestDriver 測試結果"]
+
+          full_xml = "test-results.xml"
+          if os.path.exists(full_xml):
+              tests, failures, skipped = counts(full_xml)
+              passed = tests - failures - skipped
+              status = "✅ 通過" if failures == 0 else "❌ 失敗"
+              lines.extend([
+                  f"- **狀態：{status}**",
+                  f"- 測試案例：{tests}",
+                  f"- 通過：{passed}",
+                  f"- 失敗：{failures}",
+                  f"- 略過：{skipped}",
+                  "",
+                  "| 模組 | 案例數 | 通過 | 失敗 | 略過 |",
+                  "|---|---:|---:|---:|---:|",
+              ])
+
+              for xml_path in sorted(glob.glob("reports/test_*.xml")):
+                  module = os.path.basename(xml_path).removesuffix(".xml")
+                  module_tests, module_failures, module_skipped = counts(xml_path)
+                  module_passed = module_tests - module_failures - module_skipped
+                  module_status = "✅" if module_failures == 0 else "❌"
+                  lines.append(
+                      f"| {module_status} {module} | {module_tests} | "
+                      f"{module_passed} | {module_failures} | {module_skipped} |"
+                  )
+          else:
+              lines.append("- **狀態：❌ 測試未產生結果**")
+
+          lines.extend([
+              "",
+              f"[下載完整 XML 與 HTML 報告]({os.environ['RUN_URL']})",
+          ])
+
+          with open(summary, "a", encoding="utf-8") as handle:
+              handle.write("\n".join(lines) + "\n")
+          PY
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7
