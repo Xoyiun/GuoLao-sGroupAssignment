@@ -49,11 +49,45 @@ def FindShortestPath(campusGraph: dict, startNode: str, endNode: str,
             adjacencyList[sourceNode].append((destinationNode, edgeWeight))
             adjacencyList[destinationNode].append((sourceNode, edgeWeight))
 
-    distances = {node: float("inf") for node in nodes}
     previousNodes = {node: None for node in nodes}
+    if algorithm.lower() == "bfs":
+        from collections import deque
+        distances = {node: 0 if node == startNode else None for node in nodes}
+        queue = deque([startNode])
+        while queue:
+            currentNode = queue.popleft()
+            if currentNode == endNode:
+                break
+            for nextNode, _ in adjacencyList.get(currentNode, []):
+                if distances[nextNode] is None:
+                    distances[nextNode] = distances[currentNode] + 1
+                    previousNodes[nextNode] = currentNode
+                    queue.append(nextNode)
+        if distances[endNode] is None:
+            return False, NO_PATH_FOUND, {}
+        totalDistance = 0.0
+        currentNode = endNode
+        pathReverse = []
+        while currentNode:
+            pathReverse.append(currentNode)
+            previous = previousNodes[currentNode]
+            if previous is not None:
+                edgeWeight = next(
+                    (weight for node, weight in adjacencyList[previous] if node == currentNode),
+                    1.0,
+                )
+                totalDistance += edgeWeight
+            currentNode = previous
+        path = list(reversed(pathReverse))
+        return True, OK, {
+            "path": path,
+            "total_distance": totalDistance,
+            "estimated_minutes": round(totalDistance / 80.0, 1),
+        }
+
+    distances = {node: float("inf") for node in nodes}
     distances[startNode] = 0.0
     priorityQueue = [(0.0, startNode)]
-
     while priorityQueue:
         currentDistance, currentNode = heapq.heappop(priorityQueue)
         if currentDistance > distances[currentNode]:
@@ -65,7 +99,6 @@ def FindShortestPath(campusGraph: dict, startNode: str, endNode: str,
                 distances[nextNode] = distances[currentNode] + weight
                 previousNodes[nextNode] = currentNode
                 heapq.heappush(priorityQueue, (distances[nextNode], nextNode))
-
     if distances[endNode] == float("inf"):
         return False, NO_PATH_FOUND, {}
 

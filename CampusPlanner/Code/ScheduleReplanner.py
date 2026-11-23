@@ -10,6 +10,7 @@
 
 from Constants import COURSE_NOT_FOUND, OK, REPLAN_FAILED
 import CourseDataManager as courseDataManager
+from TimeSlotUtils import TimeSlotsOverlap
 
 
 def ReplanOnCourseCancellation(database: dict, studentId: str, canceledCourseId: str) -> tuple[bool, str, dict]:
@@ -47,8 +48,17 @@ def ReplanOnCourseCancellation(database: dict, studentId: str, canceledCourseId:
         and course["course_id"] not in student.get("enrolled_courses", [])
         and course.get("credits") == creditsNeeded
         and courseDataManager.RemainingSeats(course) > 0
+        and not any(
+            TimeSlotsOverlap(course.get("time_slots", []),
+                             databaseCourse.get("time_slots", []))
+            for enrolledId in student.get("enrolled_courses", [])
+            if enrolledId != canceledCourseId
+            for databaseCourse in [courseDataManager.FindCourse(database, enrolledId)]
+            if databaseCourse is not None
+        )
     ]
-
+    if not candidates:
+        return False, REPLAN_FAILED, {}
     return True, OK, {
         "student_id": studentId,
         "removed_course": canceledCourseId,
