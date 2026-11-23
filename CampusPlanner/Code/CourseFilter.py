@@ -10,7 +10,7 @@
 - 回傳值一律為狀態與錯誤代碼 (ok, code, ...)，不回傳介面顯示文字。
 """
 
-from Constants import CONFLICTING_CRITERIA, INVALID_FIELD, OK
+from Constants import CONFLICTING_CRITERIA, INVALID_FIELD, MIN_CREDITS_UNMET, OK
 import CourseDataManager as courseDataManager
 from TimeSlotUtils import GetWeekday, TimeSlotsOverlap
 
@@ -33,10 +33,23 @@ def FilterCourses(database: dict, criteria: dict) -> tuple[bool, str, list[dict]
     if not isinstance(criteria, dict):
         return False, INVALID_FIELD, []
 
-    requiredIds = set(criteria.get("required_ids", []))
+    requiredIds = criteria.get("required_ids", [])
+    if not isinstance(requiredIds, list) or not all(isinstance(item, str) for item in requiredIds):
+        return False, INVALID_FIELD, []
+    requiredIds = set(requiredIds)
     blocked = criteria.get("blocked_slots", [])
     preferredDays = set(criteria.get("preferred_days", []))
     hasSeats = criteria.get("has_seats")
+
+    if not isinstance(blocked, list):
+        return False, INVALID_FIELD, []
+    ok, _ = courseDataManager.ValidateTimeSlots(blocked) if blocked else (True, OK)
+    if not ok:
+        return False, INVALID_FIELD, []
+    if preferredDays and not preferredDays.issubset(set(range(1, 8))):
+        return False, INVALID_FIELD, []
+    if hasSeats not in (None, True, False):
+        return False, INVALID_FIELD, []
 
     # 驗證必修課程是否落入不可上課時段
     for courseId in requiredIds:
@@ -47,6 +60,11 @@ def FilterCourses(database: dict, criteria: dict) -> tuple[bool, str, list[dict]
             return False, CONFLICTING_CRITERIA, []
 
     candidates = []
+    requiredCreditIds = set(requiredIds)
+    minCredits = criteria.get("min_credits")
+    if minCredits is not None and (not isinstance(minCredits, int) or isinstance(minCredits, bool) or minCredits < 0):
+        return False, INVALID_FIELD, []
+    availableCreditIds = set()
     for course in database.get("courses", []):
         courseSlots = course.get("time_slots", [])
         if TimeSlotsOverlap(courseSlots, blocked):
@@ -58,5 +76,18 @@ def FilterCourses(database: dict, criteria: dict) -> tuple[bool, str, list[dict]
         if hasSeats is True and courseDataManager.RemainingSeats(course) <= 0:
             continue
         candidates.append(course)
+        if course["course_id"] in requiredCreditIds:
+            availableCreditIds.add(course["course_id"])
+
+    if requiredCreditIds - availableCreditIds:
+        return False, CONFLICTING_CRITERIA, []
+    if minCredits is not None:
+        requiredCredits = sum(
+            course["credits"] for course in candidates
+            if course["course_id"] in requiredCreditIds
+        )
+        availableCredits = sum(course["credits"] for course in candidates)
+        if requiredCredits < minCredits and availableCredits < minCredits:
+            return False, MIN_CREDITS_UNMET, []
 
     return True, OK, candidates

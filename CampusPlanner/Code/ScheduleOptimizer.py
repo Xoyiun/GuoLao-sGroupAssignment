@@ -10,6 +10,8 @@
 
 from Constants import INVALID_FIELD, NO_FEASIBLE_SCHEDULE, OK
 import CourseDataManager as courseDataManager
+from ConflictChecker import CheckEnrollmentConflicts
+from TimeSlotUtils import TimeSlotsOverlap
 
 
 def SearchOptimalSchedules(database: dict, studentId: str, preferences: dict) -> tuple[bool, str, list[dict]]:
@@ -39,18 +41,78 @@ def SearchOptimalSchedules(database: dict, studentId: str, preferences: dict) ->
     maxCredits = preferences.get("max_credits", student.get("max_credits", 25))
     required = preferences.get("required_courses", [])
 
+    candidateIds = preferences.get("candidate_courses", [])
+    blocked = preferences.get("blocked_slots", [])
+    if not isinstance(required, list) or not isinstance(candidateIds, list):
+        return False, INVALID_FIELD, []
+    if not isinstance(minCredits, int) or isinstance(minCredits, bool) or minCredits < 0:
+        return False, INVALID_FIELD, []
+    if not isinstance(maxCredits, int) or isinstance(maxCredits, bool) or maxCredits < 0:
+        return False, INVALID_FIELD, []
+
     requiredCourses = [courseDataManager.FindCourse(database, courseId) for courseId in required]
     if any(course is None for course in requiredCourses):
         return False, INVALID_FIELD, []
+    candidateCourses = []
+    for courseId in candidateIds:
+        course = courseDataManager.FindCourse(database, courseId)
+        if course is not None:
+            candidateCourses.append(course)
 
-    requiredCredits = sum(course["credits"] for course in requiredCourses)
-    if requiredCredits > maxCredits:
+    plans = []
+    deduplicated = []
+    seen = set(required)
+    for course in candidateCourses:
+        if course["course_id"] not in seen:
+            seen.add(course["course_id"])
+            deduplicated.append(course)
+    candidateCourses = deduplicated
+    for mask in range(1 << len(candidateCourses)):
+        selected = list(requiredCourses)
+        selected.extend(
+            candidateCourses[index]
+            for index in range(len(candidateCourses))
+            if mask & (1 << index)
+        )
+        ids = [course["course_id"] for course in selected]
+        if len(set(ids)) != len(ids):
+            continue
+        total = sum(course["credits"] for course in selected)
+        if total < minCredits or total > maxCredits:
+            continue
+        if any(TimeSlotsOverlap(course.get("time_slots", []), blocked) for course in selected):
+            continue
+        if any(courseDataManager.RemainingSeats(course) <= 0 for course in selected
+               if course["course_id"] not in student.get("enrolled_courses", [])):
+            continue
+        conflict = False
+        enrolledCourses = [
+            courseDataManager.FindCourse(database, courseId)
+            for courseId in student.get("enrolled_courses", [])
+        ]
+        for selectedCourse in selected:
+            for enrolledCourse in enrolledCourses:
+                if enrolledCourse is not None and TimeSlotsOverlap(
+                    selectedCourse.get("time_slots", []),
+                    enrolledCourse.get("time_slots", []),
+                ):
+                    conflict = True
+                    break
+        for index, first in enumerate(selected):
+            for second in selected[index + 1:]:
+                if TimeSlotsOverlap(first.get("time_slots", []), second.get("time_slots", [])):
+                    conflict = True
+                    break
+            if conflict:
+                break
+        if conflict:
+            continue
+        plans.append({
+            "courses": ids,
+            "total_credits": total,
+            "score": float(total),
+        })
+    if not plans:
         return False, NO_FEASIBLE_SCHEDULE, []
-
-    plan = {
-        "courses": list(required),
-        "total_credits": requiredCredits,
-        "score": 100.0 if requiredCredits >= minCredits else float(requiredCredits),
-    }
-
-    return True, OK, [plan]
+    plans.sort(key=lambda plan: (-plan["score"], plan["courses"]))
+    return True, OK, plans

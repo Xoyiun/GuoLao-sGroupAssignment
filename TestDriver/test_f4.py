@@ -206,3 +206,54 @@ def test_NoRoomMeetsAllRequirements():
         minCapacity=100,
         requiredEquipment=["computer"],
     ) == (False, NO_AVAILABLE_ROOM, [])
+
+
+def test_AutoMatchSelectsSmallestAvailableRoom():
+    database = Database()
+    activity = Activity(classroom_id=None)
+    assert venueManager.AddActivity(database, activity) == (True, OK)
+    assert database["courses"][0]["classroom_id"] == "R-A"
+
+
+def test_TimeRangeToSlotsUsesOverlappingPeriods():
+    timestamp = int(datetime.datetime(2026, 10, 6, tzinfo=LOCAL_TIME_ZONE).timestamp())
+    assert venueManager.TimeRangeToSlots(timestamp, "14:00", "16:30") == (
+        True,
+        OK,
+        [
+            {"day": int(datetime.datetime(2026, 10, 6, tzinfo=LOCAL_TIME_ZONE).timestamp()), "period": "6"},
+            {"day": int(datetime.datetime(2026, 10, 6, tzinfo=LOCAL_TIME_ZONE).timestamp()), "period": "7"},
+            {"day": int(datetime.datetime(2026, 10, 6, tzinfo=LOCAL_TIME_ZONE).timestamp()), "period": "8"},
+        ],
+    )
+    assert venueManager.TimeRangeToSlots(timestamp, "12:00", "13:00")[1] == INVALID_TIME_SLOTS
+
+
+def test_UpdateAndCancelActivityAreAtomicAndReleaseRoom():
+    database = Database()
+    assert venueManager.AddActivity(database, Activity()) == (True, OK)
+    database["students"] = [{"student_id": "S1", "name": "S", "department": "CS",
+                             "max_credits": 25, "grade": 1, "enrolled_courses": ["ACT-NEW"]}]
+    assert venueManager.UpdateActivity(database, "ACT-NEW", {"title": "更新活動"}) == (True, OK)
+    assert database["courses"][0]["title"] == "更新活動"
+    assert venueManager.CancelActivity(database, "ACT-NEW") == (True, OK, ["S1"])
+    assert database["courses"] == []
+    assert database["students"][0]["enrolled_courses"] == []
+
+
+def test_QueryActivitiesFiltersByTypeDateAndSeats():
+    timestamp = int(datetime.datetime(2026, 10, 6, tzinfo=LOCAL_TIME_ZONE).timestamp())
+    database = Database([{
+        "course_id": "ACT-X", "title": "講座", "credits": 0, "required": False,
+        "teacher": "NPC", "classroom_id": "R-A", "capacity": 20,
+        "enrolled_count": 20, "time_slots": [{"day": timestamp, "period": "5"}],
+        "course_type": "event", "activity_type": "講座",
+        "required_equipment": ["projector"],
+    }])
+    assert venueManager.QueryActivities(database, activityType="講座", date=timestamp, hasSeats=False)[0]["course_id"] == "ACT-X"
+    assert venueManager.QueryActivities(database, activityType="講座", hasSeats=True) == []
+
+
+def test_ExplainUnavailableReportsCapacityAndEquipment():
+    reasons = venueManager.ExplainUnavailable(Database(), [{"day": 2, "period": "5"}], 100, ["computer"])
+    assert any(reason["reason"] == "INSUFFICIENT_CAPACITY" for reason in reasons)
