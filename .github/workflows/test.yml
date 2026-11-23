@@ -32,7 +32,7 @@ jobs:
         if: always()
         run: |
           mkdir -p reports
-          for test_file in TestDriver/test_f1.py TestDriver/test_f2.py TestDriver/test_f3.py TestDriver/test_f4.py TestDriver/test_main.py; do
+          for test_file in TestDriver/test_*.py; do
             test_name="$(basename "$test_file" .py)"
             uv run python -m pytest "$test_file" --junitxml="reports/${test_name}.xml" -q
             uv run python TestDriver/make_report.py "$test_file" --from-xml "reports/${test_name}.xml" --output "reports/report_${test_name}.html"
@@ -107,3 +107,4 @@ jobs:
           path: |
             test-results.xml
             reports/*.html
+            reports/*.xml

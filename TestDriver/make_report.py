@@ -38,6 +38,15 @@ CATEGORIES = [
     ("extra", "補充案例", "更多數值與較細的規則（不計入核心 30 個）", None),
     ("persistence", "存檔與容錯載入", "F6 相關（不計入核心 30 個）", None),
     ("acceptance", "驗收條件", "F1 資料量驗收（不計入核心 30 個）", None),
+    ("cli", "命令列介面", "Main.py CLI 流程與互動測試", None),
+    ("f2", "F2 衝堂與選課檢查", "模組層衝突檢查與加退選測試", None),
+    ("f3", "F3 個人課表與空閒時段", "課表矩陣、空堂與查詢測試", None),
+    ("f4", "F4 校園活動與教室配置", "活動及教室配置測試", None),
+    ("f5", "F5 多條件課程篩選", "課程篩選與條件衝突測試", None),
+    ("f7", "F7 多條件最佳課表搜尋", "可行課表組合與排序測試", None),
+    ("f8", "F8 搜尋演算法比較", "窮舉與回溯效能指標測試", None),
+    ("f9", "F9 校園路徑規劃", "Dijkstra、BFS 與無路徑測試", None),
+    ("f10", "F10 動態重新規劃", "停課替代課程與失敗案例測試", None),
 ]
 CORE = [c for c in CATEGORIES if c[3] is not None]
 STATUSLABEL = {"passed": "通過", "failed": "失敗", "skipped": "略過", "notrun": "未執行"}
@@ -50,6 +59,19 @@ STATUSICON = {"passed": "✓", "failed": "✗", "skipped": "–", "notrun": "?"}
 def ParseTests(path):
     with open(path, encoding="utf-8") as f:
         tree = ast.parse(f.read())
+    moduleMarks = set()
+    for node in tree.body:
+        if isinstance(node, ast.Assign):
+            if any(isinstance(target, ast.Name) and target.id == "pytestmark" for target in node.targets):
+                if isinstance(node.value, ast.Attribute):
+                    target = node.value
+                    if (
+                        isinstance(target.value, ast.Attribute)
+                        and isinstance(target.value.value, ast.Name)
+                        and target.value.value.id == "pytest"
+                        and target.value.attr == "mark"
+                    ):
+                        moduleMarks.add(target.attr)
     tests = []
     for node in tree.body:
         if not (isinstance(node, ast.FunctionDef) and node.name.startswith("test_")):
@@ -68,6 +90,8 @@ def ParseTests(path):
                 marks.append(target.attr)
         doc = (ast.get_docstring(node) or "").strip().splitlines()
         desc = doc[0] if doc else node.name[len("test_"):].replace("_", " ")
+        if moduleMarks:
+            marks = list(dict.fromkeys(marks + sorted(moduleMarks)))
         tests.append({"name": node.name, "marks": marks, "desc": desc})
     return tests
 
