@@ -313,6 +313,29 @@ def test_DropThenDropAgain(dataDir):
 
 
 # ======================================================================
+# F5 課程篩選與可行性檢查
+# ======================================================================
+def test_FilterCoursesFeasible(dataDir):
+    """必修 CS102、學分 3～20、沒有其他限制 → 可行，列出候選。"""
+    out = RunSession(dataDir, ["17", "S10902", "CS102", "", "3", "20", "", "", "0"])
+    assert "檢查結果：可行" in out and "CS102 資料結構" in out
+
+
+def test_FilterCoursesListsEveryProblem(dataDir):
+    """必修落在禁止時段又湊不到最低學分 → 兩個原因都要列出。"""
+    out = RunSession(dataDir, ["17", "S10902", "CS102", "CS102", "20", "", "4-3", "", "0"])
+    assert "檢查結果：不可行" in out
+    assert "原因 1：必修課程 CS102 資料結構 落在不可上課時段" in out
+    assert "最低需 20 學分" in out
+
+
+def test_FilterCoursesBadInput(dataDir):
+    assert "[錯誤] 篩選失敗：找不到學生 NOPE。" in RunSession(dataDir, ["17", "NOPE", "0"])
+    out = RunSession(dataDir, ["17", "S10902", "", "", "abc", "", "", "", "0"])
+    assert "[錯誤] 篩選失敗：" in out
+
+
+# ======================================================================
 # F3 課表與空堂
 # ======================================================================
 def test_TimetableShowsCoursesActivitiesAndStats(dataDir):

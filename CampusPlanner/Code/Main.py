@@ -25,6 +25,7 @@ from Constants import (
     CAPACITY_EXCEEDS_ROOM,
     CLASSROOM_IN_USE,
     CLASSROOM_NOT_FOUND,
+    CONFLICTING_CRITERIA,
     COURSE_DATA_DIRECTORY,
     COURSE_HAS_STUDENTS,
     COURSE_NOT_FOUND,
@@ -51,6 +52,7 @@ from Constants import (
     VALID_PERIODS,
 )
 import CourseDataManager as courseDataManager
+import CourseFilter as courseFilter
 import Timetable as timetableModule
 
 # 用 __file__ 算路徑，從哪個資料夾執行都找得到 UserData
@@ -633,6 +635,72 @@ def DropCourseFlow(manager, ask, show):
         show(f"[錯誤] 退選失敗：{ERROR_REASONS.get(code, code)}。")
 
 
+# F5 課程篩選流程
+EXCLUSION_LABELS = {"blocked": "落在不可上課時段", "not_preferred_day": "不在偏好星期", "full": "已額滿"}
+
+
+def FeasibilityProblemText(manager, problem):
+    """把一筆不可行原因轉成中文說明。"""
+    problemType = problem["type"]
+    if problemType == NOT_FOUND:
+        return f"找不到課程 {problem['course_id']}"
+    if problemType == COURSE_FULL:
+        return f"必修課程 {CourseLabel(manager, problem['course_id'])} 已額滿"
+    if problemType == CONFLICTING_CRITERIA:
+        reason = problem["reason"]
+        if reason == "credit_range":
+            return f"最低學分 {problem['min_credits']} 大於最高學分 {problem['max_credits']}"
+        if reason == "required_blocked":
+            return f"必修課程 {CourseLabel(manager, problem['course_id'])} 落在不可上課時段"
+        if reason == "required_overlap":
+            first, second = (CourseLabel(manager, courseId) for courseId in problem["course_ids"])
+            return f"必修課程 {first} 與 {second} 互相衝堂（{FormatSlotList(problem['slots'])}）"
+        return f"必修合計 {problem['required_credits']} 學分，超過最高學分 {problem['max_credits']}"
+    return f"最低需 {problem['min_credits']} 學分，目前最多只能選 {problem['reachable_credits']} 學分"
+
+
+def FilterCoursesFlow(manager, ask, show):
+    """輸入必修、希望課程、學分、時段與星期，列出候選課程並檢查可行性。"""
+    studentId = AskIdentifier(ask, "學號：")
+    student = manager.FindStudent(studentId)
+    if student is None:
+        show(f"[錯誤] 篩選失敗：找不到學生 {studentId}。")
+        return
+
+    def AskIds(prompt):
+        return ParseList(AskText(ask, prompt).upper())
+
+    criteria = {
+        "required_ids": AskIds("必修課程代號（逗號分隔，Enter 表示沒有）："),
+        "wished_ids": AskIds("希望修習的課程代號（逗號分隔，Enter 表示全部課程）："),
+        "enrolled_ids": student["enrolled_courses"],
+    }
+    minText = AskText(ask, "最低學分（Enter 不限）：")
+    criteria["min_credits"] = ParseInt(minText) if minText else None
+    maxText = AskText(ask, f"最高學分（Enter 為學分上限 {student['max_credits']}）：")
+    criteria["max_credits"] = ParseInt(maxText) if maxText else student["max_credits"]
+    blockedText = AskText(ask, "不可上課時段（星期-節次，例如 1-1,1-2，Enter 表示沒有）：")
+    criteria["blocked_slots"] = ParseTimeSlots(blockedText) if blockedText else []
+    daysText = AskText(ask, "偏好星期（1-7，逗號分隔，Enter 不限）：")
+    criteria["preferred_days"] = [ParseInt(day) for day in ParseList(daysText)]
+
+    ok, code, report = courseFilter.CheckCourseFeasibility({"courses": manager.QueryCourses()}, criteria)
+    if code == INVALID_FIELD:
+        show("[錯誤] 篩選失敗：學分須為 0 以上的整數，時段格式如 1-1,1-2，星期須為 1 到 7。")
+        return
+    show(f"學生：{studentId} {student['name']}")
+    show(f"檢查結果：{'可行' if ok else '不可行'}")
+    for number, problem in enumerate(report["problems"], start=1):
+        show(f"原因 {number}：{FeasibilityProblemText(manager, problem)}")
+    show(f"不衝堂時最多可選學分：{report['reachable_credits']}")
+    ShowResults(show, "候選課程", report["candidates"], FormatCourse)
+    if report["excluded"]:
+        show("排除的課程：")
+        for courseId, reasons in report["excluded"]:
+            labels = "、".join(EXCLUSION_LABELS[reason] for reason in reasons)
+            show(f"  {CourseLabel(manager, courseId)}：{labels}")
+
+
 # ======================================================================
 # 四、選單與啟動 (Menu & Main Loop)
 # ======================================================================
@@ -653,6 +721,7 @@ MENU = (
     ("14", "查詢連續空堂", FindFreeSlotsFlow),
     ("15", "加選課程／報名活動", EnrollCourseFlow),
     ("16", "退選課程／取消報名", DropCourseFlow),
+    ("17", "篩選課程並檢查可行性", FilterCoursesFlow),
 )
 
 
