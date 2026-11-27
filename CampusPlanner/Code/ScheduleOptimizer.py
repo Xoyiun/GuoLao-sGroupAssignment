@@ -156,23 +156,17 @@ def SearchOptimalSchedules(database: dict, studentId: str, preferences: dict) ->
     requiredCourses = [courseDataManager.FindCourse(database, courseId) for courseId in required]
     if any(course is None for course in requiredCourses):
         return False, INVALID_FIELD, []
+    # 已選的課已經在課表上，不再排入方案（D16）；候選課程去掉重複與必修課
+    enrolledIds = set(student.get("enrolled_courses", []))
+    requiredCourses = [course for course in requiredCourses if course["course_id"] not in enrolledIds]
+    skipIds = set(required) | enrolledIds
     candidateCourses = []
-    for courseId in candidateIds:
+    for courseId in dict.fromkeys(candidateIds):
         course = courseDataManager.FindCourse(database, courseId)
-        if course is not None:
+        if course is not None and courseId not in skipIds:
             candidateCourses.append(course)
 
     plans = []
-    deduplicated = []
-    seen = set(required)
-    for course in candidateCourses:
-        if course["course_id"] not in seen:
-            seen.add(course["course_id"])
-            deduplicated.append(course)
-    candidateCourses = deduplicated
-    enrolledIds = set(student.get("enrolled_courses", []))
-    requiredCourses = [course for course in requiredCourses if course["course_id"] not in enrolledIds]
-    candidateCourses = [course for course in candidateCourses if course["course_id"] not in enrolledIds]
     enrolledCourses = [
         course for course in (
             courseDataManager.FindCourse(database, courseId)
@@ -195,8 +189,7 @@ def SearchOptimalSchedules(database: dict, studentId: str, preferences: dict) ->
             continue
         if any(TimeSlotsOverlap(course.get("time_slots", []), blocked) for course in selected):
             continue
-        if any(courseDataManager.RemainingSeats(course) <= 0 for course in selected
-               if course["course_id"] not in student.get("enrolled_courses", [])):
+        if any(courseDataManager.RemainingSeats(course) <= 0 for course in selected):
             continue
         if HasTimeConflict(selected, enrolledCourses):
             continue
