@@ -22,40 +22,38 @@ HALF_DAY_PERIODS = (  # 集中上課時段：一天分成上午、下午、晚�
 )
 
 
-DEFAULT_WEIGHTS = {
-    "credits": 1.0,
-    "campus_days": 2.0,
-    "gap_periods": 1.0,
-    "early_periods": 1.5,
-    "half_day_blocks": 0.5,
-    "preferred_ratio": 5.0,
+# 評分公式（F7 需求規格第五節）：score = Σ 方向 × 權重 × 指標
+# 方向 +1 表示越多越好（加分），−1 表示越少越好（扣分）。新增偏好只要在這裡多加一列。
+SCORE_TERMS = {
+    # 指標名稱: (方向, 預設權重)
+    "credits": (+1, 1.0),
+    "campus_days": (-1, 2.0),
+    "gap_periods": (-1, 1.0),
+    "early_periods": (-1, 1.5),
+    "half_day_blocks": (-1, 0.5),
+    "preferred_ratio": (+1, 5.0),
 }
+DEFAULT_WEIGHTS = {name: weight for name, (_, weight) in SCORE_TERMS.items()}
+
+
+def IsWeightValue(value):
+    """權重必須是 ≥ 0 的數字（bool 不算數字）。"""
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0
 
 
 def ValidateWeights(weights):
+    """None 表示全用預設；否則必須是 {已知的權重名稱: ≥ 0 的數字}，只需填要調整的項目。"""
     if weights is None:
         return True
-    if not isinstance(weights, dict):
-        return False
-    for name, value in weights.items():
-        if name not in DEFAULT_WEIGHTS:
-            return False
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
-            return False
-    return True
+    return isinstance(weights, dict) and all(
+        name in DEFAULT_WEIGHTS and IsWeightValue(value) for name, value in weights.items()
+    )
 
 
 def ScoreSchedule(metrics, weights=None):
-    merged = dict(DEFAULT_WEIGHTS)
-    merged.update(weights or {})
-    score = (
-        merged["credits"] * metrics["credits"]
-        - merged["campus_days"] * metrics["campus_days"]
-        - merged["gap_periods"] * metrics["gap_periods"]
-        - merged["early_periods"] * metrics["early_periods"]
-        - merged["half_day_blocks"] * metrics["half_day_blocks"]
-        + merged["preferred_ratio"] * metrics["preferred_ratio"]
-    )
+    """依偏好指標與權重計算方案分數，取到小數第 2 位；weights 只需填要調整的項目。"""
+    merged = {**DEFAULT_WEIGHTS, **(weights or {})}
+    score = sum(direction * merged[name] * metrics[name] for name, (direction, _) in SCORE_TERMS.items())
     return round(score, 2)
 
 
