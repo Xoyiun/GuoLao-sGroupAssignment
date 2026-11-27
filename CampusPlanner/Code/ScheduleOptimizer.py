@@ -8,48 +8,59 @@
 - 回傳值一律為狀態與錯誤代碼 (ok, code, ...)，不回傳介面顯示文字。
 """
 
-from Constants import INVALID_FIELD, NO_FEASIBLE_SCHEDULE, OK
+from Constants import INVALID_FIELD, NO_FEASIBLE_SCHEDULE, OK, VALID_PERIODS
 import CourseDataManager as courseDataManager
 from ConflictChecker import CheckEnrollmentConflicts
 from TimeSlotUtils import GetWeekday, TimeSlotsOverlap
+from Timetable import count_gap_periods
+
+EARLY_PERIOD = "1"  # 早八
+HALF_DAY_PERIODS = (  # 集中上課時段：一天分成上午、下午、晚上三個區段
+    {"1", "2", "3", "4"},
+    {"5", "6", "7", "8", "9"},
+    {"a", "b", "c"},
+)
+
+
+def OccupiedPeriodsByWeekday(courses):
+    """{星期: {有課的節次, ...}}；活動的日期時段換算成星期。"""
+    occupied = {}
+    for course in courses:
+        for slot in course.get("time_slots", []):
+            occupied.setdefault(GetWeekday(slot["day"]), set()).add(slot["period"])
+    return occupied
 
 
 def CalculateScheduleMetrics(planCourses, enrolledCourses=(), preferredCourses=()):
-    """計算一個方案的偏好指標。"""
-    occupied = {}
-    for course in list(planCourses) + list(enrolledCourses):
-        for slot in course.get("time_slots", []):
-            occupied.setdefault(GetWeekday(slot["day"]), set()).add(slot["period"])
+    """計算一個方案的偏好指標（定義見 F7 需求規格第四節）。
 
-    periods = ("1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c")
-    gapPeriods = 0
-    earlyPeriods = 0
-    halfDayBlocks = 0
-    for dayPeriods in occupied.values():
-        indexes = sorted(periods.index(period) for period in dayPeriods)
-        gapPeriods += (indexes[-1] - indexes[0] + 1) - len(indexes)
-        if "1" in dayPeriods:
-            earlyPeriods += 1
-        if dayPeriods & {"1", "2", "3", "4"}:
-            halfDayBlocks += 1
-        if dayPeriods & {"5", "6", "7", "8", "9"}:
-            halfDayBlocks += 1
-        if dayPeriods & {"a", "b", "c"}:
-            halfDayBlocks += 1
+    輸入：
+        planCourses: 方案中新排入的課程字典清單
+        enrolledCourses: 學生已選的課程字典清單（到校天數、空堂等看整週，所以要一起算）
+        preferredCourses: 偏好課程代號清單
+    回傳：
+        {"credits", "campus_days", "gap_periods", "early_periods", "half_day_blocks", "preferred_ratio"}
+    """
+    occupied = OccupiedPeriodsByWeekday(list(planCourses) + list(enrolledCourses))
+    dayRows = [
+        [period if period in dayPeriods else None for period in VALID_PERIODS]
+        for dayPeriods in occupied.values()
+    ]
 
     planIds = {course["course_id"] for course in planCourses}
     preferred = list(preferredCourses)
-    if preferred:
-        preferredRatio = sum(1 for courseId in preferred if courseId in planIds) / len(preferred)
-    else:
-        preferredRatio = 0
+    preferredRatio = (
+        sum(courseId in planIds for courseId in preferred) / len(preferred) if preferred else 0
+    )
 
     return {
         "credits": sum(course["credits"] for course in planCourses),
         "campus_days": len(occupied),
-        "gap_periods": gapPeriods,
-        "early_periods": earlyPeriods,
-        "half_day_blocks": halfDayBlocks,
+        "gap_periods": sum(count_gap_periods(row) for row in dayRows),  # 與 F3 共用空堂定義
+        "early_periods": sum(EARLY_PERIOD in dayPeriods for dayPeriods in occupied.values()),
+        "half_day_blocks": sum(
+            bool(dayPeriods & block) for dayPeriods in occupied.values() for block in HALF_DAY_PERIODS
+        ),
         "preferred_ratio": preferredRatio,
     }
 
