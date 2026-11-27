@@ -1,0 +1,4 @@
+# TDD 第 2 輪 Green：最少量實作 ScoreSchedule、ValidateWeights
+# 2026-11-27 18:02 uv run python -m pytest TestDriver/test_f7_score.py -q
+..........                                                               [100%]
+10 passed in 0.05s

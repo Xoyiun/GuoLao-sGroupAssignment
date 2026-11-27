@@ -22,6 +22,43 @@ HALF_DAY_PERIODS = (  # 集中上課時段：一天分成上午、下午、晚�
 )
 
 
+DEFAULT_WEIGHTS = {
+    "credits": 1.0,
+    "campus_days": 2.0,
+    "gap_periods": 1.0,
+    "early_periods": 1.5,
+    "half_day_blocks": 0.5,
+    "preferred_ratio": 5.0,
+}
+
+
+def ValidateWeights(weights):
+    if weights is None:
+        return True
+    if not isinstance(weights, dict):
+        return False
+    for name, value in weights.items():
+        if name not in DEFAULT_WEIGHTS:
+            return False
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
+            return False
+    return True
+
+
+def ScoreSchedule(metrics, weights=None):
+    merged = dict(DEFAULT_WEIGHTS)
+    merged.update(weights or {})
+    score = (
+        merged["credits"] * metrics["credits"]
+        - merged["campus_days"] * metrics["campus_days"]
+        - merged["gap_periods"] * metrics["gap_periods"]
+        - merged["early_periods"] * metrics["early_periods"]
+        - merged["half_day_blocks"] * metrics["half_day_blocks"]
+        + merged["preferred_ratio"] * metrics["preferred_ratio"]
+    )
+    return round(score, 2)
+
+
 def OccupiedPeriodsByWeekday(courses):
     """{星期: {有課的節次, ...}}；活動的日期時段換算成星期。"""
     occupied = {}
