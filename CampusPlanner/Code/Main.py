@@ -107,6 +107,21 @@ def ParseList(text):
     return [item.strip() for item in text.split(",") if item.strip()]
 
 
+def ParseWeights(text):
+    """'early_periods=0, campus_days=3' → {'early_periods': 0.0, 'campus_days': 3.0}；空白輸入 → {}。
+
+    數值轉不成數字就原樣保留字串，讓 F7 的 ValidateWeights 回報 INVALID_FIELD。
+    """
+    weights = {}
+    for item in ParseList(text):
+        name, _, value = item.partition("=")
+        try:
+            weights[name.strip()] = float(value)
+        except ValueError:
+            weights[name.strip()] = value
+    return weights
+
+
 def AskText(ask, prompt):
     """提示使用者並讀取輸入字串（去除前後空白）。"""
     return ask(prompt).strip()
@@ -703,7 +718,15 @@ def FilterCoursesFlow(manager, ask, show):
             show(f"  {CourseLabel(manager, courseId)}：{labels}")
 
 
+def FormatPlanMetrics(metrics):
+    """{'campus_days': 2, ...} → '到校 2 天｜空堂 1 節｜早八 0 天｜半天區段 3｜偏好比例 100%'"""
+    return (f"到校 {metrics['campus_days']} 天｜空堂 {metrics['gap_periods']} 節｜"
+            f"早八 {metrics['early_periods']} 天｜半天區段 {metrics['half_day_blocks']}｜"
+            f"偏好比例 {round(metrics['preferred_ratio'] * 100)}%")
+
+
 def OptimizeScheduleFlow(manager, ask, show):
+    """F7：輸入必修、候選、學分、禁止時段、偏好課程與權重，列出分數最高的前三個方案。"""
     studentId = AskIdentifier(ask, "學號：")
     student = manager.FindStudent(studentId)
     if student is None:
@@ -720,15 +743,7 @@ def OptimizeScheduleFlow(manager, ask, show):
     blockedText = AskText(ask, "不可上課時段（星期-節次，例如 1-1,1-2，Enter 表示沒有）：")
     blocked = ParseTimeSlots(blockedText) if blockedText else []
     preferences["preferred_courses"] = ParseList(AskText(ask, "偏好課程代號（逗號分隔，Enter 表示沒有）：").upper())
-    weightsText = AskText(ask, "權重（例如 early_periods=0,campus_days=3，Enter 用預設）：")
-    weights = {}
-    for item in ParseList(weightsText):
-        name, _, value = item.partition("=")
-        try:
-            weights[name.strip()] = float(value)
-        except ValueError:
-            weights[name.strip()] = value
-    preferences["weights"] = weights
+    preferences["weights"] = ParseWeights(AskText(ask, "權重（例如 early_periods=0,campus_days=3，Enter 用預設）："))
     if isinstance(blocked, str):
         show("[錯誤] 搜尋失敗：不可上課時段格式如 1-1,1-2。")
         return
@@ -747,10 +762,7 @@ def OptimizeScheduleFlow(manager, ask, show):
     for rank, plan in enumerate(top, start=1):
         labels = "、".join(CourseLabel(manager, courseId) for courseId in plan["courses"])
         show(f"第 {rank} 名：分數 {plan['score']}｜{labels}（{plan['total_credits']} 學分）")
-        metrics = plan["metrics"]
-        show(f"  到校 {metrics['campus_days']} 天｜空堂 {metrics['gap_periods']} 節｜"
-             f"早八 {metrics['early_periods']} 天｜半天區段 {metrics['half_day_blocks']}｜"
-             f"偏好比例 {round(metrics['preferred_ratio'] * 100)}%")
+        show("  " + FormatPlanMetrics(plan["metrics"]))
 
 
 # ======================================================================
