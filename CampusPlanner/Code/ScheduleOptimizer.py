@@ -11,7 +11,47 @@
 from Constants import INVALID_FIELD, NO_FEASIBLE_SCHEDULE, OK
 import CourseDataManager as courseDataManager
 from ConflictChecker import CheckEnrollmentConflicts
-from TimeSlotUtils import TimeSlotsOverlap
+from TimeSlotUtils import GetWeekday, TimeSlotsOverlap
+
+
+def CalculateScheduleMetrics(planCourses, enrolledCourses=(), preferredCourses=()):
+    """計算一個方案的偏好指標。"""
+    occupied = {}
+    for course in list(planCourses) + list(enrolledCourses):
+        for slot in course.get("time_slots", []):
+            occupied.setdefault(GetWeekday(slot["day"]), set()).add(slot["period"])
+
+    periods = ("1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c")
+    gapPeriods = 0
+    earlyPeriods = 0
+    halfDayBlocks = 0
+    for dayPeriods in occupied.values():
+        indexes = sorted(periods.index(period) for period in dayPeriods)
+        gapPeriods += (indexes[-1] - indexes[0] + 1) - len(indexes)
+        if "1" in dayPeriods:
+            earlyPeriods += 1
+        if dayPeriods & {"1", "2", "3", "4"}:
+            halfDayBlocks += 1
+        if dayPeriods & {"5", "6", "7", "8", "9"}:
+            halfDayBlocks += 1
+        if dayPeriods & {"a", "b", "c"}:
+            halfDayBlocks += 1
+
+    planIds = {course["course_id"] for course in planCourses}
+    preferred = list(preferredCourses)
+    if preferred:
+        preferredRatio = sum(1 for courseId in preferred if courseId in planIds) / len(preferred)
+    else:
+        preferredRatio = 0
+
+    return {
+        "credits": sum(course["credits"] for course in planCourses),
+        "campus_days": len(occupied),
+        "gap_periods": gapPeriods,
+        "early_periods": earlyPeriods,
+        "half_day_blocks": halfDayBlocks,
+        "preferred_ratio": preferredRatio,
+    }
 
 
 def SearchOptimalSchedules(database: dict, studentId: str, preferences: dict) -> tuple[bool, str, list[dict]]:
