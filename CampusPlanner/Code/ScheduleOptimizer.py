@@ -170,6 +170,9 @@ def SearchOptimalSchedules(database: dict, studentId: str, preferences: dict) ->
             seen.add(course["course_id"])
             deduplicated.append(course)
     candidateCourses = deduplicated
+    enrolledIds = set(student.get("enrolled_courses", []))
+    requiredCourses = [course for course in requiredCourses if course["course_id"] not in enrolledIds]
+    candidateCourses = [course for course in candidateCourses if course["course_id"] not in enrolledIds]
     enrolledCourses = [
         course for course in (
             courseDataManager.FindCourse(database, courseId)
