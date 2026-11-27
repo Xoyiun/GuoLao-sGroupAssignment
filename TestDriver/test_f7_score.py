@@ -44,3 +44,40 @@ def test_MetricsPreferredRatio():
     assert optimizer.CalculateScheduleMetrics(plan, [], ["A", "C"])["preferred_ratio"] == 0.5
     assert optimizer.CalculateScheduleMetrics(plan, [], ["A", "B"])["preferred_ratio"] == 1.0
     assert optimizer.CalculateScheduleMetrics(plan, [])["preferred_ratio"] == 0
+
+
+# ======================================================================
+# T03–T05：評分公式與權重
+# ======================================================================
+def test_ScoreUsesDefaultWeights():
+    """1.0×學分 − 2.0×到校天數 − 1.0×空堂 − 1.5×早八 − 0.5×半天區段 + 5.0×偏好比例。"""
+    metrics = {"credits": 9, "campus_days": 2, "gap_periods": 1, "early_periods": 1,
+               "half_day_blocks": 3, "preferred_ratio": 0.5}
+    # 9 − 4 − 1 − 1.5 − 1.5 + 2.5 = 3.5
+    assert optimizer.ScoreSchedule(metrics) == 3.5
+
+
+def test_WeightsChangeRanking():
+    """預設權重避開早八，LATE 第一；把早八權重設 0 後兩案同分，依代號 EARLY 第一（需求規格第五節）。"""
+    early = optimizer.CalculateScheduleMetrics([Course("EARLY", [(1, "1"), (1, "2")])])
+    late = optimizer.CalculateScheduleMetrics([Course("LATE", [(1, "5"), (1, "6")])])
+
+    assert (optimizer.ScoreSchedule(early), optimizer.ScoreSchedule(late)) == (-1.0, 0.5)
+    noEarlyPenalty = {"early_periods": 0}
+    assert optimizer.ScoreSchedule(early, noEarlyPenalty) == optimizer.ScoreSchedule(late, noEarlyPenalty) == 0.5
+
+
+@pytest.mark.parametrize("weights", [
+    {"early_periods": -1},        # 負數
+    {"campus_days": "很多"},       # 不是數字
+    {"campus_days": True},        # bool 不算數字
+    {"lunch_break": 1},           # 不存在的權重名稱
+    ["campus_days"],              # 不是字典
+])
+def test_InvalidWeightsRejected(weights):
+    assert optimizer.ValidateWeights(weights) is False
+
+
+def test_ValidWeightsAccepted():
+    assert optimizer.ValidateWeights(None) is True
+    assert optimizer.ValidateWeights({"campus_days": 0, "credits": 2.5}) is True
