@@ -10,7 +10,6 @@
 
 from Constants import INVALID_FIELD, NO_FEASIBLE_SCHEDULE, OK, VALID_PERIODS
 import CourseDataManager as courseDataManager
-from ConflictChecker import CheckEnrollmentConflicts
 from TimeSlotUtils import GetWeekday, TimeSlotsOverlap
 from Timetable import count_gap_periods
 
@@ -100,21 +99,35 @@ def CalculateScheduleMetrics(planCourses, enrolledCourses=(), preferredCourses=(
     }
 
 
+def HasTimeConflict(selected, enrolledCourses):
+    """方案中的課程與已選課程衝堂，或方案中的課程彼此衝堂，回傳 True。"""
+    if any(TimeSlotsOverlap(course.get("time_slots", []), enrolled.get("time_slots", []))
+           for course in selected for enrolled in enrolledCourses):
+        return True
+    return any(TimeSlotsOverlap(first.get("time_slots", []), second.get("time_slots", []))
+               for index, first in enumerate(selected) for second in selected[index + 1:])
+
+
 def SearchOptimalSchedules(database: dict, studentId: str, preferences: dict) -> tuple[bool, str, list[dict]]:
     """依偏好條件搜尋最佳可行課表組合。
 
     輸入：
         db: 標準資料庫字典
         student_id: 學號
-        preferences: 偏好字典：
+        preferences: 偏好字典（完整說明見 F7 需求規格第三節）：
             - min_credits: int (最低學分)
             - max_credits: int (最高學分)
             - required_courses: list[str] (指定必排課程清單)
             - candidate_courses: list[str] (候選選修課程清單)
+            - blocked_slots: list[dict] (不可上課時段)
+            - preferred_courses: list[str] (偏好課程清單)
+            - weights: dict (評分權重，只需填要調整的項目)
     回傳：
         (ok, code, schedule_plans):
-        - 成功：(True, OK, [{"courses": [cid, ...], "total_credits": int, "score": float}, ...])
+        - 成功：(True, OK, [{"courses": [cid, ...], "total_credits": int, "score": float,
+                             "metrics": {...}}, ...])，依分數由高到低、同分依課程代號
         - 無可行課表：(False, NO_FEASIBLE_SCHEDULE, [])
+        - 格式錯誤：(False, INVALID_FIELD, [])
     """
     if not isinstance(preferences, dict):
         return False, INVALID_FIELD, []
@@ -157,6 +170,13 @@ def SearchOptimalSchedules(database: dict, studentId: str, preferences: dict) ->
             seen.add(course["course_id"])
             deduplicated.append(course)
     candidateCourses = deduplicated
+    enrolledCourses = [
+        course for course in (
+            courseDataManager.FindCourse(database, courseId)
+            for courseId in student.get("enrolled_courses", [])
+        )
+        if course is not None
+    ]
     for mask in range(1 << len(candidateCourses)):
         selected = list(requiredCourses)
         selected.extend(
@@ -175,30 +195,9 @@ def SearchOptimalSchedules(database: dict, studentId: str, preferences: dict) ->
         if any(courseDataManager.RemainingSeats(course) <= 0 for course in selected
                if course["course_id"] not in student.get("enrolled_courses", [])):
             continue
-        conflict = False
-        enrolledCourses = [
-            courseDataManager.FindCourse(database, courseId)
-            for courseId in student.get("enrolled_courses", [])
-        ]
-        for selectedCourse in selected:
-            for enrolledCourse in enrolledCourses:
-                if enrolledCourse is not None and TimeSlotsOverlap(
-                    selectedCourse.get("time_slots", []),
-                    enrolledCourse.get("time_slots", []),
-                ):
-                    conflict = True
-                    break
-        for index, first in enumerate(selected):
-            for second in selected[index + 1:]:
-                if TimeSlotsOverlap(first.get("time_slots", []), second.get("time_slots", [])):
-                    conflict = True
-                    break
-            if conflict:
-                break
-        if conflict:
+        if HasTimeConflict(selected, enrolledCourses):
             continue
-        metrics = CalculateScheduleMetrics(
-            selected, [course for course in enrolledCourses if course is not None], preferredIds)
+        metrics = CalculateScheduleMetrics(selected, enrolledCourses, preferredIds)
         plans.append({
             "courses": ids,
             "total_credits": total,
