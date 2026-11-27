@@ -1,0 +1,12 @@
+# TDD 第 1 輪 Red：偏好指標（T01、T02）
+# 2026-11-27 18:01 uv run python -m pytest TestDriver/test_f7_score.py -q
+FF                                                                       [100%]
+================================== FAILURES ===================================
+E   AttributeError: module 'ScheduleOptimizer' has no attribute 'CalculateScheduleMetrics'
+C:\Users\user\Desktop\Homeworkpy\GuoLao-sGroupAssignment\TestDriver\test_f7_score.py:31: AttributeError: module 'ScheduleOptimizer' has no attribute 'CalculateScheduleMetrics'
+E   AttributeError: module 'ScheduleOptimizer' has no attribute 'CalculateScheduleMetrics'
+C:\Users\user\Desktop\Homeworkpy\GuoLao-sGroupAssignment\TestDriver\test_f7_score.py:44: AttributeError: module 'ScheduleOptimizer' has no attribute 'CalculateScheduleMetrics'
+=========================== short test summary info ===========================
+FAILED TestDriver/test_f7_score.py::test_MetricsCountDaysGapsEarlyAndBlocks
+FAILED TestDriver/test_f7_score.py::test_MetricsPreferredRatio - AttributeErr...
+2 failed in 0.03s
