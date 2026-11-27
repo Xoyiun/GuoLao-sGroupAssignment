@@ -102,3 +102,12 @@ def test_SearchRejectsInvalidPreferences(extra):
     """T08：權重或偏好課程格式錯誤 → INVALID_FIELD。"""
     assert optimizer.SearchOptimalSchedules(PreferenceDatabase(), "S1", OneOfTwo(**extra)) == (
         False, INVALID_FIELD, [])
+
+
+def test_SearchTreatsEnrolledRequiredCourseAsSatisfied():
+    """缺陷 D16：必修課學生已經選了，不能再被當成跟自己衝堂而找不到方案；已選的課不重複排入。"""
+    ok, code, plans = optimizer.SearchOptimalSchedules(PreferenceDatabase(enrolled=["E"]), "S1", {
+        "min_credits": 3, "max_credits": 3, "required_courses": ["E"], "candidate_courses": ["LATE"],
+    })
+    assert (ok, code) == (True, OK)
+    assert [plan["courses"] for plan in plans] == [["LATE"]]
