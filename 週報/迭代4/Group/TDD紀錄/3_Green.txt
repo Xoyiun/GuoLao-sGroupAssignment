@@ -1,0 +1,4 @@
+# TDD 第 3 輪 Green：SearchOptimalSchedules 改用 ScoreSchedule 並附上指標
+# 2026-11-27 18:04 uv run python -m pytest TestDriver/test_f7.py -q
+.......                                                                  [100%]
+7 passed in 0.04s

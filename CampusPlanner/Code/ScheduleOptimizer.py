@@ -129,7 +129,11 @@ def SearchOptimalSchedules(database: dict, studentId: str, preferences: dict) ->
 
     candidateIds = preferences.get("candidate_courses", [])
     blocked = preferences.get("blocked_slots", [])
+    preferredIds = preferences.get("preferred_courses", [])
+    weights = preferences.get("weights")
     if not isinstance(required, list) or not isinstance(candidateIds, list):
+        return False, INVALID_FIELD, []
+    if not isinstance(preferredIds, list) or not ValidateWeights(weights):
         return False, INVALID_FIELD, []
     if not isinstance(minCredits, int) or isinstance(minCredits, bool) or minCredits < 0:
         return False, INVALID_FIELD, []
@@ -193,10 +197,13 @@ def SearchOptimalSchedules(database: dict, studentId: str, preferences: dict) ->
                 break
         if conflict:
             continue
+        metrics = CalculateScheduleMetrics(
+            selected, [course for course in enrolledCourses if course is not None], preferredIds)
         plans.append({
             "courses": ids,
             "total_credits": total,
-            "score": float(total),
+            "score": ScoreSchedule(metrics, weights),
+            "metrics": metrics,
         })
     if not plans:
         return False, NO_FEASIBLE_SCHEDULE, []
