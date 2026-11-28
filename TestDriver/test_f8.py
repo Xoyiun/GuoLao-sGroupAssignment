@@ -80,3 +80,34 @@ def test_BruteForceRespectsAllConstraints():
     result = searchCompare.BruteForceSearch(problem)
     assert result["solutions"] == [("OK1",), ("OK1", "OK2"), ("OK2",)]
     assert result["nodes"] == 32
+
+
+# ======================================================================
+# S03、S04：回溯法
+# ======================================================================
+def test_BacktrackingMatchesBruteForce():
+    """S03：同一題目兩法的可行解集合完全相同。
+
+    小題目的回溯法節點數（22，手算見演算法說明）反而比窮舉法（16）多：
+    回溯法連中途的部分選法也算節點，限制不夠多時剪枝省不了多少。
+    """
+    result = searchCompare.BacktrackingSearch(SmallProblem())
+    assert result["solutions"] == SMALL_SOLUTIONS
+    assert result["nodes"] == 22
+    assert result["completed"] is True
+
+
+def test_BacktrackingPrunes():
+    """S04：8 門各 3 學分、彼此不衝堂、學分 3–6（最多選 2 門）。
+
+    窮舉法檢查 2⁸ = 256 個組合；回溯法只走「已選 ≤ 2 門」的狀態：
+    Σ(i=0..8) [C(i,0) + C(i,1) + C(i,2)] = 129 個節點。可行解 C(8,1) + C(8,2) = 36 個。
+    """
+    database = Database([Course(f"K{index}", [(1 + index % 7, str(1 + index // 7))]) for index in range(8)])
+    problem = Problem(database, candidate_courses=[f"K{index}" for index in range(8)], min_credits=3, max_credits=6)
+
+    brute = searchCompare.BruteForceSearch(problem)
+    back = searchCompare.BacktrackingSearch(problem)
+    assert (brute["nodes"], back["nodes"]) == (256, 129)
+    assert len(back["solutions"]) == 36
+    assert back["solutions"] == brute["solutions"]
