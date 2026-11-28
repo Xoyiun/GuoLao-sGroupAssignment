@@ -164,3 +164,42 @@ def test_F7AndF8AgreeOnFeasiblePlans():
 def test_CompareRejectsInvalidInput(studentId, preferences):
     """S09：學生或必修課不存在、學分格式錯誤 → INVALID_FIELD。"""
     assert searchCompare.CompareAlgorithms(SmallDatabase(), studentId, preferences) == (False, INVALID_FIELD, {})
+
+
+# ======================================================================
+# S08、S10：8、12、16 門候選課程的實驗資料與實驗函式
+# ======================================================================
+import json
+import os
+
+EXPERIMENT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "TestInput", "F8")
+
+
+def LoadExperiment(count):
+    path = os.path.join(EXPERIMENT_DIR, f"candidates_{count:02d}.json")
+    with open(path, encoding="utf-8") as dataFile:
+        return json.load(dataFile)
+
+
+@pytest.mark.parametrize("count", [8, 12, 16])
+def test_ExperimentDatasetsAgree(count):
+    """S08：三組資料的候選課程數量正確；兩法都完成、可行解一致，且回溯法節點較少。"""
+    dataset = LoadExperiment(count)
+    assert len(dataset["preferences"]["candidate_courses"]) == count
+    ok, code, report = searchCompare.CompareAlgorithms(dataset["database"], dataset["student_id"], dataset["preferences"])
+    assert (ok, code) == (True, OK)
+    assert report["candidate_count"] == count
+    assert report["brute_force"]["nodes"] == 2 ** count
+    assert report["consistent"] is True
+    assert report["backtracking"]["nodes"] < report["brute_force"]["nodes"]
+    assert report["brute_force"]["solutions"] > 0
+
+
+def test_RunExperimentSummarizesRepeatedRuns():
+    """S10：同一組資料重複執行，回傳節點數、可行解數、一致性與時間中位數。"""
+    row = searchCompare.RunExperiment(LoadExperiment(8), repeats=3)
+    assert row["candidate_count"] == 8
+    assert row["brute_force"]["nodes"] == 256 and row["brute_force"]["completed"] is True
+    assert row["backtracking"]["solutions"] == row["brute_force"]["solutions"]
+    assert row["consistent"] is True
+    assert row["brute_force"]["median_seconds"] >= 0 and row["backtracking"]["median_seconds"] >= 0
