@@ -14,21 +14,32 @@ from itertools import combinations
 import copy
 from Constants import INVALID_FIELD, OK
 import CourseDataManager as courseDataManager
+import ScheduleOptimizer as scheduleOptimizer
 from TimeSlotUtils import TimeSlotsOverlap
 
 
-def BruteForceSearch(problem):
-    import ScheduleOptimizer
+def SolutionKey(selected):
+    """可行解的表示法：排序後的課程代號，方便兩種演算法比較是否一致。"""
+    return tuple(sorted(course["course_id"] for course in selected))
 
+
+def BruteForceSearch(problem):
+    """窮舉法：逐一檢查候選課程的全部 2ⁿ 個子集合（每個子集合算一個節點）。
+
+    輸入：ScheduleOptimizer.BuildSearchProblem 產生的 problem
+    回傳：{"solutions": [排序後的可行解], "nodes": int, "seconds": float, "completed": bool}
+    """
     start = time.perf_counter()
     candidates = problem["candidates"]
     solutions = []
     nodes = 0
     for mask in range(1 << len(candidates)):
         nodes += 1
-        chosen = [candidates[index] for index in range(len(candidates)) if mask & (1 << index)]
-        if ScheduleOptimizer.IsFeasibleSelection(problem, problem["required"] + chosen):
-            solutions.append(tuple(sorted(course["course_id"] for course in problem["required"] + chosen)))
+        selected = problem["required"] + [
+            candidates[index] for index in range(len(candidates)) if mask & (1 << index)
+        ]
+        if scheduleOptimizer.IsFeasibleSelection(problem, selected):
+            solutions.append(SolutionKey(selected))
     return {
         "solutions": sorted(solutions),
         "nodes": nodes,
