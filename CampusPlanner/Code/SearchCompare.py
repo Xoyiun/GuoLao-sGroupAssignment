@@ -23,7 +23,7 @@ def SolutionKey(selected):
     return tuple(sorted(course["course_id"] for course in selected))
 
 
-def BruteForceSearch(problem):
+def BruteForceSearch(problem, timeLimit=None):
     """窮舉法：逐一檢查候選課程的全部 2ⁿ 個子集合（每個子集合算一個節點）。
 
     輸入：ScheduleOptimizer.BuildSearchProblem 產生的 problem
@@ -33,7 +33,11 @@ def BruteForceSearch(problem):
     candidates = problem["candidates"]
     solutions = []
     nodes = 0
+    completed = True
     for mask in range(1 << len(candidates)):
+        if timeLimit is not None and time.perf_counter() - start >= timeLimit:
+            completed = False
+            break
         nodes += 1
         selected = problem["required"] + [
             candidates[index] for index in range(len(candidates)) if mask & (1 << index)
@@ -44,7 +48,7 @@ def BruteForceSearch(problem):
         "solutions": sorted(solutions),
         "nodes": nodes,
         "seconds": time.perf_counter() - start,
-        "completed": True,
+        "completed": completed,
     }
 
 
@@ -70,7 +74,7 @@ def CanAddCourse(problem, selected, credits, course):
     )
 
 
-def BacktrackingSearch(problem):
+def BacktrackingSearch(problem, timeLimit=None):
     """回溯法：依序決定每門候選「不選／選」，違反條件的分支提早放棄（每次走訪算一個節點）。
 
     剪枝：加入後違反 C1～C4 就不往下走；目前學分加上剩餘候選的學分仍達不到最低學分，也停止。
@@ -81,9 +85,15 @@ def BacktrackingSearch(problem):
     suffix = SuffixCredits(candidates)
     solutions = []
     nodes = 0
+    completed = True
 
     def Visit(index, selected, credits):
-        nonlocal nodes
+        nonlocal nodes, completed
+        if not completed:
+            return
+        if timeLimit is not None and time.perf_counter() - start >= timeLimit:
+            completed = False
+            return
         nodes += 1
         if credits + suffix[index] < problem["min_credits"]:                      # C5 剪枝
             return
@@ -109,86 +119,27 @@ def BacktrackingSearch(problem):
         "solutions": sorted(solutions),
         "nodes": nodes,
         "seconds": time.perf_counter() - start,
-        "completed": True,
+        "completed": completed,
     }
 
 
-def CompareAlgorithms(database: dict, studentId: str, preferences: dict) -> tuple[bool, str, dict]:
-    """評測並比較兩種演算法在相同資料上的搜尋耗時與走訪節點數。
-
-    輸入：
-        db: 標準資料庫字典
-        student_id: 學號
-        preferences: 搜尋偏好字典
-    回傳：
-        (ok, code, metrics):
-        - 成功：(True, OK, {
-            "brute_force": {"time_seconds": float, "nodes_searched": int},
-            "backtracking": {"time_seconds": float, "nodes_searched": int},
-            "winner": str
-          })
-        - 失敗：(False, INVALID_FIELD, {})
-    """
-    if not isinstance(preferences, dict):
-        return False, INVALID_FIELD, {}
-
-    student = courseDataManager.FindStudent(database, studentId)
-    if not student:
-        return False, INVALID_FIELD, {}
-    required = preferences.get("required_courses", [])
-    candidates = preferences.get("candidate_courses", [])
-    if not isinstance(required, list) or not isinstance(candidates, list):
-        return False, INVALID_FIELD, {}
-    ids = list(dict.fromkeys(required + candidates))
-    courses = [courseDataManager.FindCourse(database, courseId) for courseId in ids]
-    if any(course is None for course in courses):
-        return False, INVALID_FIELD, {}
-    minCredits = preferences.get("min_credits", 9)
-    maxCredits = preferences.get("max_credits", student.get("max_credits", 25))
-    blocked = preferences.get("blocked_slots", [])
-
-    def feasible(selected):
-        selectedIds = [course["course_id"] for course in selected]
-        if set(required).issubset(set(selectedIds)) is False:
-            return False
-        total = sum(course["credits"] for course in selected)
-        if total < minCredits or total > maxCredits:
-            return False
-        if any(TimeSlotsOverlap(course["time_slots"], blocked) for course in selected):
-            return False
-        for index, course in enumerate(selected):
-            if courseDataManager.RemainingSeats(course) <= 0:
-                if course["course_id"] not in student["enrolled_courses"]:
-                    return False
-            for other in selected[index + 1:]:
-                if TimeSlotsOverlap(course["time_slots"], other["time_slots"]):
-                    return False
-        return True
-
-    bruteNodes = 0
-    start = time.perf_counter()
-    for size in range(len(courses) + 1):
-        for selected in combinations(courses, size):
-            bruteNodes += 1
-            feasible(selected)
-    bruteTime = max(time.perf_counter() - start, 0.000001)
-
-    backNodes = 0
-    start = time.perf_counter()
-    def visit(index, selected):
-        nonlocal backNodes
-        backNodes += 1
-        if index == len(courses):
-            feasible(selected)
-            return
-        visit(index + 1, selected)
-        visit(index + 1, selected + [courses[index]])
-    visit(0, [])
-    backTime = max(time.perf_counter() - start, 0.000001)
-
-    metrics = {
-        "brute_force": {"time_seconds": round(bruteTime, 9), "nodes_searched": bruteNodes},
-        "backtracking": {"time_seconds": round(backTime, 9), "nodes_searched": backNodes},
-        "winner": "backtracking" if backNodes < bruteNodes else "brute_force",
-    }
-    return True, OK, metrics
+def CompareAlgorithms(database, studentId, preferences, timeLimit=None):
+    ok, code, problem = scheduleOptimizer.BuildSearchProblem(database, studentId, preferences)
+    if not ok:
+        return False, code, {}
+    report = {"candidate_count": len(problem["candidates"])}
+    results = {}
+    for name, search in (("brute_force", BruteForceSearch), ("backtracking", BacktrackingSearch)):
+        result = search(problem, timeLimit)
+        results[name] = result
+        report[name] = {
+            "nodes": result["nodes"],
+            "seconds": result["seconds"],
+            "solutions": len(result["solutions"]),
+            "completed": result["completed"],
+        }
+    if results["brute_force"]["completed"] and results["backtracking"]["completed"]:
+        report["consistent"] = results["brute_force"]["solutions"] == results["backtracking"]["solutions"]
+    else:
+        report["consistent"] = None
+    return True, OK, report
