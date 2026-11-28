@@ -131,17 +131,29 @@ def BacktrackingSearch(problem, timeLimit=None):
 
 
 def RunExperiment(dataset, repeats=5, timeLimit=None):
-    reports = []
-    for _ in range(repeats):
-        ok, code, report = CompareAlgorithms(dataset["database"], dataset["student_id"], dataset["preferences"], timeLimit)
-        reports.append(report)
-    row = {"candidate_count": reports[0]["candidate_count"], "consistent": reports[-1]["consistent"]}
+    """效能實驗：同一組資料重複執行 repeats 次 CompareAlgorithms，時間取中位數以降低誤差。
+
+    輸入：dataset = {"database", "student_id", "preferences"}（見 TestDriver/TestInput/F8）
+    回傳：{"candidate_count", "consistent",
+           "brute_force": {"nodes", "solutions", "completed", "median_seconds"},
+           "backtracking": {...}}；consistent 只有每次都一致才是 True，有一次無法判定就是 None
+    """
+    reports = [
+        CompareAlgorithms(dataset["database"], dataset["student_id"], dataset["preferences"], timeLimit)[2]
+        for _ in range(repeats)
+    ]
+    verdicts = [report["consistent"] for report in reports]
+    row = {
+        "candidate_count": reports[0]["candidate_count"],
+        "consistent": None if None in verdicts else all(verdicts),
+    }
     for name in ("brute_force", "backtracking"):
         times = sorted(report[name]["seconds"] for report in reports)
+        last = reports[-1][name]
         row[name] = {
-            "nodes": reports[-1][name]["nodes"],
-            "solutions": reports[-1][name]["solutions"],
-            "completed": reports[-1][name]["completed"],
+            "nodes": last["nodes"],
+            "solutions": last["solutions"],
+            "completed": last["completed"],
             "median_seconds": times[len(times) // 2],
         }
     return row
