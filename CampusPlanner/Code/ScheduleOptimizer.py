@@ -108,12 +108,80 @@ def HasTimeConflict(selected, enrolledCourses):
                for index, first in enumerate(selected) for second in selected[index + 1:])
 
 
+def IsNonNegativeInteger(value):
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+
+def BuildSearchProblem(database: dict, studentId: str, preferences: dict) -> tuple[bool, str, dict]:
+    """把搜尋偏好整理成搜尋問題；F7 最佳課表搜尋與 F8 演算法比較共用同一份條件。
+
+    回傳 (ok, code, problem)，problem 為：
+        {"required": [必修課程], "candidates": [候選課程], "enrolled": [已選課程],
+         "min_credits": int, "max_credits": int, "blocked": [不可上課時段],
+         "preferred_ids": [偏好課程代號], "weights": 權重或 None}
+    已選的課已經在課表上，不再排入方案（D16）；候選課程去掉重複、必修與已選。
+    格式錯誤、學生或必修課不存在回傳 (False, INVALID_FIELD, {})。
+    """
+    if not isinstance(preferences, dict):
+        return False, INVALID_FIELD, {}
+    student = courseDataManager.FindStudent(database, studentId)
+    if not student:
+        return False, INVALID_FIELD, {}
+
+    minCredits = preferences.get("min_credits", 9)
+    maxCredits = preferences.get("max_credits", student.get("max_credits", 25))
+    required = preferences.get("required_courses", [])
+    candidateIds = preferences.get("candidate_courses", [])
+    preferredIds = preferences.get("preferred_courses", [])
+    weights = preferences.get("weights")
+    if not all(isinstance(value, list) for value in (required, candidateIds, preferredIds)):
+        return False, INVALID_FIELD, {}
+    if not ValidateWeights(weights) or not IsNonNegativeInteger(minCredits) or not IsNonNegativeInteger(maxCredits):
+        return False, INVALID_FIELD, {}
+
+    requiredCourses = [courseDataManager.FindCourse(database, courseId) for courseId in required]
+    if any(course is None for course in requiredCourses):
+        return False, INVALID_FIELD, {}
+    enrolledIds = set(student.get("enrolled_courses", []))
+    skipIds = set(required) | enrolledIds
+    candidates = []
+    for courseId in dict.fromkeys(candidateIds):
+        course = courseDataManager.FindCourse(database, courseId)
+        if course is not None and courseId not in skipIds:
+            candidates.append(course)
+
+    return True, OK, {
+        "required": [course for course in requiredCourses if course["course_id"] not in enrolledIds],
+        "candidates": candidates,
+        "enrolled": [course for course in (courseDataManager.FindCourse(database, courseId)
+                                           for courseId in student.get("enrolled_courses", []))
+                     if course is not None],
+        "min_credits": minCredits,
+        "max_credits": maxCredits,
+        "blocked": preferences.get("blocked_slots", []),
+        "preferred_ids": preferredIds,
+        "weights": weights,
+    }
+
+
+def IsFeasibleSelection(problem: dict, selected: list[dict]) -> bool:
+    """selected（必修＋選到的候選）是否符合所有必要條件：學分上下限、禁止時段、額滿、衝堂。"""
+    total = sum(course["credits"] for course in selected)
+    if total < problem["min_credits"] or total > problem["max_credits"]:
+        return False
+    if any(TimeSlotsOverlap(course.get("time_slots", []), problem["blocked"]) for course in selected):
+        return False
+    if any(courseDataManager.RemainingSeats(course) <= 0 for course in selected):
+        return False
+    return not HasTimeConflict(selected, problem["enrolled"])
+
+
 def SearchOptimalSchedules(database: dict, studentId: str, preferences: dict) -> tuple[bool, str, list[dict]]:
     """依偏好條件搜尋最佳可行課表組合。
 
     輸入：
-        db: 標準資料庫字典
-        student_id: 學號
+        database: 標準資料庫字典
+        studentId: 學號
         preferences: 偏好字典（完整說明見 F7 需求規格第三節）：
             - min_credits: int (最低學分)
             - max_credits: int (最高學分)
@@ -129,75 +197,23 @@ def SearchOptimalSchedules(database: dict, studentId: str, preferences: dict) ->
         - 無可行課表：(False, NO_FEASIBLE_SCHEDULE, [])
         - 格式錯誤：(False, INVALID_FIELD, [])
     """
-    if not isinstance(preferences, dict):
-        return False, INVALID_FIELD, []
+    ok, code, problem = BuildSearchProblem(database, studentId, preferences)
+    if not ok:
+        return False, code, []
 
-    student = courseDataManager.FindStudent(database, studentId)
-    if not student:
-        return False, INVALID_FIELD, []
-
-    minCredits = preferences.get("min_credits", 9)
-    maxCredits = preferences.get("max_credits", student.get("max_credits", 25))
-    required = preferences.get("required_courses", [])
-
-    candidateIds = preferences.get("candidate_courses", [])
-    blocked = preferences.get("blocked_slots", [])
-    preferredIds = preferences.get("preferred_courses", [])
-    weights = preferences.get("weights")
-    if not isinstance(required, list) or not isinstance(candidateIds, list):
-        return False, INVALID_FIELD, []
-    if not isinstance(preferredIds, list) or not ValidateWeights(weights):
-        return False, INVALID_FIELD, []
-    if not isinstance(minCredits, int) or isinstance(minCredits, bool) or minCredits < 0:
-        return False, INVALID_FIELD, []
-    if not isinstance(maxCredits, int) or isinstance(maxCredits, bool) or maxCredits < 0:
-        return False, INVALID_FIELD, []
-
-    requiredCourses = [courseDataManager.FindCourse(database, courseId) for courseId in required]
-    if any(course is None for course in requiredCourses):
-        return False, INVALID_FIELD, []
-    # 已選的課已經在課表上，不再排入方案（D16）；候選課程去掉重複與必修課
-    enrolledIds = set(student.get("enrolled_courses", []))
-    requiredCourses = [course for course in requiredCourses if course["course_id"] not in enrolledIds]
-    skipIds = set(required) | enrolledIds
-    candidateCourses = []
-    for courseId in dict.fromkeys(candidateIds):
-        course = courseDataManager.FindCourse(database, courseId)
-        if course is not None and courseId not in skipIds:
-            candidateCourses.append(course)
-
+    candidates = problem["candidates"]
     plans = []
-    enrolledCourses = [
-        course for course in (
-            courseDataManager.FindCourse(database, courseId)
-            for courseId in student.get("enrolled_courses", [])
-        )
-        if course is not None
-    ]
-    for mask in range(1 << len(candidateCourses)):
-        selected = list(requiredCourses)
-        selected.extend(
-            candidateCourses[index]
-            for index in range(len(candidateCourses))
-            if mask & (1 << index)
-        )
-        ids = [course["course_id"] for course in selected]
-        if len(set(ids)) != len(ids):
+    for mask in range(1 << len(candidates)):
+        selected = problem["required"] + [
+            candidates[index] for index in range(len(candidates)) if mask & (1 << index)
+        ]
+        if not IsFeasibleSelection(problem, selected):
             continue
-        total = sum(course["credits"] for course in selected)
-        if total < minCredits or total > maxCredits:
-            continue
-        if any(TimeSlotsOverlap(course.get("time_slots", []), blocked) for course in selected):
-            continue
-        if any(courseDataManager.RemainingSeats(course) <= 0 for course in selected):
-            continue
-        if HasTimeConflict(selected, enrolledCourses):
-            continue
-        metrics = CalculateScheduleMetrics(selected, enrolledCourses, preferredIds)
+        metrics = CalculateScheduleMetrics(selected, problem["enrolled"], problem["preferred_ids"])
         plans.append({
-            "courses": ids,
-            "total_credits": total,
-            "score": ScoreSchedule(metrics, weights),
+            "courses": [course["course_id"] for course in selected],
+            "total_credits": metrics["credits"],
+            "score": ScoreSchedule(metrics, problem["weights"]),
             "metrics": metrics,
         })
     if not plans:
