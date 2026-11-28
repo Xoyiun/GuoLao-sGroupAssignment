@@ -1,0 +1,30 @@
+# TDD 第 2 輪 Red：評分公式與權重（T03–T05）
+# 2026-11-27 18:02 uv run python -m pytest TestDriver/test_f7_score.py -q
+..FFFFFFFF                                                               [100%]
+================================== FAILURES ===================================
+E   AttributeError: module 'ScheduleOptimizer' has no attribute 'ScoreSchedule'
+C:\Users\user\Desktop\Homeworkpy\GuoLao-sGroupAssignment\TestDriver\test_f7_score.py:57: AttributeError: module 'ScheduleOptimizer' has no attribute 'ScoreSchedule'
+E   AttributeError: module 'ScheduleOptimizer' has no attribute 'ScoreSchedule'
+C:\Users\user\Desktop\Homeworkpy\GuoLao-sGroupAssignment\TestDriver\test_f7_score.py:65: AttributeError: module 'ScheduleOptimizer' has no attribute 'ScoreSchedule'
+E   AttributeError: module 'ScheduleOptimizer' has no attribute 'ValidateWeights'
+C:\Users\user\Desktop\Homeworkpy\GuoLao-sGroupAssignment\TestDriver\test_f7_score.py:78: AttributeError: module 'ScheduleOptimizer' has no attribute 'ValidateWeights'
+E   AttributeError: module 'ScheduleOptimizer' has no attribute 'ValidateWeights'
+C:\Users\user\Desktop\Homeworkpy\GuoLao-sGroupAssignment\TestDriver\test_f7_score.py:78: AttributeError: module 'ScheduleOptimizer' has no attribute 'ValidateWeights'
+E   AttributeError: module 'ScheduleOptimizer' has no attribute 'ValidateWeights'
+C:\Users\user\Desktop\Homeworkpy\GuoLao-sGroupAssignment\TestDriver\test_f7_score.py:78: AttributeError: module 'ScheduleOptimizer' has no attribute 'ValidateWeights'
+E   AttributeError: module 'ScheduleOptimizer' has no attribute 'ValidateWeights'
+C:\Users\user\Desktop\Homeworkpy\GuoLao-sGroupAssignment\TestDriver\test_f7_score.py:78: AttributeError: module 'ScheduleOptimizer' has no attribute 'ValidateWeights'
+E   AttributeError: module 'ScheduleOptimizer' has no attribute 'ValidateWeights'
+C:\Users\user\Desktop\Homeworkpy\GuoLao-sGroupAssignment\TestDriver\test_f7_score.py:78: AttributeError: module 'ScheduleOptimizer' has no attribute 'ValidateWeights'
+E   AttributeError: module 'ScheduleOptimizer' has no attribute 'ValidateWeights'
+C:\Users\user\Desktop\Homeworkpy\GuoLao-sGroupAssignment\TestDriver\test_f7_score.py:82: AttributeError: module 'ScheduleOptimizer' has no attribute 'ValidateWeights'
+=========================== short test summary info ===========================
+FAILED TestDriver/test_f7_score.py::test_ScoreUsesDefaultWeights - AttributeE...
+FAILED TestDriver/test_f7_score.py::test_WeightsChangeRanking - AttributeErro...
+FAILED TestDriver/test_f7_score.py::test_InvalidWeightsRejected[weights0] - A...
+FAILED TestDriver/test_f7_score.py::test_InvalidWeightsRejected[weights1] - A...
+FAILED TestDriver/test_f7_score.py::test_InvalidWeightsRejected[weights2] - A...
+FAILED TestDriver/test_f7_score.py::test_InvalidWeightsRejected[weights3] - A...
+FAILED TestDriver/test_f7_score.py::test_InvalidWeightsRejected[weights4] - A...
+FAILED TestDriver/test_f7_score.py::test_ValidWeightsAccepted - AttributeErro...
+8 failed, 2 passed in 0.06s

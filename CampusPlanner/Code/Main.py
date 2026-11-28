@@ -44,6 +44,7 @@ from Constants import (
     INVALID_STUDENT_COURSES,
     INVALID_TIME_SLOTS,
     KIND,
+    NO_FEASIBLE_SCHEDULE,
     NOT_FOUND,
     OK,
     SAVE_FAILED,
@@ -53,6 +54,7 @@ from Constants import (
 )
 import CourseDataManager as courseDataManager
 import CourseFilter as courseFilter
+import ScheduleOptimizer as scheduleOptimizer
 import Timetable as timetableModule
 
 # 用 __file__ 算路徑，從哪個資料夾執行都找得到 UserData
@@ -103,6 +105,21 @@ def ParseTimeSlots(text):
 def ParseList(text):
     """'projector, mic' → ['projector', 'mic']；空白輸入 → []。"""
     return [item.strip() for item in text.split(",") if item.strip()]
+
+
+def ParseWeights(text):
+    """'early_periods=0, campus_days=3' → {'early_periods': 0.0, 'campus_days': 3.0}；空白輸入 → {}。
+
+    數值轉不成數字就原樣保留字串，讓 F7 的 ValidateWeights 回報 INVALID_FIELD。
+    """
+    weights = {}
+    for item in ParseList(text):
+        name, _, value = item.partition("=")
+        try:
+            weights[name.strip()] = float(value)
+        except ValueError:
+            weights[name.strip()] = value
+    return weights
 
 
 def AskText(ask, prompt):
@@ -701,6 +718,53 @@ def FilterCoursesFlow(manager, ask, show):
             show(f"  {CourseLabel(manager, courseId)}：{labels}")
 
 
+def FormatPlanMetrics(metrics):
+    """{'campus_days': 2, ...} → '到校 2 天｜空堂 1 節｜早八 0 天｜半天區段 3｜偏好比例 100%'"""
+    return (f"到校 {metrics['campus_days']} 天｜空堂 {metrics['gap_periods']} 節｜"
+            f"早八 {metrics['early_periods']} 天｜半天區段 {metrics['half_day_blocks']}｜"
+            f"偏好比例 {round(metrics['preferred_ratio'] * 100)}%")
+
+
+def OptimizeScheduleFlow(manager, ask, show):
+    """F7：輸入必修、候選、學分、禁止時段、偏好課程與權重，列出分數最高的前三個方案。"""
+    studentId = AskIdentifier(ask, "學號：")
+    student = manager.FindStudent(studentId)
+    if student is None:
+        show(f"[錯誤] 搜尋失敗：找不到學生 {studentId}。")
+        return
+    preferences = {
+        "required_courses": ParseList(AskText(ask, "必修課程代號（逗號分隔，Enter 表示沒有）：").upper()),
+        "candidate_courses": ParseList(AskText(ask, "候選選修課程代號（逗號分隔）：").upper()),
+    }
+    minText = AskText(ask, "最低學分（Enter 預設 9）：")
+    preferences["min_credits"] = ParseInt(minText) if minText else 9
+    maxText = AskText(ask, f"最高學分（Enter 為學分上限 {student['max_credits']}）：")
+    preferences["max_credits"] = ParseInt(maxText) if maxText else student["max_credits"]
+    blockedText = AskText(ask, "不可上課時段（星期-節次，例如 1-1,1-2，Enter 表示沒有）：")
+    blocked = ParseTimeSlots(blockedText) if blockedText else []
+    preferences["preferred_courses"] = ParseList(AskText(ask, "偏好課程代號（逗號分隔，Enter 表示沒有）：").upper())
+    preferences["weights"] = ParseWeights(AskText(ask, "權重（例如 early_periods=0,campus_days=3，Enter 用預設）："))
+    if isinstance(blocked, str):
+        show("[錯誤] 搜尋失敗：不可上課時段格式如 1-1,1-2。")
+        return
+    preferences["blocked_slots"] = blocked
+
+    database = {"courses": manager.QueryCourses(), "students": manager.QueryStudents()}
+    ok, code, plans = scheduleOptimizer.SearchOptimalSchedules(database, studentId, preferences)
+    if code == NO_FEASIBLE_SCHEDULE:
+        show("[查詢] 找不到符合所有條件的課表。")
+        return
+    if not ok:
+        show("[錯誤] 搜尋失敗：學分須為 0 以上的整數，課程代號須存在，權重須為 0 以上的數字。")
+        return
+    top = plans[:3]
+    show(f"[查詢] 共 {len(plans)} 個可行方案，列出前 {len(top)} 名：")
+    for rank, plan in enumerate(top, start=1):
+        labels = "、".join(CourseLabel(manager, courseId) for courseId in plan["courses"])
+        show(f"第 {rank} 名：分數 {plan['score']}｜{labels}（{plan['total_credits']} 學分）")
+        show("  " + FormatPlanMetrics(plan["metrics"]))
+
+
 # ======================================================================
 # 四、選單與啟動 (Menu & Main Loop)
 # ======================================================================
@@ -722,6 +786,7 @@ MENU = (
     ("15", "加選課程／報名活動", EnrollCourseFlow),
     ("16", "退選課程／取消報名", DropCourseFlow),
     ("17", "篩選課程並檢查可行性", FilterCoursesFlow),
+    ("18", "最佳課表搜尋", OptimizeScheduleFlow),
 )
 
 

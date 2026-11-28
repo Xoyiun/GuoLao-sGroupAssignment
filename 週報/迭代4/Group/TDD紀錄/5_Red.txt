@@ -1,0 +1,6 @@
+# TDD 第 5 輪 Red：缺陷 D16 必修課已選時找不到方案
+# 2026-11-27 18:07 uv run python -m pytest TestDriver/test_f7.py -q
+      Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED TestDriver/test_f7.py::test_SearchTreatsEnrolledRequiredCourseAsSatisfied
+1 failed, 7 passed in 0.07s

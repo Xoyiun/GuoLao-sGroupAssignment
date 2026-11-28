@@ -1,0 +1,10 @@
+# F8 TDD 第 1 輪 Red：窮舉法（S01、S02）
+# 2026-11-28 11:53 uv run python -m pytest TestDriver/test_f8.py -q
+FF                                                                       [100%]
+================================== FAILURES ===================================
+E   AttributeError: module 'SearchCompare' has no attribute 'BruteForceSearch'
+E   AttributeError: module 'SearchCompare' has no attribute 'BruteForceSearch'
+=========================== short test summary info ===========================
+FAILED TestDriver/test_f8.py::test_BruteForceFindsEveryFeasibleSelection - At...
+FAILED TestDriver/test_f8.py::test_BruteForceRespectsAllConstraints - Attribu...
+2 failed in 0.02s

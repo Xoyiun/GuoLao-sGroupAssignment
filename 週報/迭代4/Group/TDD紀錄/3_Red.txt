@@ -1,0 +1,33 @@
+# TDD 第 3 輪 Red：搜尋結果依偏好分數排序（T06–T08）
+# 2026-11-27 18:03 uv run python -m pytest TestDriver/test_f7.py -q
+..FFFFF                                                                  [100%]
+================================== FAILURES ===================================
+E   AssertionError: assert [['EARLY'], ['LATE']] == [['LATE'], ['EARLY']]
+      
+      At index 0 diff: ['EARLY'] != ['LATE']
+      Use -v to get more diff
+C:\Users\user\Desktop\Homeworkpy\GuoLao-sGroupAssignment\TestDriver\test_f7.py:76: AssertionError: assert [['EARLY'], ['LATE']] == [['LATE'], ['EARLY']]
+E   KeyError: 'metrics'
+C:\Users\user\Desktop\Homeworkpy\GuoLao-sGroupAssignment\TestDriver\test_f7.py:92: KeyError: 'metrics'
+E   AssertionError: assert (True, 'OK', ...score': 3.0}]) == (False, 'INVALID_FIELD', [])
+      
+      At index 0 diff: True != False
+      Use -v to get more diff
+C:\Users\user\Desktop\Homeworkpy\GuoLao-sGroupAssignment\TestDriver\test_f7.py:103: AssertionError: assert (True, 'OK', ...score': 3.0}]) == (False, 'INVALID_FIELD', [])
+E   AssertionError: assert (True, 'OK', ...score': 3.0}]) == (False, 'INVALID_FIELD', [])
+      
+      At index 0 diff: True != False
+      Use -v to get more diff
+C:\Users\user\Desktop\Homeworkpy\GuoLao-sGroupAssignment\TestDriver\test_f7.py:103: AssertionError: assert (True, 'OK', ...score': 3.0}]) == (False, 'INVALID_FIELD', [])
+E   AssertionError: assert (True, 'OK', ...score': 3.0}]) == (False, 'INVALID_FIELD', [])
+      
+      At index 0 diff: True != False
+      Use -v to get more diff
+C:\Users\user\Desktop\Homeworkpy\GuoLao-sGroupAssignment\TestDriver\test_f7.py:103: AssertionError: assert (True, 'OK', ...score': 3.0}]) == (False, 'INVALID_FIELD', [])
+=========================== short test summary info ===========================
+FAILED TestDriver/test_f7.py::test_SearchRanksByPreferenceScore - AssertionEr...
+FAILED TestDriver/test_f7.py::test_SearchCountsEnrolledCoursesInMetrics - Key...
+FAILED TestDriver/test_f7.py::test_SearchRejectsInvalidPreferences[extra0] - ...
+FAILED TestDriver/test_f7.py::test_SearchRejectsInvalidPreferences[extra1] - ...
+FAILED TestDriver/test_f7.py::test_SearchRejectsInvalidPreferences[extra2] - ...
+5 failed, 2 passed in 0.05s

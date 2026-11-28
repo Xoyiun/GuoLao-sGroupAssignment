@@ -1,0 +1,4 @@
+# TDD 第 4 輪 Green：新增 OptimizeScheduleFlow 與選單 18
+# 2026-11-27 18:06 uv run python -m pytest TestDriver/test_main.py -q -k Optimize
+.....                                                                    [100%]
+5 passed, 44 deselected in 1.96s

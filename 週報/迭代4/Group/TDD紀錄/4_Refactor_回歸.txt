@@ -1,0 +1,4 @@
+# TDD 第 4 輪 Refactor 後回歸測試：抽出 ParseWeights、FormatPlanMetrics
+# 2026-11-27 18:06 uv run python TestDriver.py
+
+============================ 240 passed in 19.40s =============================

@@ -358,3 +358,42 @@ def test_FreeSlotsAcrossDays(dataDir):
 def test_FreeSlotsRejectsReversedRange(dataDir):
     out = RunSession(dataDir, ["14", "S10901", "3", "1", "1", "c", "1", "0"])
     assert "[錯誤]" in out
+
+
+# ======================================================================
+# F7 最佳課表搜尋（迭代 4 TDD 第 4 輪，先寫測試再實作）
+# S10901 已選 CS101（星期一 2–4 節）、MA102（星期一 6–8 節）
+# 候選 ENG101（星期三 1–2，2 學分）、CS203（星期三 2–4）、CS201（星期五 5–7），學分上下限都是 3
+# → 可行方案只有 CS201、CS203；兩者都是到校 2 天、空堂 1 節、半天區段 3，預設分數 −3.5
+# ======================================================================
+def OptimizeInputs(preferred="", weights="", minCredits="3"):
+    return ["18", "S10901", "", "ENG101,CS203,CS201", minCredits, "3", "", preferred, weights, "0"]
+
+
+def test_OptimizeSchedulePreferredCourseRanksFirst(dataDir):
+    out = RunSession(dataDir, OptimizeInputs(preferred="CS203"))
+    assert "[查詢] 共 2 個可行方案，列出前 2 名：" in out
+    assert "第 1 名：分數 1.5｜CS203 軟體工程（3 學分）" in out
+    assert "第 2 名：分數 -3.5｜CS201 作業系統（3 學分）" in out
+    assert "到校 2 天｜空堂 1 節｜早八 0 天｜半天區段 3｜偏好比例 100%" in out
+
+
+def test_OptimizeScheduleCustomWeights(dataDir):
+    """自訂集中權重為 2：兩案半天區段都是 3，分數都變成 −8.0，同分依代號 CS201 第一。"""
+    out = RunSession(dataDir, OptimizeInputs(weights="half_day_blocks=2"))
+    assert "第 1 名：分數 -8.0｜CS201 作業系統（3 學分）" in out
+
+
+def test_OptimizeScheduleNoFeasiblePlan(dataDir):
+    out = RunSession(dataDir, OptimizeInputs(minCredits="30"))
+    assert "[查詢] 找不到符合所有條件的課表。" in out
+
+
+def test_OptimizeScheduleRejectsBadWeights(dataDir):
+    out = RunSession(dataDir, OptimizeInputs(weights="lunch_break=1"))
+    assert "[錯誤] 搜尋失敗：" in out
+
+
+def test_OptimizeScheduleUnknownStudent(dataDir):
+    out = RunSession(dataDir, ["18", "NOPE", "0"])
+    assert "[錯誤] 搜尋失敗：找不到學生 NOPE。" in out

@@ -1,0 +1,10 @@
+# F8 TDD 第 2 輪 Red：回溯法（S03、S04）
+# 2026-11-28 11:54 uv run python -m pytest TestDriver/test_f8.py -q
+..FF                                                                     [100%]
+================================== FAILURES ===================================
+E   AttributeError: module 'SearchCompare' has no attribute 'BacktrackingSearch'
+E   AttributeError: module 'SearchCompare' has no attribute 'BacktrackingSearch'
+=========================== short test summary info ===========================
+FAILED TestDriver/test_f8.py::test_BacktrackingMatchesBruteForce - AttributeE...
+FAILED TestDriver/test_f8.py::test_BacktrackingPrunes - AttributeError: modul...
+2 failed, 2 passed in 0.03s
