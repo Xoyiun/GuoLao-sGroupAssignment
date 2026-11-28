@@ -17,6 +17,26 @@ import CourseDataManager as courseDataManager
 from TimeSlotUtils import TimeSlotsOverlap
 
 
+def BruteForceSearch(problem):
+    import ScheduleOptimizer
+
+    start = time.perf_counter()
+    candidates = problem["candidates"]
+    solutions = []
+    nodes = 0
+    for mask in range(1 << len(candidates)):
+        nodes += 1
+        chosen = [candidates[index] for index in range(len(candidates)) if mask & (1 << index)]
+        if ScheduleOptimizer.IsFeasibleSelection(problem, problem["required"] + chosen):
+            solutions.append(tuple(sorted(course["course_id"] for course in problem["required"] + chosen)))
+    return {
+        "solutions": sorted(solutions),
+        "nodes": nodes,
+        "seconds": time.perf_counter() - start,
+        "completed": True,
+    }
+
+
 def CompareAlgorithms(database: dict, studentId: str, preferences: dict) -> tuple[bool, str, dict]:
     """評測並比較兩種演算法在相同資料上的搜尋耗時與走訪節點數。
 
