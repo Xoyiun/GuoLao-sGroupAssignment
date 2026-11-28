@@ -48,6 +48,60 @@ def BruteForceSearch(problem):
     }
 
 
+def BacktrackingSearch(problem):
+    start = time.perf_counter()
+    candidates = problem["candidates"]
+    remaining = [0] * (len(candidates) + 1)
+    for index in range(len(candidates) - 1, -1, -1):
+        remaining[index] = remaining[index + 1] + candidates[index]["credits"]
+    solutions = []
+    nodes = 0
+
+    def CanAdd(selected, credits, course):
+        if credits + course["credits"] > problem["max_credits"]:
+            return False
+        if TimeSlotsOverlap(course.get("time_slots", []), problem["blocked"]):
+            return False
+        if courseDataManager.RemainingSeats(course) <= 0:
+            return False
+        for other in selected + problem["enrolled"]:
+            if TimeSlotsOverlap(course.get("time_slots", []), other.get("time_slots", [])):
+                return False
+        return True
+
+    def Visit(index, selected, credits):
+        nonlocal nodes
+        nodes += 1
+        if credits + remaining[index] < problem["min_credits"]:
+            return
+        if index == len(candidates):
+            if scheduleOptimizer.IsFeasibleSelection(problem, selected):
+                solutions.append(SolutionKey(selected))
+            return
+        Visit(index + 1, selected, credits)
+        course = candidates[index]
+        if CanAdd(selected, credits, course):
+            Visit(index + 1, selected + [course], credits + course["credits"])
+
+    required = []
+    requiredCredits = 0
+    feasible = True
+    for course in problem["required"]:
+        if not CanAdd(required, requiredCredits, course):
+            feasible = False
+            break
+        required.append(course)
+        requiredCredits += course["credits"]
+    if feasible:
+        Visit(0, required, requiredCredits)
+    return {
+        "solutions": sorted(solutions),
+        "nodes": nodes,
+        "seconds": time.perf_counter() - start,
+        "completed": True,
+    }
+
+
 def CompareAlgorithms(database: dict, studentId: str, preferences: dict) -> tuple[bool, str, dict]:
     """評測並比較兩種演算法在相同資料上的搜尋耗時與走訪節點數。
 

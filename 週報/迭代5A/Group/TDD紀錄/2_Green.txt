@@ -1,0 +1,4 @@
+# F8 TDD 第 2 輪 Green：最少量實作 BacktrackingSearch
+# 2026-11-28 11:54 uv run python -m pytest TestDriver/test_f8.py -q
+....                                                                     [100%]
+4 passed in 0.03s
