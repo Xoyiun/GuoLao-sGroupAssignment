@@ -1,0 +1,440 @@
+{
+  "description": "F8 效能實驗：16 門候選課程（產生規則見 make_f8_datasets.py）",
+  "student_id": "S1",
+  "database": {
+    "courses": [
+      {
+        "course_id": "REQ",
+        "title": "REQ",
+        "credits": 2,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RREQ",
+        "capacity": 30,
+        "enrolled_count": 0,
+        "time_slots": [
+          {
+            "day": 1,
+            "period": "a"
+          },
+          {
+            "day": 1,
+            "period": "b"
+          }
+        ]
+      },
+      {
+        "course_id": "ENR",
+        "title": "ENR",
+        "credits": 1,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RENR",
+        "capacity": 30,
+        "enrolled_count": 0,
+        "time_slots": [
+          {
+            "day": 5,
+            "period": "1"
+          }
+        ]
+      },
+      {
+        "course_id": "C01",
+        "title": "C01",
+        "credits": 2,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RC01",
+        "capacity": 30,
+        "enrolled_count": 0,
+        "time_slots": [
+          {
+            "day": 1,
+            "period": "2"
+          },
+          {
+            "day": 1,
+            "period": "3"
+          }
+        ]
+      },
+      {
+        "course_id": "C02",
+        "title": "C02",
+        "credits": 3,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RC02",
+        "capacity": 30,
+        "enrolled_count": 0,
+        "time_slots": [
+          {
+            "day": 2,
+            "period": "2"
+          },
+          {
+            "day": 2,
+            "period": "3"
+          },
+          {
+            "day": 2,
+            "period": "4"
+          }
+        ]
+      },
+      {
+        "course_id": "C03",
+        "title": "C03",
+        "credits": 3,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RC03",
+        "capacity": 30,
+        "enrolled_count": 0,
+        "time_slots": [
+          {
+            "day": 3,
+            "period": "2"
+          },
+          {
+            "day": 3,
+            "period": "3"
+          },
+          {
+            "day": 3,
+            "period": "4"
+          }
+        ]
+      },
+      {
+        "course_id": "C04",
+        "title": "C04",
+        "credits": 2,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RC04",
+        "capacity": 30,
+        "enrolled_count": 0,
+        "time_slots": [
+          {
+            "day": 4,
+            "period": "2"
+          },
+          {
+            "day": 4,
+            "period": "3"
+          }
+        ]
+      },
+      {
+        "course_id": "C05",
+        "title": "C05",
+        "credits": 3,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RC05",
+        "capacity": 30,
+        "enrolled_count": 0,
+        "time_slots": [
+          {
+            "day": 5,
+            "period": "2"
+          },
+          {
+            "day": 5,
+            "period": "3"
+          },
+          {
+            "day": 5,
+            "period": "4"
+          }
+        ]
+      },
+      {
+        "course_id": "C06",
+        "title": "C06",
+        "credits": 3,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RC06",
+        "capacity": 30,
+        "enrolled_count": 0,
+        "time_slots": [
+          {
+            "day": 1,
+            "period": "5"
+          },
+          {
+            "day": 1,
+            "period": "6"
+          },
+          {
+            "day": 1,
+            "period": "7"
+          }
+        ]
+      },
+      {
+        "course_id": "C07",
+        "title": "C07",
+        "credits": 2,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RC07",
+        "capacity": 30,
+        "enrolled_count": 30,
+        "time_slots": [
+          {
+            "day": 2,
+            "period": "5"
+          },
+          {
+            "day": 2,
+            "period": "6"
+          }
+        ]
+      },
+      {
+        "course_id": "C08",
+        "title": "C08",
+        "credits": 3,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RC08",
+        "capacity": 30,
+        "enrolled_count": 0,
+        "time_slots": [
+          {
+            "day": 3,
+            "period": "5"
+          },
+          {
+            "day": 3,
+            "period": "6"
+          },
+          {
+            "day": 3,
+            "period": "7"
+          }
+        ]
+      },
+      {
+        "course_id": "C09",
+        "title": "C09",
+        "credits": 3,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RC09",
+        "capacity": 30,
+        "enrolled_count": 0,
+        "time_slots": [
+          {
+            "day": 4,
+            "period": "5"
+          },
+          {
+            "day": 4,
+            "period": "6"
+          },
+          {
+            "day": 4,
+            "period": "7"
+          }
+        ]
+      },
+      {
+        "course_id": "C10",
+        "title": "C10",
+        "credits": 2,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RC10",
+        "capacity": 30,
+        "enrolled_count": 0,
+        "time_slots": [
+          {
+            "day": 5,
+            "period": "5"
+          },
+          {
+            "day": 5,
+            "period": "6"
+          }
+        ]
+      },
+      {
+        "course_id": "C11",
+        "title": "C11",
+        "credits": 3,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RC11",
+        "capacity": 30,
+        "enrolled_count": 0,
+        "time_slots": [
+          {
+            "day": 1,
+            "period": "7"
+          },
+          {
+            "day": 1,
+            "period": "8"
+          },
+          {
+            "day": 1,
+            "period": "9"
+          }
+        ]
+      },
+      {
+        "course_id": "C12",
+        "title": "C12",
+        "credits": 3,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RC12",
+        "capacity": 30,
+        "enrolled_count": 0,
+        "time_slots": [
+          {
+            "day": 2,
+            "period": "7"
+          },
+          {
+            "day": 2,
+            "period": "8"
+          },
+          {
+            "day": 2,
+            "period": "9"
+          }
+        ]
+      },
+      {
+        "course_id": "C13",
+        "title": "C13",
+        "credits": 2,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RC13",
+        "capacity": 30,
+        "enrolled_count": 0,
+        "time_slots": [
+          {
+            "day": 3,
+            "period": "7"
+          },
+          {
+            "day": 3,
+            "period": "8"
+          }
+        ]
+      },
+      {
+        "course_id": "C14",
+        "title": "C14",
+        "credits": 3,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RC14",
+        "capacity": 30,
+        "enrolled_count": 30,
+        "time_slots": [
+          {
+            "day": 4,
+            "period": "7"
+          },
+          {
+            "day": 4,
+            "period": "8"
+          },
+          {
+            "day": 4,
+            "period": "9"
+          }
+        ]
+      },
+      {
+        "course_id": "C15",
+        "title": "C15",
+        "credits": 3,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RC15",
+        "capacity": 30,
+        "enrolled_count": 0,
+        "time_slots": [
+          {
+            "day": 5,
+            "period": "7"
+          },
+          {
+            "day": 5,
+            "period": "8"
+          },
+          {
+            "day": 5,
+            "period": "9"
+          }
+        ]
+      },
+      {
+        "course_id": "C16",
+        "title": "C16",
+        "credits": 2,
+        "required": false,
+        "teacher": "T",
+        "classroom_id": "RC16",
+        "capacity": 30,
+        "enrolled_count": 0,
+        "time_slots": [
+          {
+            "day": 1,
+            "period": "2"
+          },
+          {
+            "day": 1,
+            "period": "3"
+          }
+        ]
+      }
+    ],
+    "students": [
+      {
+        "student_id": "S1",
+        "name": "實驗生",
+        "department": "資工系",
+        "max_credits": 25,
+        "enrolled_courses": [
+          "ENR"
+        ]
+      }
+    ]
+  },
+  "preferences": {
+    "required_courses": [
+      "REQ"
+    ],
+    "candidate_courses": [
+      "C01",
+      "C02",
+      "C03",
+      "C04",
+      "C05",
+      "C06",
+      "C07",
+      "C08",
+      "C09",
+      "C10",
+      "C11",
+      "C12",
+      "C13",
+      "C14",
+      "C15",
+      "C16"
+    ],
+    "min_credits": 9,
+    "max_credits": 15
+  }
+}

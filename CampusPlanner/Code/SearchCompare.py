@@ -130,6 +130,23 @@ def BacktrackingSearch(problem, timeLimit=None):
     }
 
 
+def RunExperiment(dataset, repeats=5, timeLimit=None):
+    reports = []
+    for _ in range(repeats):
+        ok, code, report = CompareAlgorithms(dataset["database"], dataset["student_id"], dataset["preferences"], timeLimit)
+        reports.append(report)
+    row = {"candidate_count": reports[0]["candidate_count"], "consistent": reports[-1]["consistent"]}
+    for name in ("brute_force", "backtracking"):
+        times = sorted(report[name]["seconds"] for report in reports)
+        row[name] = {
+            "nodes": reports[-1][name]["nodes"],
+            "solutions": reports[-1][name]["solutions"],
+            "completed": reports[-1][name]["completed"],
+            "median_seconds": times[len(times) // 2],
+        }
+    return row
+
+
 def CompareAlgorithms(database, studentId, preferences, timeLimit=None):
     """以相同輸入執行窮舉法與回溯法並比較。
 

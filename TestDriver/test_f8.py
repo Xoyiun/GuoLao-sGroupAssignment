@@ -183,7 +183,12 @@ def LoadExperiment(count):
 
 @pytest.mark.parametrize("count", [8, 12, 16])
 def test_ExperimentDatasetsAgree(count):
-    """S08：三組資料的候選課程數量正確；兩法都完成、可行解一致，且回溯法節點較少。"""
+    """S08：三組資料的候選課程數量正確；兩法都完成、可行解一致。
+
+    原本假設「回溯法節點一定較少」，Green 階段實測 8 門時回溯法 279 個節點、窮舉法 256 個，
+    假設不成立：候選少、限制不夠時，回溯法多算的中途節點會抵銷剪枝。改為 12 門以上才要求較少，
+    8 門的結果如實記錄在效能實驗。
+    """
     dataset = LoadExperiment(count)
     assert len(dataset["preferences"]["candidate_courses"]) == count
     ok, code, report = searchCompare.CompareAlgorithms(dataset["database"], dataset["student_id"], dataset["preferences"])
@@ -191,7 +196,8 @@ def test_ExperimentDatasetsAgree(count):
     assert report["candidate_count"] == count
     assert report["brute_force"]["nodes"] == 2 ** count
     assert report["consistent"] is True
-    assert report["backtracking"]["nodes"] < report["brute_force"]["nodes"]
+    if count >= 12:
+        assert report["backtracking"]["nodes"] < report["brute_force"]["nodes"]
     assert report["brute_force"]["solutions"] > 0
 
 

@@ -1,0 +1,11 @@
+# F8 TDD 第 4 輪 Green：建立 8、12、16（另 20）門實驗資料，最少量實作 RunExperiment
+# 2026-11-28 11:57 uv run python -m pytest TestDriver/test_f8.py -q
+............F...                                                         [100%]
+================================== FAILURES ===================================
+_______________________ test_ExperimentDatasetsAgree[8] _______________________
+TestDriver\test_f8.py:194: in test_ExperimentDatasetsAgree
+    assert report["backtracking"]["nodes"] < report["brute_force"]["nodes"]
+E   assert 279 < 256
+=========================== short test summary info ===========================
+FAILED TestDriver/test_f8.py::test_ExperimentDatasetsAgree[8] - assert 279 < 256
+1 failed, 15 passed in 0.33s
