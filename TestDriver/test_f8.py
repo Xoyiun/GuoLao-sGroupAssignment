@@ -111,3 +111,56 @@ def test_BacktrackingPrunes():
     assert (brute["nodes"], back["nodes"]) == (256, 129)
     assert len(back["solutions"]) == 36
     assert back["solutions"] == brute["solutions"]
+
+
+# ======================================================================
+# S05–S07、S09：時間上限、比較報告、與 F7 一致、錯誤輸入
+# ======================================================================
+@pytest.mark.parametrize("search", ["BruteForceSearch", "BacktrackingSearch"])
+def test_TimeLimitStopsAndReportsIncomplete(search):
+    """S05：時間上限 0 秒 → 立即停止並回報未完成（規範：逾時須如實記錄未完成情況）。"""
+    result = getattr(searchCompare, search)(SmallProblem(), timeLimit=0)
+    assert result["completed"] is False
+    assert result["nodes"] < 16
+
+
+def test_CompareReportsBothAlgorithms():
+    """S06：比較報告包含兩法的節點數、時間、可行解數與一致性。"""
+    ok, code, report = searchCompare.CompareAlgorithms(SmallDatabase(), "S1", {
+        "candidate_courses": ["A", "B", "C", "E"], "min_credits": 3, "max_credits": 6,
+    })
+    assert (ok, code) == (True, OK)
+    assert report["candidate_count"] == 4
+    assert {key: report["brute_force"][key] for key in ("nodes", "solutions", "completed")} == {
+        "nodes": 16, "solutions": 8, "completed": True}
+    assert {key: report["backtracking"][key] for key in ("nodes", "solutions", "completed")} == {
+        "nodes": 22, "solutions": 8, "completed": True}
+    assert report["brute_force"]["seconds"] >= 0 and report["backtracking"]["seconds"] >= 0
+    assert report["consistent"] is True
+
+
+def test_CompareWithTimeLimitCannotJudgeConsistency():
+    """S05：有一方未完成時，一致性標為 None（無法判定），不能當成一致。"""
+    _, _, report = searchCompare.CompareAlgorithms(SmallDatabase(), "S1", {
+        "candidate_courses": ["A", "B", "C", "E"], "min_credits": 3, "max_credits": 6,
+    }, timeLimit=0)
+    assert report["brute_force"]["completed"] is False
+    assert report["consistent"] is None
+
+
+def test_F7AndF8AgreeOnFeasiblePlans():
+    """S07：F7 最佳課表搜尋找到的方案，與 F8 兩種演算法的可行解完全相同（共用同一套條件）。"""
+    preferences = {"candidate_courses": ["A", "B", "C", "E"], "min_credits": 3, "max_credits": 6}
+    _, _, plans = optimizer.SearchOptimalSchedules(SmallDatabase(), "S1", preferences)
+    f7 = sorted(tuple(sorted(plan["courses"])) for plan in plans)
+    assert f7 == searchCompare.BruteForceSearch(SmallProblem())["solutions"] == SMALL_SOLUTIONS
+
+
+@pytest.mark.parametrize("studentId, preferences", [
+    ("NOPE", {}),
+    ("S1", {"required_courses": ["NOPE"]}),
+    ("S1", {"min_credits": -1}),
+])
+def test_CompareRejectsInvalidInput(studentId, preferences):
+    """S09：學生或必修課不存在、學分格式錯誤 → INVALID_FIELD。"""
+    assert searchCompare.CompareAlgorithms(SmallDatabase(), studentId, preferences) == (False, INVALID_FIELD, {})
