@@ -48,51 +48,62 @@ def BruteForceSearch(problem):
     }
 
 
+def SuffixCredits(candidates):
+    """suffix[i] = 第 i 門之後（含）所有候選的學分總和，用來估計「最多還能拿到幾學分」。"""
+    suffix = [0] * (len(candidates) + 1)
+    for index in range(len(candidates) - 1, -1, -1):
+        suffix[index] = suffix[index + 1] + candidates[index]["credits"]
+    return suffix
+
+
+def CanAddCourse(problem, selected, credits, course):
+    """把 course 加入目前選法後，是否仍符合可在搜尋途中檢查的條件 C1～C4（見演算法說明第三節）。"""
+    if credits + course["credits"] > problem["max_credits"]:                      # C1 學分上限
+        return False
+    if TimeSlotsOverlap(course.get("time_slots", []), problem["blocked"]):        # C3 禁止時段
+        return False
+    if courseDataManager.RemainingSeats(course) <= 0:                             # C4 額滿
+        return False
+    return not any(                                                               # C2 衝堂
+        TimeSlotsOverlap(course.get("time_slots", []), other.get("time_slots", []))
+        for other in selected + problem["enrolled"]
+    )
+
+
 def BacktrackingSearch(problem):
+    """回溯法：依序決定每門候選「不選／選」，違反條件的分支提早放棄（每次走訪算一個節點）。
+
+    剪枝：加入後違反 C1～C4 就不往下走；目前學分加上剩餘候選的學分仍達不到最低學分，也停止。
+    回傳格式與 BruteForceSearch 相同。
+    """
     start = time.perf_counter()
     candidates = problem["candidates"]
-    remaining = [0] * (len(candidates) + 1)
-    for index in range(len(candidates) - 1, -1, -1):
-        remaining[index] = remaining[index + 1] + candidates[index]["credits"]
+    suffix = SuffixCredits(candidates)
     solutions = []
     nodes = 0
-
-    def CanAdd(selected, credits, course):
-        if credits + course["credits"] > problem["max_credits"]:
-            return False
-        if TimeSlotsOverlap(course.get("time_slots", []), problem["blocked"]):
-            return False
-        if courseDataManager.RemainingSeats(course) <= 0:
-            return False
-        for other in selected + problem["enrolled"]:
-            if TimeSlotsOverlap(course.get("time_slots", []), other.get("time_slots", [])):
-                return False
-        return True
 
     def Visit(index, selected, credits):
         nonlocal nodes
         nodes += 1
-        if credits + remaining[index] < problem["min_credits"]:
+        if credits + suffix[index] < problem["min_credits"]:                      # C5 剪枝
             return
         if index == len(candidates):
-            if scheduleOptimizer.IsFeasibleSelection(problem, selected):
+            if scheduleOptimizer.IsFeasibleSelection(problem, selected):            # 再用 F7 的完整條件確認
                 solutions.append(SolutionKey(selected))
             return
-        Visit(index + 1, selected, credits)
+        Visit(index + 1, selected, credits)                                       # 不選第 index 門
         course = candidates[index]
-        if CanAdd(selected, credits, course):
-            Visit(index + 1, selected + [course], credits + course["credits"])
+        if CanAddCourse(problem, selected, credits, course):
+            Visit(index + 1, selected + [course], credits + course["credits"])    # 選第 index 門
 
-    required = []
-    requiredCredits = 0
-    feasible = True
+    # 必修課先逐一加入；必修課本身就違反條件時沒有任何可行解
+    required, requiredCredits = [], 0
     for course in problem["required"]:
-        if not CanAdd(required, requiredCredits, course):
-            feasible = False
+        if not CanAddCourse(problem, required, requiredCredits, course):
             break
         required.append(course)
         requiredCredits += course["credits"]
-    if feasible:
+    else:
         Visit(0, required, requiredCredits)
     return {
         "solutions": sorted(solutions),
